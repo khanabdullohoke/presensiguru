@@ -24,7 +24,12 @@
   h1,h2,h3{font-family:var(--font-display);}
 
   header{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff;padding:22px 18px 0;box-shadow:0 2px 0 var(--gold),0 18px 40px rgba(6,36,84,0.28);}
-  .brand{display:flex;align-items:center;gap:13px;max-width:1120px;margin:0 auto;padding-bottom:16px;}
+  .brand{display:flex;align-items:center;gap:13px;max-width:1120px;margin:0 auto;padding-bottom:16px;flex-wrap:wrap;}
+  @media(max-width:480px){
+    .brand{gap:11px;}
+    .brand-text{flex:1 1 calc(100% - 57px);}
+    .badge-publik{order:3;flex:0 0 100%;margin:8px 0 0 57px;width:fit-content;}
+  }
   .brand .logo{width:44px;height:44px;border-radius:12px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--navy);font-weight:900;flex-shrink:0;box-shadow:0 6px 16px rgba(255,179,0,0.35);}
   .brand-text{flex:1;min-width:0;}
   .brand h1{font-size:15.5px;margin:0;line-height:1.3;font-weight:700;letter-spacing:.1px;}
@@ -172,42 +177,65 @@
   .dash-top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
   .dash-title h2{font-size:20px;margin:0 0 4px;color:var(--navy);font-weight:800;}
   .dash-title p{margin:0;font-size:12.5px;color:var(--muted);}
-  .controls{display:flex;gap:8px;align-items:center;}
-  .controls select{padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1.5px solid var(--line);}
-  .controls button{padding:9px 18px;border-radius:999px;background:var(--navy);color:#fff;font-size:13px;}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .controls select{padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1.5px solid var(--line);transition:border-color .15s;}
+  .controls select:focus{outline:none;border-color:var(--navy);}
+  .controls button{padding:9px 18px;border-radius:999px;background:var(--navy);color:#fff;font-size:13px;box-shadow:0 6px 14px rgba(11,61,145,0.2);}
+  .controls button:not(:disabled):hover{box-shadow:0 8px 18px rgba(11,61,145,0.28);}
 
   /* Hero: gauge + kartu ringkas */
-  .hero-grid{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:18px;}
+  .hero-grid{display:grid;grid-template-columns:264px 1fr;gap:16px;margin-bottom:18px;align-items:stretch;}
   @media(max-width:700px){.hero-grid{grid-template-columns:1fr;}}
 
   .gauge-panel{
-    background:var(--card);border-radius:20px;padding:24px 20px;
-    box-shadow:0 12px 32px rgba(11,61,145,0.08);border:1px solid var(--line);
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(120% 140% at 50% -10%, rgba(11,61,145,0.05), transparent 60%),
+      var(--card);
+    border-radius:22px;padding:26px 20px 22px;
+    box-shadow:0 14px 34px rgba(11,61,145,0.09);border:1px solid var(--line);
     display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   }
-  .gauge-panel .gauge-caption{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:6px;}
-  .gauge-panel .gauge-sub{font-size:11.5px;color:var(--faint);margin-top:3px;}
+  .gauge-panel::after{
+    content:"";position:absolute;top:-60px;right:-60px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,179,0,0.14),transparent 70%);pointer-events:none;
+  }
+  .gauge-panel canvas{position:relative;z-index:1;}
+  .gauge-panel .gauge-caption{font-size:11.5px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.7px;margin-top:14px;position:relative;z-index:1;}
+  .gauge-panel .gauge-sub{font-size:11px;color:var(--faint);margin-top:3px;position:relative;z-index:1;}
 
   .kartu-ringkas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-  @media(max-width:420px){.kartu-ringkas{grid-template-columns:1fr 1fr;}}
+  @media(max-width:420px){.kartu-ringkas{grid-template-columns:1fr 1fr;gap:9px;}}
   .kartu{
-    background:var(--card);border-radius:16px;padding:16px 16px;
+    position:relative;background:var(--card);border-radius:16px;padding:15px 16px 16px;
     box-shadow:0 8px 22px rgba(11,61,145,0.06);border:1px solid var(--line);
-    border-left:4px solid var(--line);
+    overflow:hidden;transition:transform .18s ease,box-shadow .18s ease;
   }
-  .kartu .angka{font-size:26px;font-weight:800;font-family:var(--font-display);}
-  .kartu .label{font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:600;}
-  .kartu.hadir{border-left-color:var(--ok);} .kartu.hadir .angka{color:var(--ok);}
-  .kartu.sakit{border-left-color:var(--warn);} .kartu.sakit .angka{color:var(--warn);}
-  .kartu.izin{border-left-color:var(--info);} .kartu.izin .angka{color:var(--info);}
-  .kartu.alpa{border-left-color:var(--err);} .kartu.alpa .angka{color:var(--err);}
+  .kartu::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3.5px;background:var(--line);
+    transition:width .18s ease;
+  }
+  .kartu:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(11,61,145,0.11);}
+  .kartu:hover::before{width:5px;}
+  .kartu-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .kartu .ico{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+  .kartu .angka{font-size:25px;font-weight:800;font-family:var(--font-display);line-height:1.15;letter-spacing:-.3px;margin-top:9px;font-variant-numeric:tabular-nums;}
+  .kartu .label{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;}
+  .kartu.hadir::before{background:var(--ok);} .kartu.hadir .angka{color:var(--ok);} .kartu.hadir .ico{background:var(--ok-bg);}
+  .kartu.sakit::before{background:var(--warn);} .kartu.sakit .angka{color:var(--warn);} .kartu.sakit .ico{background:var(--warn-bg);}
+  .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:var(--info-bg);}
+  .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:var(--err-bg);}
 
-  .panel-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px;}
+  .panel-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px;align-items:start;}
   @media(max-width:800px){.panel-grid{grid-template-columns:1fr;}}
 
-  .panel{background:var(--card);border-radius:18px;padding:20px;box-shadow:0 10px 28px rgba(11,61,145,0.06);border:1px solid var(--line);margin-bottom:16px;}
+  .panel{
+    background:var(--card);border-radius:18px;padding:20px;
+    box-shadow:0 10px 28px rgba(11,61,145,0.06);border:1px solid var(--line);margin-bottom:16px;
+  }
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;}
   .panel h3{font-size:14px;margin:0 0 2px;color:var(--navy);font-weight:700;}
-  .panel .panel-sub{font-size:11.5px;color:var(--faint);margin:0 0 14px;}
+  .panel .panel-sub{font-size:11.5px;color:var(--faint);margin:0;}
   canvas{width:100%;display:block;}
 
   .status-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
@@ -215,15 +243,25 @@
   .status-pill.sedang{background:var(--warn-bg);color:var(--warn-deep,var(--warn));}
   .status-pill.rendah{background:var(--err-bg);color:var(--err);}
 
+  .tabel-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line);}
+  th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;}
   th{color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;}
   tr:last-child td{border-bottom:none;}
+  tbody tr{transition:background .12s ease;}
   tbody tr:hover{background:#f8faff;}
   td.num{text-align:center;font-variant-numeric:tabular-nums;}
 
   .footer-note{text-align:center;font-size:11.5px;color:var(--faint);margin-top:6px;padding-bottom:6px;}
   .muat{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
+
+  @media(prefers-reduced-motion:reduce){
+    .kartu,.kartu::before{transition:none;}
+    #isiDashboard.tampil{animation:none;}
+  }
+
+  @keyframes masukHalus{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  #isiDashboard.tampil{animation:masukHalus .45s ease both;}
 
   /* ===== Tab Info & Ketentuan ===== */
   .motiv-card{
@@ -438,35 +476,40 @@
           <div class="gauge-sub" id="gaugeSub">dari seluruh hari kerja tercatat</div>
         </div>
         <div class="kartu-ringkas">
-          <div class="kartu hadir"><div class="angka" id="totalHadir">0</div><div class="label">Total Hadir</div></div>
-          <div class="kartu sakit"><div class="angka" id="totalSakit">0</div><div class="label">Total Sakit</div></div>
-          <div class="kartu izin"><div class="angka" id="totalIzin">0</div><div class="label">Total Izin</div></div>
-          <div class="kartu alpa"><div class="angka" id="totalAlpa">0</div><div class="label">Total Alfa</div></div>
+          <div class="kartu hadir"><div class="kartu-top"><span class="ico">✅</span></div><div class="angka" id="totalHadir">0</div><div class="label">Total Hadir</div></div>
+          <div class="kartu sakit"><div class="kartu-top"><span class="ico">🩺</span></div><div class="angka" id="totalSakit">0</div><div class="label">Total Sakit</div></div>
+          <div class="kartu izin"><div class="kartu-top"><span class="ico">📋</span></div><div class="angka" id="totalIzin">0</div><div class="label">Total Izin</div></div>
+          <div class="kartu alpa"><div class="kartu-top"><span class="ico">⛔</span></div><div class="angka" id="totalAlpa">0</div><div class="label">Total Alfa</div></div>
         </div>
       </div>
 
       <div class="panel-grid">
         <div class="panel">
-          <h3>Tren Kehadiran Harian</h3>
-          <p class="panel-sub">Jumlah pegawai hadir setiap tanggal dalam bulan ini</p>
+          <div class="panel-head">
+            <div><h3>Tren Kehadiran Harian</h3><p class="panel-sub">Jumlah pegawai hadir setiap tanggal dalam bulan ini</p></div>
+          </div>
           <canvas id="chartTren" height="220"></canvas>
         </div>
         <div class="panel">
-          <h3>Peringkat Kehadiran</h3>
-          <p class="panel-sub">Diurutkan dari persentase hadir tertinggi</p>
+          <div class="panel-head">
+            <div><h3>Peringkat Kehadiran</h3><p class="panel-sub">Diurutkan dari persentase hadir tertinggi</p></div>
+          </div>
           <canvas id="chartPeringkat" height="220"></canvas>
         </div>
       </div>
 
       <div class="panel">
-        <h3>Detail per Pegawai</h3>
-        <p class="panel-sub">Rincian lengkap kehadiran bulan berjalan</p>
+        <div class="panel-head">
+          <div><h3>Detail per Pegawai</h3><p class="panel-sub">Rincian lengkap kehadiran bulan berjalan</p></div>
+        </div>
+        <div class="tabel-scroll">
         <table>
           <thead>
             <tr><th>Nama</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
           </thead>
           <tbody id="tabelBody"></tbody>
         </table>
+        </div>
       </div>
 
       <div class="panel">
@@ -478,12 +521,14 @@
           <input type="text" id="cariRiwayat" placeholder="Cari nama...">
         </div>
         <div class="riwayat-scroll">
+        <div class="tabel-scroll">
           <table>
             <thead>
               <tr><th>Tanggal</th><th>Nama</th><th>Status</th><th class="num">Jam Masuk</th><th class="num">Jam Pulang</th><th class="num">Foto</th></tr>
             </thead>
             <tbody id="riwayatBody"></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -1047,8 +1092,9 @@
       if(i+1 === now.getMonth()+1) opt.selected = true;
       pilihBulan.appendChild(opt);
     });
-    for(let t = now.getFullYear(); t >= now.getFullYear()-2; t--){
+    for(let t = 2030; t >= now.getFullYear()-2; t--){
       const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+      if(t === now.getFullYear()) opt.selected = true;
       pilihTahun.appendChild(opt);
     }
   })();
@@ -1064,6 +1110,7 @@
       document.getElementById('judulRekap').textContent =
         `Rekap Kehadiran — ${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
       muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
+      isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
       renderDashboard(json.data);
       document.getElementById('footerNote').textContent =
         `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
@@ -1072,6 +1119,18 @@
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
 
   let riwayatTerakhir = [];
+  let grafikTerakhir = null; // menyimpan data grafik terakhir untuk digambar ulang saat resize
+
+  function animasiAngka(el, target){
+    if(kurangGerak){ el.textContent = target; return; }
+    const durasi = 700, mulai = performance.now(), dari = 0;
+    function frame(sekarang){
+      const t = Math.min(1, (sekarang - mulai) / durasi);
+      el.textContent = Math.round(dari + (target - dari) * easeOutCubic(t));
+      if(t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
 
   function renderDashboard(data){
     const { rekapPerPegawai, trenHarian, daftarHarian } = data;
@@ -1096,10 +1155,10 @@
       tabelBody.appendChild(tr);
     });
 
-    document.getElementById('totalHadir').textContent = totalHadir;
-    document.getElementById('totalSakit').textContent = totalSakit;
-    document.getElementById('totalIzin').textContent = totalIzin;
-    document.getElementById('totalAlpa').textContent = totalAlfa;
+    animasiAngka(document.getElementById('totalHadir'), totalHadir);
+    animasiAngka(document.getElementById('totalSakit'), totalSakit);
+    animasiAngka(document.getElementById('totalIzin'), totalIzin);
+    animasiAngka(document.getElementById('totalAlpa'), totalAlfa);
 
     const totalKeseluruhan = totalHadir+totalSakit+totalIzin+totalAlfa+totalDinas;
     const persenKeseluruhan = totalKeseluruhan > 0 ? Math.round(totalHadir/totalKeseluruhan*100) : 0;
@@ -1107,12 +1166,29 @@
     gambarGauge('gaugeUtama', persenKeseluruhan);
 
     const tanggalList = Object.keys(trenHarian).sort();
-    gambarGrafikGaris('chartTren', tanggalList.map(t => t.split('-')[2]), tanggalList.map(t => trenHarian[t]));
-    gambarPeringkat('chartPeringkat', rekapPersen.slice(0, 8));
+    const labelTren = tanggalList.map(t => t.split('-')[2]);
+    const nilaiTren = tanggalList.map(t => trenHarian[t]);
+    const top8 = rekapPersen.slice(0, 8);
+    gambarGrafikGaris('chartTren', labelTren, nilaiTren);
+    gambarPeringkat('chartPeringkat', top8);
+
+    // simpan untuk digambar ulang saat ukuran layar berubah (responsif tanpa hitung ulang data)
+    grafikTerakhir = { labelTren, nilaiTren, top8 };
 
     riwayatTerakhir = daftarHarian || [];
     renderRiwayat(riwayatTerakhir);
   }
+
+  // Gambar ulang grafik saat jendela di-resize/rotasi layar, supaya tetap tajam & pas lebar
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if(!grafikTerakhir) return;
+      gambarGrafikGaris('chartTren', grafikTerakhir.labelTren, grafikTerakhir.nilaiTren);
+      gambarPeringkat('chartPeringkat', grafikTerakhir.top8);
+    }, 150);
+  });
 
   function renderRiwayat(daftar){
     const body = document.getElementById('riwayatBody');
@@ -1146,35 +1222,61 @@
     return '#f04438';
   }
 
-  /* ---- Gauge lingkaran (signature element) ---- */
-  function gambarGauge(canvasId, persen){
+  const kurangGerak = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+
+  /* ---- Gauge lingkaran (signature element), dianimasikan mengisi dari 0 ---- */
+  function gambarGauge(canvasId, persenTarget){
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const size = 180;
     canvas.width = size*dpr; canvas.height = size*dpr;
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0,0,size,size);
 
     const cx = size/2, cy = size/2, r = 74, tebal = 16;
     const mulai = -Math.PI/2;
-    const warna = warnaPersen(persen);
+    const warna = warnaPersen(persenTarget);
+    const durasi = kurangGerak ? 0 : 900;
+    const mulaiWaktu = performance.now();
 
-    // track
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI*2);
-    ctx.strokeStyle = '#eef1f8'; ctx.lineWidth = tebal; ctx.stroke();
+    function frame(sekarang){
+      const t = durasi === 0 ? 1 : Math.min(1, (sekarang - mulaiWaktu) / durasi);
+      const p = easeOutCubic(t) * persenTarget;
 
-    // progres
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, mulai, mulai + (Math.PI*2 * persen/100));
-    ctx.strokeStyle = warna; ctx.lineWidth = tebal; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.clearRect(0,0,size,size);
 
-    // angka tengah
-    ctx.fillStyle = '#10182b';
-    ctx.font = '700 34px Sora, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(persen + '%', cx, cy);
+      // track
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.strokeStyle = '#eef1f8'; ctx.lineWidth = tebal; ctx.stroke();
+
+      // progres
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, mulai, mulai + (Math.PI*2 * p/100));
+      ctx.strokeStyle = warna; ctx.lineWidth = tebal; ctx.lineCap = 'round'; ctx.stroke();
+
+      // titik ujung progres (aksen)
+      if(p > 0.5){
+        const sudutUjung = mulai + (Math.PI*2 * p/100);
+        const ux = cx + r*Math.cos(sudutUjung), uy = cy + r*Math.sin(sudutUjung);
+        ctx.beginPath(); ctx.arc(ux, uy, tebal/2 - 2, 0, Math.PI*2);
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1;
+      }
+
+      // angka tengah
+      ctx.fillStyle = '#10182b';
+      ctx.font = '800 33px Sora, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(Math.round(p) + '%', cx, cy - 4);
+
+      ctx.fillStyle = '#98a2b8';
+      ctx.font = '600 10px Inter, sans-serif';
+      ctx.fillText('HADIR', cx, cy + 22);
+
+      if(t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   }
 
   /* ---- Grafik garis dengan area gradient, native canvas ---- */
@@ -1186,10 +1288,10 @@
     canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr, dpr);
     ctx.clearRect(0,0,W,H);
 
-    const pad = { l:30, r:14, t:16, b:26 };
+    const pad = { l:28, r:14, t:16, b:26 };
 
     if(values.length === 0){
-      ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center';
+      ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText('Belum ada data untuk periode ini', W/2, H/2);
       return;
     }
@@ -1201,16 +1303,19 @@
       y: pad.t + (H-pad.t-pad.b) * (1 - v/maxVal)
     }));
 
-    // grid halus
+    // grid halus + label nilai maksimum
     ctx.strokeStyle = '#eef1f8'; ctx.lineWidth = 1;
     for(let i=0;i<=3;i++){
       const y = pad.t + (H-pad.t-pad.b) * (i/3);
       ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
     }
+    ctx.fillStyle = '#c3cad9'; ctx.font = '600 9px Inter'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(maxVal), 0, pad.t);
+    ctx.fillText('0', 0, H - pad.b);
 
     // area gradient di bawah garis
     const grad = ctx.createLinearGradient(0, pad.t, 0, H-pad.b);
-    grad.addColorStop(0, 'rgba(11,61,145,0.18)');
+    grad.addColorStop(0, 'rgba(11,61,145,0.20)');
     grad.addColorStop(1, 'rgba(11,61,145,0.0)');
     ctx.beginPath();
     ctx.moveTo(titik[0].x, H-pad.b);
@@ -1230,50 +1335,67 @@
     ctx.lineTo(titik[titik.length-1].x, titik[titik.length-1].y);
     ctx.strokeStyle = '#0b3d91'; ctx.lineWidth = 2.5; ctx.lineJoin='round'; ctx.stroke();
 
+    // titik-titik halus di sepanjang garis (hanya jika data tidak terlalu padat)
+    if(titik.length <= 31){
+      ctx.fillStyle = '#0b3d91';
+      titik.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill(); });
+    }
+
     // titik akhir ditandai emas
     const akhir = titik[titik.length-1];
-    ctx.beginPath(); ctx.arc(akhir.x, akhir.y, 4, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(akhir.x, akhir.y, 4.5, 0, Math.PI*2);
     ctx.fillStyle = '#ffb300'; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
 
     // label tanggal (sebagian, biar tidak numpuk)
     const lompat = Math.ceil(labels.length / 8);
-    ctx.fillStyle = '#98a2b8'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#98a2b8'; ctx.font = '10px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     labels.forEach((lab,i) => { if(i % lompat === 0) ctx.fillText(lab, titik[i].x, H-8); });
   }
 
   /* ---- Peringkat kehadiran: bar horizontal, diurutkan, mudah dianalisis ---- */
+  const MEDALI = ['#ffb300', '#9aa5bd', '#c98553'];
   function gambarPeringkat(canvasId, daftar){
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.clientWidth;
-    const rowH = 30;
+    const rowH = 32;
     const H = Math.max(220, daftar.length * rowH + 20);
     canvas.style.height = H + 'px';
     canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr, dpr);
     ctx.clearRect(0,0,W,H);
 
     if(daftar.length === 0){
-      ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center';
+      ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText('Belum ada data untuk periode ini', W/2, H/2);
       return;
     }
 
-    const labelW = 108;
-    const persenW = 40;
-    const barMaxW = W - labelW - persenW - 10;
+    const rankW = 20;
+    const labelW = rankW + 96;
+    const persenW = 42;
+    const barMaxW = W - labelW - persenW - 6;
 
     daftar.forEach((item, i) => {
-      const y = 12 + i*rowH;
+      const y = 13 + i*rowH;
       const barH = 14;
       const barW = barMaxW * (item.persen/100);
       const warna = warnaPersen(item.persen);
 
+      // peringkat (medali untuk 3 besar)
+      if(i < 3){
+        ctx.fillStyle = MEDALI[i]; ctx.font = '800 11px Sora'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('#' + (i+1), 0, y + barH/2);
+      } else {
+        ctx.fillStyle = '#c3cad9'; ctx.font = '700 10.5px Inter'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText((i+1) + '.', 0, y + barH/2);
+      }
+
       // nama (dipotong bila panjang)
       ctx.fillStyle = '#10182b'; ctx.font = '600 11.5px Inter'; ctx.textAlign = 'left'; ctx.textBaseline='middle';
-      const nama = item.nama.length > 16 ? item.nama.slice(0,15)+'…' : item.nama;
-      ctx.fillText(nama, 0, y + barH/2);
+      const nama = item.nama.length > 14 ? item.nama.slice(0,13)+'…' : item.nama;
+      ctx.fillText(nama, rankW, y + barH/2);
 
       // track
       ctx.fillStyle = '#eef1f8';
