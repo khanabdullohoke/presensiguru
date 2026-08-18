@@ -67,6 +67,41 @@
   .pin-wrap input{letter-spacing:2px;padding-right:44px;}
   .pin-toggle{position:absolute;right:6px;top:6px;bottom:6px;width:36px;border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;padding:0;border-radius:8px;}
   .pin-toggle:active{background:var(--line);}
+  .link-gantipin{color:var(--navy);font-weight:700;text-decoration:none;}
+  .link-gantipin:hover{text-decoration:underline;}
+
+  /* ===== Foto bukti kehadiran ===== */
+  .foto-wrap{display:flex;align-items:center;gap:12px;}
+  .foto-preview{
+    width:76px;height:76px;border-radius:14px;background:#f4f6fb;border:1.5px dashed var(--line);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+  }
+  .foto-preview #fotoPlaceholder{font-size:10.5px;color:var(--faint);text-align:center;padding:4px;line-height:1.4;}
+  .foto-preview img{width:100%;height:100%;object-fit:cover;}
+  .foto-preview.terisi{border-style:solid;border-color:rgba(18,183,106,0.35);}
+  .foto-tombol{flex:1;}
+  .btn-foto{
+    display:inline-block;padding:10px 16px;border-radius:11px;background:var(--navy);color:#fff;
+    font-size:13px;font-weight:700;cursor:pointer;text-align:center;
+  }
+  .btn-foto:active{transform:scale(0.97);}
+
+  /* ===== Modal Ganti PIN ===== */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(6,36,84,0.45);z-index:100;
+    align-items:center;justify-content:center;padding:18px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:#fff;border-radius:20px;padding:24px 22px;max-width:400px;width:100%;
+    box-shadow:0 20px 50px rgba(6,36,84,0.3);max-height:88vh;overflow-y:auto;
+  }
+  .modal-box h3{margin:0 0 4px;font-size:16px;color:var(--navy);}
+  .modal-box .modal-sub{margin:0 0 6px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .modal-close{float:right;background:transparent;border:none;font-size:18px;color:var(--faint);cursor:pointer;padding:0 4px;}
+  .modal-pesan{margin-top:10px;font-size:12.5px;text-align:center;font-weight:600;min-height:16px;}
+  .modal-pesan.ok{color:var(--ok);}
+  .modal-pesan.err{color:var(--err);}
 
   /* ===== Kartu verifikasi lokasi (radius sekolah) ===== */
   .lokasi-card{
@@ -273,7 +308,20 @@
         <input type="password" id="pin" inputmode="numeric" autocomplete="off" placeholder="Masukkan PIN pribadi Anda">
         <button type="button" class="pin-toggle" id="pinToggle">LIHAT</button>
       </div>
-      <div class="field-hint">PIN bersifat rahasia dan hanya diketahui oleh Anda. Presensi ditolak sistem jika PIN salah. Lupa PIN? Hubungi operator sekolah.</div>
+      <div class="field-hint">PIN bersifat rahasia dan hanya diketahui oleh Anda. Presensi ditolak sistem jika PIN salah. <a href="#" id="bukaGantiPin" class="link-gantipin">Lupa atau ingin ganti PIN?</a></div>
+
+      <label for="fotoInput">Foto Bukti Kehadiran</label>
+      <div class="foto-wrap">
+        <div class="foto-preview" id="fotoPreview">
+          <span id="fotoPlaceholder">📷 Belum ada foto</span>
+          <img id="fotoImg" style="display:none;" alt="Pratinjau foto kehadiran">
+        </div>
+        <div class="foto-tombol">
+          <label class="btn-foto" for="fotoInput" id="fotoLabel">Ambil Foto</label>
+          <input type="file" id="fotoInput" accept="image/*" capture="user" style="display:none;">
+        </div>
+      </div>
+      <div class="field-hint" id="fotoHint">Foto diambil langsung dari kamera perangkat dan dikompres otomatis sebelum dikirim.</div>
 
       <div class="status-box" id="statusBox"></div>
 
@@ -287,6 +335,41 @@
       <div class="pesan" id="pesan"></div>
     </div>
   </section>
+
+  <!-- ===== MODAL: ATUR/GANTI PIN SENDIRI (verifikasi NUPTK) ===== -->
+  <div class="modal-overlay" id="modalGantiPin">
+    <div class="modal-box">
+      <button type="button" class="modal-close" id="tutupModalGantiPin">✕</button>
+      <h3>Atur / Ganti PIN</h3>
+      <p class="modal-sub">Verifikasi identitas Anda dengan nomor identitas pegawai untuk mengatur PIN presensi yang baru.</p>
+
+      <label for="gpNama">Nama</label>
+      <select id="gpNama"><option value="">-- Pilih nama --</option></select>
+
+      <label for="gpNuptk">NUPTK / Nomor Identitas Pegawai</label>
+      <input type="text" id="gpNuptk" inputmode="numeric" autocomplete="off" placeholder="Masukkan NUPTK Anda">
+      <div class="field-hint">Belum punya NUPTK (mis. honorer baru)? Gunakan nomor identitas lain yang sudah didaftarkan operator untuk Anda (mis. NIK KTP atau nomor pegawai internal sekolah).</div>
+
+      <label for="gpPinBaru">PIN Baru</label>
+      <div class="pin-wrap">
+        <input type="password" id="gpPinBaru" inputmode="numeric" autocomplete="off" placeholder="Minimal 4 karakter">
+        <button type="button" class="pin-toggle" id="gpPinToggle1">LIHAT</button>
+      </div>
+
+      <label for="gpPinUlang">Ulangi PIN Baru</label>
+      <div class="pin-wrap">
+        <input type="password" id="gpPinUlang" inputmode="numeric" autocomplete="off" placeholder="Ketik ulang PIN baru">
+        <button type="button" class="pin-toggle" id="gpPinToggle2">LIHAT</button>
+      </div>
+
+      <div class="field-hint">Nomor identitas Anda diverifikasi langsung dengan data pegawai di sistem. Jika tidak cocok, PIN tidak akan berubah. Jika Anda belum tahu nomor identitas yang terdaftar untuk Anda, hubungi operator sekolah.</div>
+
+      <div class="btn-row tunggal">
+        <button class="btn-simpan" id="gpSimpan">Simpan PIN Baru</button>
+      </div>
+      <div class="modal-pesan" id="gpPesan"></div>
+    </div>
+  </div>
 
   <!-- ===== TAB: DASHBOARD ===== -->
   <section id="view-dashboard" class="view">
@@ -356,7 +439,7 @@
         <div class="riwayat-scroll">
           <table>
             <thead>
-              <tr><th>Tanggal</th><th>Nama</th><th>Status</th><th class="num">Jam Masuk</th><th class="num">Jam Pulang</th></tr>
+              <tr><th>Tanggal</th><th>Nama</th><th>Status</th><th class="num">Jam Masuk</th><th class="num">Jam Pulang</th><th class="num">Foto</th></tr>
             </thead>
             <tbody id="riwayatBody"></tbody>
           </table>
@@ -390,7 +473,7 @@
           <li><span class="no">1</span><span>Absen masuk dilakukan paling lambat <strong>07.30 WIB</strong>; setelah jam tersebut tercatat sebagai terlambat.</span></li>
           <li><span class="no">2</span><span>Absen pulang dilakukan setelah jam kerja selesai, minimal pukul <strong>15.30 WIB</strong>, sebelum meninggalkan lingkungan sekolah.</span></li>
           <li><span class="no">3</span><span>Presensi hanya dapat dilakukan dalam radius <strong>200 meter</strong> dari lingkungan SMK Ciledug Al-Musaddadiyah. Sistem memverifikasi lokasi GPS perangkat secara otomatis dan menolak pengisian dari luar radius tersebut.</span></li>
-          <li><span class="no">4</span><span>Presensi hanya dapat dilakukan atas nama sendiri, diverifikasi dengan <strong>kode keamanan (PIN)</strong> pribadi. Menitipkan absen atau PIN pada pihak lain melanggar ketentuan ini.</span></li>
+          <li><span class="no">4</span><span>Presensi hanya dapat dilakukan atas nama sendiri, diverifikasi dengan <strong>kode keamanan (PIN)</strong> pribadi dan <strong>foto kehadiran</strong> yang diambil langsung dari kamera. Menitipkan absen, PIN, atau nomor identitas pegawai pada pihak lain melanggar ketentuan ini.</span></li>
           <li><span class="no">5</span><span>Izin atau sakit wajib disertai keterangan pada kolom yang tersedia, dan bila perlu menyertakan surat pendukung ke bagian tata usaha.</span></li>
           <li><span class="no">6</span><span>Data kehadiran direkap setiap bulan dan menjadi salah satu dasar penilaian kinerja serta tunjangan kehadiran.</span></li>
           <li><span class="no">7</span><span>Kendala teknis saat absen (jaringan, GPS, atau sistem error) segera dilaporkan ke operator sekolah agar dapat dikoreksi.</span></li>
@@ -413,7 +496,17 @@
 
         <details class="faq-item">
           <summary>Apa itu kode keamanan (PIN) dan bagaimana mendapatkannya?</summary>
-          <p>PIN adalah kode rahasia pribadi yang memastikan hanya guru/staf bersangkutan yang bisa mengisi absennya sendiri, meski nama dapat dipilih siapa saja di daftar. PIN diberikan dan diatur oleh operator sekolah, dan wajib dijaga kerahasiaannya seperti kata sandi.</p>
+          <p>PIN adalah kode rahasia pribadi yang memastikan hanya guru/staf bersangkutan yang bisa mengisi absennya sendiri, meski nama dapat dipilih siapa saja di daftar. PIN awal diberikan oleh operator sekolah. Setelahnya, Anda dapat mengatur atau mengganti PIN sendiri kapan saja lewat tautan "Lupa atau ingin ganti PIN?" pada tab Absen, dengan memasukkan nomor identitas pegawai sebagai verifikasi.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Bagaimana jika saya belum punya NUPTK?</summary>
+          <p>Kolom nomor identitas tidak harus diisi NUPTK asli. Operator sekolah dapat mendaftarkan nomor identitas lain yang unik untuk Anda, misalnya NIK KTP atau nomor pegawai internal sekolah. Tanyakan ke operator nomor identitas mana yang sudah didaftarkan atas nama Anda.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Kenapa sistem meminta foto saat presensi?</summary>
+          <p>Foto diambil langsung dari kamera perangkat sebagai bukti visual kehadiran, dan dikompres otomatis di perangkat sebelum dikirim agar tetap ringan. Foto tidak dapat diunggah dari galeri, hanya diambil langsung, untuk menjaga keasliannya.</p>
         </details>
 
         <details class="faq-item">
@@ -547,8 +640,16 @@
   const keteranganEl = document.getElementById('keterangan');
   const pinEl = document.getElementById('pin');
   const pinToggle = document.getElementById('pinToggle');
+  const fotoInput = document.getElementById('fotoInput');
+  const fotoPreview = document.getElementById('fotoPreview');
+  const fotoPlaceholder = document.getElementById('fotoPlaceholder');
+  const fotoImg = document.getElementById('fotoImg');
+  const fotoLabel = document.getElementById('fotoLabel');
+  const fotoHint = document.getElementById('fotoHint');
+  const gpNama = document.getElementById('gpNama');
   let pegawaiMap = {};
   let statusHariIniTerakhir = { sudahMasuk:false, sudahPulang:false, status:null };
+  let fotoDataUrl = '';
 
   function updateJam(){
     const now = new Date();
@@ -565,19 +666,74 @@
     pinToggle.textContent = jadikanTeks ? 'SEMBUNYIKAN' : 'LIHAT';
   });
 
+  /* ---------- Ambil foto + kompresi otomatis di perangkat ---------- */
+  // Mengecilkan gambar ke lebar maksimum & kualitas JPEG tertentu di
+  // canvas sebelum dikirim, supaya ukuran data tetap ringan.
+  function kompresGambar(file, maxWidth = 640, quality = 0.6){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Gagal membaca berkas foto'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  fotoInput.addEventListener('change', async () => {
+    const file = fotoInput.files && fotoInput.files[0];
+    if(!file) return;
+    fotoLabel.textContent = 'Memproses...';
+    try{
+      fotoDataUrl = await kompresGambar(file);
+      fotoImg.src = fotoDataUrl;
+      fotoImg.style.display = 'block';
+      fotoPlaceholder.style.display = 'none';
+      fotoPreview.classList.add('terisi');
+      const kb = Math.round(fotoDataUrl.length * 0.75 / 1024);
+      fotoHint.textContent = `Foto siap dikirim (± ${kb} KB setelah kompresi).`;
+    }catch(err){
+      fotoDataUrl = '';
+      fotoHint.textContent = 'Gagal memproses foto, coba ambil ulang.';
+    }finally{
+      fotoLabel.textContent = 'Ambil Ulang';
+      fotoInput.value = '';
+      perbaruiEnableTombol();
+    }
+  });
+
   async function muatDaftarPegawai(){
     try{
       const res = await fetch(`${API_URL}?aksi=daftarPegawai&token=${TOKEN}`);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
       pilihNama.innerHTML = '<option value="">-- Pilih nama --</option>';
+      gpNama.innerHTML = '<option value="">-- Pilih nama --</option>';
       json.data.forEach(p => {
-        pegawaiMap[p.nama] = p;
+        pegawaiMap[p.nama] = p; // { nama, nuptk, jabatan } — PIN tidak pernah dikirim ke client
         const opt = document.createElement('option');
         opt.value = p.nama; opt.textContent = `${p.nama} — ${p.jabatan}`;
         pilihNama.appendChild(opt);
+
+        const optGp = document.createElement('option');
+        optGp.value = p.nama; optGp.textContent = `${p.nama} — ${p.jabatan}`;
+        gpNama.appendChild(optGp);
       });
-    }catch(err){ pilihNama.innerHTML = '<option value="">Gagal memuat daftar</option>'; }
+    }catch(err){
+      pilihNama.innerHTML = '<option value="">Gagal memuat daftar</option>';
+      gpNama.innerHTML = '<option value="">Gagal memuat daftar</option>';
+    }
   }
 
   // Menampilkan set tombol yang sesuai (Hadir = masuk/pulang, lainnya = simpan sekali)
@@ -592,13 +748,15 @@
 
   // PIN minimal 4 karakter sebelum tombol bisa ditekan
   function pinValid(){ return pinEl.value.trim().length >= 4; }
+  // Foto wajib diambil (bukti kehadiran) sebelum tombol bisa ditekan
+  function fotoValid(){ return !!fotoDataUrl; }
 
   function perbaruiEnableTombol(){
     const nama = pilihNama.value;
     const d = statusHariIniTerakhir;
     const sudahAdaCatatanHariIni = d.sudahMasuk;
 
-    if(!nama || !pinValid() || !lokasiTerkini.valid){
+    if(!nama || !pinValid() || !fotoValid() || !lokasiTerkini.valid){
       btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true; return;
     }
 
@@ -650,9 +808,20 @@
   pilihStatus.addEventListener('change', perbaruiTampilanTombol);
   pinEl.addEventListener('input', perbaruiEnableTombol);
 
+  function resetFoto(){
+    fotoDataUrl = '';
+    fotoImg.style.display = 'none';
+    fotoImg.src = '';
+    fotoPlaceholder.style.display = 'block';
+    fotoPreview.classList.remove('terisi');
+    fotoLabel.textContent = 'Ambil Foto';
+    fotoHint.textContent = 'Foto diambil langsung dari kamera perangkat dan dikompres otomatis sebelum dikirim.';
+  }
+
   async function kirimAbsen(tipe){
     const nama = pilihNama.value; if(!nama) return;
     if(!pinValid()){ tampilPesan('Masukkan kode keamanan (PIN) terlebih dahulu.', 'err'); return; }
+    if(!fotoValid()){ tampilPesan('Ambil foto bukti kehadiran terlebih dahulu.', 'err'); return; }
     if(!lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
     btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true;
     tampilPesan('Mengirim...', 'ok');
@@ -667,14 +836,16 @@
           keterangan: keteranganEl.value,
           pin: pinEl.value,
           lat: lokasiTerkini.lat,
-          lng: lokasiTerkini.lng
+          lng: lokasiTerkini.lng,
+          foto: fotoDataUrl
         })
       });
       const json = await res.json();
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
-      if(json.ok){ pinEl.value = ''; }
+      if(json.ok){ pinEl.value = ''; resetFoto(); }
       cekStatus();
     }catch(err){ tampilPesan('Gagal mengirim, coba lagi.', 'err'); cekStatus(); }
+    finally{ perbaruiEnableTombol(); }
   }
   btnMasuk.addEventListener('click', () => kirimAbsen('masuk'));
   btnPulang.addEventListener('click', () => kirimAbsen('pulang'));
@@ -682,6 +853,70 @@
   muatDaftarPegawai();
   perbaruiTampilanTombol();
   mulaiPantauLokasi();
+
+  /* ---------- Modal: Atur / Ganti PIN sendiri (verifikasi NUPTK) ---------- */
+  const modalGantiPin = document.getElementById('modalGantiPin');
+  const bukaGantiPin = document.getElementById('bukaGantiPin');
+  const tutupModalGantiPin = document.getElementById('tutupModalGantiPin');
+  const gpNuptk = document.getElementById('gpNuptk');
+  const gpPinBaru = document.getElementById('gpPinBaru');
+  const gpPinUlang = document.getElementById('gpPinUlang');
+  const gpSimpan = document.getElementById('gpSimpan');
+  const gpPesan = document.getElementById('gpPesan');
+
+  function bukaModalGantiPin(){
+    gpNama.value = ''; gpNuptk.value = ''; gpPinBaru.value = ''; gpPinUlang.value = '';
+    gpPesan.textContent = ''; gpPesan.className = 'modal-pesan';
+    modalGantiPin.classList.add('show');
+  }
+  function tutupModalGantiPinFn(){ modalGantiPin.classList.remove('show'); }
+
+  bukaGantiPin.addEventListener('click', (e) => { e.preventDefault(); bukaModalGantiPin(); });
+  tutupModalGantiPin.addEventListener('click', tutupModalGantiPinFn);
+  modalGantiPin.addEventListener('click', (e) => { if(e.target === modalGantiPin) tutupModalGantiPinFn(); });
+
+  document.getElementById('gpPinToggle1').addEventListener('click', () => {
+    const jadikanTeks = gpPinBaru.type === 'password';
+    gpPinBaru.type = jadikanTeks ? 'text' : 'password';
+    document.getElementById('gpPinToggle1').textContent = jadikanTeks ? 'SEMBUNYIKAN' : 'LIHAT';
+  });
+  document.getElementById('gpPinToggle2').addEventListener('click', () => {
+    const jadikanTeks = gpPinUlang.type === 'password';
+    gpPinUlang.type = jadikanTeks ? 'text' : 'password';
+    document.getElementById('gpPinToggle2').textContent = jadikanTeks ? 'SEMBUNYIKAN' : 'LIHAT';
+  });
+
+  gpSimpan.addEventListener('click', async () => {
+    const nama = gpNama.value;
+    const nuptk = gpNuptk.value.trim();
+    const pinBaru = gpPinBaru.value.trim();
+    const pinUlang = gpPinUlang.value.trim();
+
+    if(!nama){ gpPesan.textContent = 'Pilih nama terlebih dahulu.'; gpPesan.className = 'modal-pesan err'; return; }
+    if(!nuptk){ gpPesan.textContent = 'Masukkan NUPTK atau nomor identitas Anda.'; gpPesan.className = 'modal-pesan err'; return; }
+    if(pinBaru.length < 4){ gpPesan.textContent = 'PIN baru minimal 4 karakter.'; gpPesan.className = 'modal-pesan err'; return; }
+    if(pinBaru !== pinUlang){ gpPesan.textContent = 'PIN baru dan ulangi PIN tidak sama.'; gpPesan.className = 'modal-pesan err'; return; }
+
+    gpSimpan.disabled = true;
+    gpPesan.textContent = 'Memverifikasi...'; gpPesan.className = 'modal-pesan';
+    try{
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ token: TOKEN, aksi: 'gantiPin', nama, nuptk, pinBaru })
+      });
+      const json = await res.json();
+      gpPesan.textContent = json.ok ? json.message : json.error;
+      gpPesan.className = 'modal-pesan ' + (json.ok ? 'ok' : 'err');
+      if(json.ok){
+        gpNuptk.value = ''; gpPinBaru.value = ''; gpPinUlang.value = '';
+        setTimeout(tutupModalGantiPinFn, 1800);
+      }
+    }catch(err){
+      gpPesan.textContent = 'Gagal menghubungi server, coba lagi.'; gpPesan.className = 'modal-pesan err';
+    }finally{
+      gpSimpan.disabled = false;
+    }
+  });
 
   /* ================= TAB DASHBOARD (canvas native, tanpa library) ================= */
   const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -711,8 +946,8 @@
       if(!json.ok) throw new Error(json.error);
       document.getElementById('judulRekap').textContent =
         `Rekap Kehadiran — ${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
-      renderDashboard(json.data);
       muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
+      renderDashboard(json.data);
       document.getElementById('footerNote').textContent =
         `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
     }catch(err){ muatPesan.textContent = 'Gagal memuat data. Periksa konfigurasi API.'; }
@@ -766,14 +1001,18 @@
     const body = document.getElementById('riwayatBody');
     body.innerHTML = '';
     if(!daftar.length){
-      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--faint);padding:20px;">Belum ada data untuk periode ini</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:20px;">Belum ada data untuk periode ini</td></tr>';
       return;
     }
     daftar.forEach(row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
       const kelasStatus = row.status.replace(/\s+/g,'');
+      const tautanFoto = [];
+      if(row.fotoMasuk) tautanFoto.push(`<a href="${row.fotoMasuk}" target="_blank" rel="noopener">Masuk</a>`);
+      if(row.fotoPulang) tautanFoto.push(`<a href="${row.fotoPulang}" target="_blank" rel="noopener">Pulang</a>`);
+      const kolomFoto = tautanFoto.length ? tautanFoto.join(' · ') : '—';
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span></td><td class="num">${row.jamMasuk || '—'}</td><td class="num">${row.jamPulang || '—'}</td>`;
+      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span></td><td class="num">${row.jamMasuk || '—'}</td><td class="num">${row.jamPulang || '—'}</td><td class="num">${kolomFoto}</td>`;
       body.appendChild(tr);
     });
   }
