@@ -70,6 +70,20 @@
   .link-gantipin{color:var(--navy);font-weight:700;text-decoration:none;}
   .link-gantipin:hover{text-decoration:underline;}
 
+  /* ===== FAQ mini: atur PIN dulu (tab Absen) ===== */
+  .pin-faq{background:#f8faff;border:1.5px dashed var(--line);border-radius:14px;padding:14px 16px 6px;margin-top:14px;}
+  .pin-faq-head{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+  .pin-faq-head .ico{font-size:16px;line-height:1;}
+  .pin-faq-head h4{margin:0;font-size:12.5px;font-weight:800;color:var(--navy);}
+  .pin-faq .panel-sub{font-size:11px;color:var(--faint);margin:0 0 10px;}
+  .pin-faq .faq-item summary{font-size:12.5px;padding:9px 0;}
+  .pin-faq .faq-item p{font-size:12px;margin:0 0 10px;padding-right:16px;}
+  .btn-atur-pin{
+    display:block;width:100%;margin:10px 0 14px;padding:11px 13px;border:none;border-radius:11px;
+    background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;text-align:center;
+  }
+  .btn-atur-pin:active{transform:scale(0.98);}
+
   /* ===== Foto bukti kehadiran ===== */
   .foto-wrap{display:flex;align-items:center;gap:12px;}
   .foto-preview{
@@ -309,6 +323,33 @@
         <button type="button" class="pin-toggle" id="pinToggle">LIHAT</button>
       </div>
       <div class="field-hint">PIN bersifat rahasia dan hanya diketahui oleh Anda. Presensi ditolak sistem jika PIN salah. <a href="#" id="bukaGantiPin" class="link-gantipin">Lupa atau ingin ganti PIN?</a></div>
+
+      <div class="pin-faq">
+        <div class="pin-faq-head"><span class="ico">🔑</span><h4>Absen Pertama Kali? Atur PIN Dulu</h4></div>
+        <p class="panel-sub">PIN wajib diatur lebih dulu sebelum bisa mengisi presensi</p>
+
+        <details class="faq-item" open>
+          <summary>Bagaimana cara mengatur PIN untuk pertama kali?</summary>
+          <p>Tekan tombol "Atur PIN Sekarang" di bawah, pilih nama Anda, lalu masukkan nomor identitas pegawai (NUPTK/NIK/nomor pegawai internal) yang sudah didaftarkan operator sekolah untuk verifikasi. Jika cocok, buat PIN baru minimal 4 karakter dan langsung dapat digunakan untuk absen.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Saya lupa PIN, harus bagaimana?</summary>
+          <p>Gunakan langkah yang sama seperti mengatur PIN pertama kali — tidak perlu menghubungi operator sekolah. Cukup verifikasi ulang dengan nomor identitas pegawai Anda, lalu buat PIN baru.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Apakah PIN harus diatur ulang setiap kali absen?</summary>
+          <p>Tidak. PIN cukup diatur satu kali dan akan terus dipakai untuk setiap presensi berikutnya, sampai Anda menggantinya sendiri kapan pun diperlukan.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Kenapa harus verifikasi dengan NUPTK/nomor identitas?</summary>
+          <p>Supaya hanya pemilik nama yang bisa mengatur atau mengganti PIN-nya sendiri, sehingga presensi tetap terjamin diisi oleh orang yang bersangkutan.</p>
+        </details>
+
+        <button type="button" class="btn-atur-pin" id="btnFaqAturPin">🔑 Atur PIN Sekarang</button>
+      </div>
 
       <label for="fotoInput">Foto Bukti Kehadiran</label>
       <div class="foto-wrap">
@@ -946,6 +987,8 @@
   function tutupModalGantiPinFn(){ modalGantiPin.classList.remove('show'); }
 
   bukaGantiPin.addEventListener('click', (e) => { e.preventDefault(); bukaModalGantiPin(); });
+  const btnFaqAturPin = document.getElementById('btnFaqAturPin');
+  if(btnFaqAturPin) btnFaqAturPin.addEventListener('click', () => bukaModalGantiPin());
   tutupModalGantiPin.addEventListener('click', tutupModalGantiPinFn);
   modalGantiPin.addEventListener('click', (e) => { if(e.target === modalGantiPin) tutupModalGantiPinFn(); });
 
