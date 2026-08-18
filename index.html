@@ -573,7 +573,77 @@
     lokasiIcon.textContent = state === 'ok' ? '✅' : state === 'jauh' ? '📍' : state === 'error' ? '⚠️' : '📡';
   }
 
-  function mulaiPantauLokasi(){
+  function pesanErrorLokasi(err){
+    // Deteksi platform/browser untuk instruksi yang lebih tepat sasaran
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isAndroid = /Android/.test(ua);
+    const isChrome = /Chrome/.test(ua) && !/Edg|OPR/.test(ua);
+    const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+    const isFirefox = /Firefox/.test(ua);
+    const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
+
+    switch(err.code){
+      case err.PERMISSION_DENIED: {
+        let langkah;
+        if(!isHttps){
+          langkah = 'Situs ini belum diakses via HTTPS, sehingga browser memblokir lokasi meski GPS aktif. Buka situs ini melalui alamat https://, lalu tekan "Coba Lagi".';
+        } else if(isIOS && isSafari){
+          langkah = 'Izin lokasi untuk situs ini ditolak di Safari. Buka Pengaturan (Settings) > Safari > Lokasi, atau ketuk ikon "aA"/gembok di address bar > Pengaturan Situs Web > Lokasi > Izinkan, lalu tekan "Coba Lagi".';
+        } else if(isAndroid && isChrome){
+          langkah = 'Izin lokasi untuk situs ini ditolak di Chrome. Ketuk ikon gembok/info di sebelah alamat situs > Izin > Lokasi > Izinkan, lalu tekan "Coba Lagi". Mengaktifkan GPS ponsel saja tidak cukup jika izin situs masih diblokir.';
+        } else if(isFirefox){
+          langkah = 'Izin lokasi untuk situs ini ditolak di Firefox. Klik ikon gembok di address bar > hapus blokir Lokasi > Izinkan, lalu tekan "Coba Lagi".';
+        } else {
+          langkah = 'Izin lokasi untuk situs ini ditolak di pengaturan browser (bukan pengaturan GPS perangkat). Klik ikon gembok/info di address bar, cari izin "Lokasi", ubah ke "Izinkan", lalu tekan "Coba Lagi".';
+        }
+        return { teks: 'Izin lokasi untuk situs ini diblokir di browser', sub: langkah };
+      }
+      case err.POSITION_UNAVAILABLE:
+        return {
+          teks: 'Posisi tidak dapat ditentukan',
+          sub: 'GPS aktif namun sinyal lokasi belum didapat (sering terjadi di dalam ruangan/gedung atau sinyal lemah). Coba pindah ke area terbuka atau dekat jendela, pastikan Layanan Lokasi aktif, lalu tekan "Coba Lagi".'
+        };
+      case err.TIMEOUT:
+        return {
+          teks: 'Waktu pencarian lokasi habis',
+          sub: 'Perangkat butuh waktu lebih lama untuk mendapatkan sinyal GPS. Pastikan Anda berada di area dengan sinyal baik, lalu tekan "Coba Lagi".'
+        };
+      default:
+        return {
+          teks: 'Gagal mengambil lokasi',
+          sub: (err.message || 'Terjadi kesalahan tak dikenal saat mengambil lokasi.') + ' Tekan "Coba Lagi".'
+        };
+    }
+  }
+
+  async function cekIzinLokasiProaktif(){
+    // Cek status izin situs via Permissions API sebelum memanggil getCurrentPosition,
+    // supaya pesan yang tampil sudah akurat sejak awal (tidak perlu menunggu error dulu).
+    if(!('permissions' in navigator) || !navigator.permissions.query) return null;
+    try{
+      const status = await navigator.permissions.query({ name: 'geolocation' });
+      if(status.state === 'denied'){
+        const semu = { code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 };
+        const { teks, sub } = pesanErrorLokasi(semu);
+        tampilkanStatusLokasi('error', teks, sub);
+        if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
+        return status.state;
+      }
+      // Pantau perubahan izin secara live (mis. user baru saja mengizinkan lewat pengaturan browser)
+      status.onchange = function(){
+        if(status.state === 'granted' || status.state === 'prompt'){
+          mulaiPantauLokasi();
+        }
+      };
+      return status.state;
+    } catch(e){
+      // Beberapa browser (mis. Safari versi lama) tidak mendukung query 'geolocation' -> abaikan, lanjut fallback normal
+      return null;
+    }
+  }
+
+  async function mulaiPantauLokasi(){
     lokasiTerkini = { valid:false, lat:null, lng:null, jarak:null };
     if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
 
@@ -581,7 +651,12 @@
       tampilkanStatusLokasi('error', 'Perangkat tidak mendukung GPS', 'Gunakan perangkat dengan akses lokasi untuk mengisi presensi.');
       return;
     }
+
     tampilkanStatusLokasi('checking', 'Memeriksa lokasi Anda...', 'Pastikan GPS aktif dan izinkan akses lokasi di browser.');
+
+    const statusIzin = await cekIzinLokasiProaktif();
+    if(statusIzin === 'denied') return; // pesan sudah ditampilkan oleh cekIzinLokasiProaktif
+
     if(watchIdLokasi !== null) navigator.geolocation.clearWatch(watchIdLokasi);
 
     watchIdLokasi = navigator.geolocation.watchPosition(
@@ -597,9 +672,8 @@
         if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
       },
       (err) => {
-        let pesan = 'Gagal mengambil lokasi. Coba lagi.';
-        if(err.code === err.PERMISSION_DENIED) pesan = 'Akses lokasi ditolak oleh browser.';
-        tampilkanStatusLokasi('error', pesan, 'Aktifkan izin lokasi di pengaturan browser, lalu tekan "Coba Lagi".');
+        const { teks, sub } = pesanErrorLokasi(err);
+        tampilkanStatusLokasi('error', teks, sub);
         if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
