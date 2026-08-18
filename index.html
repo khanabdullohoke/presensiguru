@@ -505,7 +505,7 @@
         <div class="tabel-scroll">
         <table>
           <thead>
-            <tr><th>Nama</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
+            <tr><th>Nama</th><th>Periode</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
           </thead>
           <tbody id="tabelBody"></tbody>
         </table>
@@ -1109,6 +1109,7 @@
       if(!json.ok) throw new Error(json.error);
       document.getElementById('judulRekap').textContent =
         `Rekap Kehadiran — ${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
+      periodeLabel = `${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
       muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
       isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
       renderDashboard(json.data);
@@ -1120,6 +1121,7 @@
 
   let riwayatTerakhir = [];
   let grafikTerakhir = null; // menyimpan data grafik terakhir untuk digambar ulang saat resize
+  let periodeLabel = ''; // label "Bulan Tahun" untuk kolom Periode di tabel Detail per Pegawai
 
   function animasiAngka(el, target){
     if(kurangGerak){ el.textContent = target; return; }
@@ -1151,7 +1153,7 @@
 
       const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${nama}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tr.innerHTML = `<td>${nama}</td><td>${periodeLabel}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
       tabelBody.appendChild(tr);
     });
 
