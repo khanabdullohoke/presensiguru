@@ -122,6 +122,36 @@
   .modal-pesan.ok{color:var(--ok);}
   .modal-pesan.err{color:var(--err);}
 
+  /* ===== Modal Ucapan Terima Kasih & Motivasi (setelah absen berhasil) ===== */
+  .modal-ucapan .modal-box{
+    text-align:center;padding:30px 26px 26px;max-width:380px;
+    animation:ucapanMasuk .35s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  @keyframes ucapanMasuk{from{opacity:0;transform:translateY(14px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+  @media(prefers-reduced-motion:reduce){.modal-ucapan .modal-box{animation:none;}}
+
+  .ucapan-ico{
+    width:64px;height:64px;border-radius:50%;margin:0 auto 16px;
+    display:flex;align-items:center;justify-content:center;font-size:30px;
+    background:radial-gradient(circle at 35% 30%, #34d399, var(--ok));
+    box-shadow:0 10px 24px rgba(18,183,106,0.35);color:#fff;
+  }
+  .ucapan-ico.pulang{background:radial-gradient(circle at 35% 30%, #ffd166, var(--gold-deep));box-shadow:0 10px 24px rgba(201,134,0,0.35);}
+  .ucapan-judul{font-size:18px;font-weight:800;color:var(--navy);margin:0 0 4px;font-family:var(--font-display);}
+  .ucapan-sub{font-size:12.5px;color:var(--muted);margin:0 0 18px;}
+  .ucapan-sub strong{color:var(--ink);}
+  .ucapan-quote{
+    background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;font-size:13.5px;line-height:1.65;color:var(--ink);
+    font-style:italic;position:relative;margin-bottom:20px;
+  }
+  .ucapan-quote::before{content:"“";position:absolute;top:2px;left:10px;font-size:28px;color:var(--gold);font-style:normal;line-height:1;opacity:.6;}
+  .ucapan-tutup{
+    width:100%;padding:12px;border-radius:999px;background:var(--navy);color:#fff;
+    font-size:14px;font-weight:700;box-shadow:0 8px 18px rgba(11,61,145,0.25);
+  }
+  .ucapan-tutup:active{transform:scale(0.98);}
+
   /* ===== Kartu verifikasi lokasi (radius sekolah) ===== */
   .lokasi-card{
     display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border-radius:13px;
@@ -414,6 +444,17 @@
       <div class="pesan" id="pesan"></div>
     </div>
   </section>
+
+  <!-- ===== MODAL: UCAPAN TERIMA KASIH & MOTIVASI (setelah absen masuk/pulang berhasil) ===== -->
+  <div class="modal-overlay modal-ucapan" id="modalUcapan">
+    <div class="modal-box">
+      <div class="ucapan-ico" id="ucapanIco">✅</div>
+      <h3 class="ucapan-judul" id="ucapanJudul">Absen Masuk Berhasil</h3>
+      <p class="ucapan-sub" id="ucapanSub">Terima kasih, <strong>Nama</strong> — tercatat pukul 07.00</p>
+      <div class="ucapan-quote" id="ucapanQuote">Semangat menjalani hari ini.</div>
+      <button type="button" class="ucapan-tutup" id="tutupUcapan">Terima Kasih</button>
+    </div>
+  </div>
 
   <!-- ===== MODAL: ATUR/GANTI PIN SENDIRI (verifikasi NUPTK) ===== -->
   <div class="modal-overlay" id="modalGantiPin">
@@ -1002,7 +1043,14 @@
       });
       const json = await res.json();
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
-      if(json.ok){ pinEl.value = ''; resetFoto(); }
+      if(json.ok){
+        pinEl.value = ''; resetFoto();
+        // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi;
+        // status lain (Sakit/Izin/Alfa/Dinas Luar) memakai tipe 'masuk' juga tapi bukan check-in, jadi dilewati.
+        if(pilihStatus.value === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
+          tampilkanUcapan(tipe, nama, json.jam || '');
+        }
+      }
       cekStatus();
     }catch(err){ tampilPesan('Gagal mengirim, coba lagi.', 'err'); cekStatus(); }
     finally{ perbaruiEnableTombol(); }
@@ -1010,6 +1058,50 @@
   btnMasuk.addEventListener('click', () => kirimAbsen('masuk'));
   btnPulang.addEventListener('click', () => kirimAbsen('pulang'));
   btnSimpan.addEventListener('click', () => kirimAbsen('masuk'));
+
+  // ===== Ucapan terima kasih & motivasi setelah absen masuk/pulang =====
+  const PESAN_MASUK = [
+    'Terima kasih sudah hadir tepat waktu. Setiap pagi yang Bapak/Ibu mulai dengan niat baik adalah bekal berharga bagi murid-murid yang menanti di kelas.',
+    'Kehadiran Bapak/Ibu hari ini adalah awal yang berarti bagi banyak orang. Semoga ilmu yang dibagikan hari ini membawa manfaat yang panjang.',
+    'Selamat memulai hari. Di balik absen sederhana ini, ada dedikasi yang tidak semua orang lihat — tapi selalu dihargai.',
+    'Terima kasih atas komitmennya untuk selalu hadir. Semoga langkah kecil pagi ini membawa keberkahan untuk hari yang penuh makna.',
+    'Setiap kali Bapak/Ibu melangkah masuk gerbang sekolah, ada murid yang diam-diam menunggu bimbingan itu. Selamat bertugas hari ini.',
+    'Semangat pagi! Yang Bapak/Ibu lakukan hari ini mungkin terasa biasa, tapi bagi seorang murid, itu bisa jadi momen yang mereka ingat seumur hidup.'
+  ];
+  const PESAN_PULANG = [
+    'Terima kasih untuk seluruh tenaga dan pikiran yang sudah dicurahkan hari ini. Selamat beristirahat, Bapak/Ibu sudah bekerja dengan baik.',
+    'Satu hari lagi telah dilalui dengan penuh dedikasi. Semoga lelahnya terbayar dengan keberkahan yang tak terlihat.',
+    'Terima kasih sudah menyelesaikan tugas hari ini dengan sepenuh hati. Perjalanan pulang ini pantas didapatkan setelah kerja keras tadi.',
+    'Hari ini mungkin melelahkan, tapi jejak kebaikan yang Bapak/Ibu tinggalkan di kelas tidak akan sia-sia. Selamat pulang, hati-hati di jalan.',
+    'Terima kasih telah hadir sepenuhnya untuk murid-murid hari ini. Semoga rumah menyambut dengan kehangatan yang sama seperti yang Bapak/Ibu berikan di sekolah.',
+    'Satu hari penuh pengabdian telah selesai. Selamat pulang, dan terima kasih sudah menjadi bagian penting dari perjalanan pendidikan mereka.'
+  ];
+
+  const modalUcapan = document.getElementById('modalUcapan');
+  const ucapanIco = document.getElementById('ucapanIco');
+  const ucapanJudul = document.getElementById('ucapanJudul');
+  const ucapanSub = document.getElementById('ucapanSub');
+  const ucapanQuote = document.getElementById('ucapanQuote');
+
+  function tampilkanUcapan(tipe, nama, jam){
+    const masuk = tipe === 'masuk';
+    const daftarPesan = masuk ? PESAN_MASUK : PESAN_PULANG;
+    const pesan = daftarPesan[Math.floor(Math.random() * daftarPesan.length)];
+
+    ucapanIco.textContent = masuk ? '☀️' : '🌇';
+    ucapanIco.classList.toggle('pulang', !masuk);
+    ucapanJudul.textContent = masuk ? 'Absen Masuk Berhasil' : 'Absen Pulang Berhasil';
+    ucapanSub.innerHTML = jam
+      ? `Terima kasih, <strong>${nama}</strong> — tercatat pukul ${jam}`
+      : `Terima kasih, <strong>${nama}</strong>`;
+    ucapanQuote.textContent = pesan;
+
+    modalUcapan.classList.add('show');
+  }
+  function tutupUcapanFn(){ modalUcapan.classList.remove('show'); }
+  document.getElementById('tutupUcapan').addEventListener('click', tutupUcapanFn);
+  modalUcapan.addEventListener('click', (e) => { if(e.target === modalUcapan) tutupUcapanFn(); });
+
   muatDaftarPegawai();
   perbaruiTampilanTombol();
   mulaiPantauLokasi();
