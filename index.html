@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --navy:#0b3d91; --navy-deep:#062454; --gold:#ffb300; --gold-deep:#c98600;
@@ -202,6 +204,16 @@
   .status-tag.Izin{background:var(--info-bg);color:var(--info);}
   .status-tag.Alfa{background:var(--err-bg);color:var(--err);}
   .status-tag.DinasLuar{background:#f0ecff;color:#6941c6;}
+  .tag-otomatis{
+    display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;
+    font-size:9.5px;font-weight:700;background:#fde8e6;color:#b3261e;vertical-align:middle;
+  }
+
+  .jam-terlambat{
+    display:inline-flex;align-items:center;gap:4px;
+    background:var(--warn-bg);color:var(--warn-deep,#93590a);
+    padding:2px 8px;border-radius:999px;font-weight:700;font-size:11.5px;
+  }
 
   /* ===== Tab Dashboard ===== */
   .dash-top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
@@ -284,6 +296,35 @@
 
   .footer-note{text-align:center;font-size:11.5px;color:var(--faint);margin-top:6px;padding-bottom:6px;}
   .muat{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
+
+  /* ===== Banner: pegawai belum presensi hari ini (Alfa otomatis) ===== */
+  .alfa-banner{
+    background:var(--err-bg);border:1.5px solid rgba(240,68,56,0.28);border-radius:16px;
+    padding:16px 18px;margin-bottom:18px;display:none;
+  }
+  .alfa-banner.show{display:block;}
+  .alfa-banner-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .alfa-banner-head .ico{font-size:18px;line-height:1;}
+  .alfa-banner-head h4{margin:0;font-size:13.5px;font-weight:800;color:#b3261e;}
+  .alfa-banner p.sub{margin:0 0 10px;font-size:11.5px;color:#93342c;line-height:1.6;}
+  .alfa-banner-list{display:flex;flex-wrap:wrap;gap:7px;}
+  .alfa-chip{
+    background:#fff;border:1px solid rgba(240,68,56,0.3);color:#b3261e;
+    font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;
+  }
+  .alfa-chip span{font-weight:500;color:#93342c;}
+
+  /* ===== Tombol unduh PDF rekap ===== */
+  .controls .btn-pdf{
+    background:#fff;color:var(--navy);border:1.5px solid var(--navy);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .controls .btn-pdf:not(:disabled):hover{background:var(--navy);color:#fff;}
+  .akhir-bulan-badge{
+    display:none;align-items:center;gap:6px;background:var(--warn-bg);color:#93590a;
+    font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px;margin-bottom:14px;
+  }
+  .akhir-bulan-badge.show{display:inline-flex;}
 
   @media(prefers-reduced-motion:reduce){
     .kartu,.kartu::before{transition:none;}
@@ -503,12 +544,21 @@
         <select id="pilihBulan"></select>
         <select id="pilihTahun"></select>
         <button id="btnMuat">Tampilkan</button>
+        <button id="btnUnduhPdf" class="btn-pdf" disabled>📄 Unduh PDF</button>
       </div>
     </div>
 
     <div id="muatPesan" class="muat">Pilih bulan lalu klik Tampilkan.</div>
 
     <div id="isiDashboard" style="display:none;">
+
+      <div class="akhir-bulan-badge" id="badgeAkhirBulan">📅 Hari ini tanggal terakhir bulan ini — saat yang tepat untuk mengunduh rekap PDF.</div>
+
+      <div class="alfa-banner" id="alfaBanner">
+        <div class="alfa-banner-head"><span class="ico">⛔</span><h4>Belum Mengisi Presensi Hari Ini</h4></div>
+        <p class="sub">Pegawai berikut tercatat otomatis "Alfa" oleh sistem karena belum mengisi presensi hingga sore ini.</p>
+        <div class="alfa-banner-list" id="alfaBannerList"></div>
+      </div>
 
       <div class="hero-grid">
         <div class="gauge-panel">
@@ -1024,6 +1074,24 @@
     if(!pinValid()){ tampilPesan('Masukkan kode keamanan (PIN) terlebih dahulu.', 'err'); return; }
     if(!fotoValid()){ tampilPesan('Ambil foto bukti kehadiran terlebih dahulu.', 'err'); return; }
     if(!lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
+
+    // Jaring pengaman tambahan di sisi klien: sekali absen masuk & sekali absen pulang per hari.
+    // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
+    // atau kondisi tombol yang belum sempat ter-update.
+    const d = statusHariIniTerakhir;
+    if(tipe === 'masuk' && d.sudahMasuk){
+      tampilPesan('Absen masuk hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
+      perbaruiEnableTombol(); return;
+    }
+    if(tipe === 'pulang' && d.sudahPulang){
+      tampilPesan('Absen pulang hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
+      perbaruiEnableTombol(); return;
+    }
+    if(pilihStatus.value !== 'Hadir' && d.sudahMasuk){
+      tampilPesan('Hari ini sudah ada catatan presensi, tidak bisa disimpan ulang.', 'err');
+      perbaruiEnableTombol(); return;
+    }
+
     btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true;
     tampilPesan('Mengirim...', 'ok');
     try{
@@ -1051,8 +1119,8 @@
           tampilkanUcapan(tipe, nama, json.jam || '');
         }
       }
-      cekStatus();
-    }catch(err){ tampilPesan('Gagal mengirim, coba lagi.', 'err'); cekStatus(); }
+      await cekStatus();
+    }catch(err){ tampilPesan('Gagal mengirim, coba lagi.', 'err'); await cekStatus(); }
     finally{ perbaruiEnableTombol(); }
   }
   btnMasuk.addEventListener('click', () => kirimAbsen('masuk'));
@@ -1091,8 +1159,12 @@
     ucapanIco.textContent = masuk ? '☀️' : '🌇';
     ucapanIco.classList.toggle('pulang', !masuk);
     ucapanJudul.textContent = masuk ? 'Absen Masuk Berhasil' : 'Absen Pulang Berhasil';
-    ucapanSub.innerHTML = jam
-      ? `Terima kasih, <strong>${nama}</strong> — tercatat pukul ${jam}`
+
+    const menit = masuk ? jamKeMenit(jam) : null;
+    const telatKuning = menit !== null && menit >= BATAS_MENIT_KUNING;
+    const labelJam = jam ? (telatKuning ? `<span class="jam-terlambat">⚠ ${jam}</span>` : `pukul ${jam}`) : '';
+    ucapanSub.innerHTML = labelJam
+      ? `Terima kasih, <strong>${nama}</strong> — tercatat ${labelJam}`
       : `Terima kasih, <strong>${nama}</strong>`;
     ucapanQuote.textContent = pesan;
 
@@ -1194,6 +1266,8 @@
   async function muatRekap(){
     const muatPesan = document.getElementById('muatPesan');
     const isiDashboard = document.getElementById('isiDashboard');
+    const btnUnduhPdf = document.getElementById('btnUnduhPdf');
+    btnUnduhPdf.disabled = true;
     muatPesan.style.display = 'block'; muatPesan.textContent = 'Memuat data...'; isiDashboard.style.display = 'none';
     try{
       const res = await fetch(`${API_URL}?aksi=rekap&bulan=${pilihBulan.value}&tahun=${pilihTahun.value}&token=${TOKEN}`);
@@ -1207,9 +1281,107 @@
       renderDashboard(json.data);
       document.getElementById('footerNote').textContent =
         `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
+      tampilkanBadgeAkhirBulan();
+      muatAlfaOtomatisHariIni();
+      btnUnduhPdf.disabled = false;
     }catch(err){ muatPesan.textContent = 'Gagal memuat data. Periksa konfigurasi API.'; }
   }
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
+
+  /* ---------- Banner: pegawai belum presensi hari ini (Alfa otomatis) ---------- */
+  async function muatAlfaOtomatisHariIni(){
+    const banner = document.getElementById('alfaBanner');
+    const list = document.getElementById('alfaBannerList');
+    try{
+      const res = await fetch(`${API_URL}?aksi=alfaOtomatisHariIni&token=${TOKEN}`);
+      const json = await res.json();
+      if(!json.ok || !json.data.daftar || !json.data.daftar.length){
+        banner.classList.remove('show');
+        return;
+      }
+      list.innerHTML = json.data.daftar.map(p =>
+        `<span class="alfa-chip">${p.nama} <span>— ${p.jabatan}</span></span>`
+      ).join('');
+      banner.classList.add('show');
+    }catch(err){
+      banner.classList.remove('show');
+    }
+  }
+
+  /* ---------- Badge: hari ini adalah tanggal terakhir bulan yang dipilih ---------- */
+  function tampilkanBadgeAkhirBulan(){
+    const badge = document.getElementById('badgeAkhirBulan');
+    const now = new Date();
+    const bulanDipilih = parseInt(pilihBulan.value, 10);
+    const tahunDipilih = parseInt(pilihTahun.value, 10);
+    const akhirBulanDipilih = new Date(tahunDipilih, bulanDipilih, 0); // hari terakhir bulan itu
+    const iniAkhirBulan =
+      now.getFullYear() === akhirBulanDipilih.getFullYear() &&
+      now.getMonth() === akhirBulanDipilih.getMonth() &&
+      now.getDate() === akhirBulanDipilih.getDate();
+    badge.classList.toggle('show', iniAkhirBulan);
+  }
+
+  /* ---------- Unduh rekapitulasi bulanan sebagai PDF ---------- */
+  function unduhRekapPdf(){
+    if(!riwayatTerakhir || !document.getElementById('tabelBody').children.length){
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const lebar = doc.internal.pageSize.getWidth();
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text('SMK Ciledug Al-Musaddadiyah', lebar/2, 16, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text('Rekapitulasi Presensi Kehadiran Guru & Staf', lebar/2, 23, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(`Periode: ${periodeLabel}`, lebar/2, 29, { align: 'center' });
+    doc.setDrawColor(11, 61, 145); doc.setLineWidth(0.6);
+    doc.line(14, 33, lebar-14, 33);
+
+    // Ringkasan total
+    const totalHadir = document.getElementById('totalHadir').textContent;
+    const totalSakit = document.getElementById('totalSakit').textContent;
+    const totalIzin = document.getElementById('totalIzin').textContent;
+    const totalAlpa = document.getElementById('totalAlpa').textContent;
+    doc.setFontSize(9.5);
+    doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Alfa: ${totalAlpa}`, 14, 40);
+
+    // Tabel detail per pegawai (ambil langsung dari tabel yang sedang tampil di layar)
+    const bodyRows = [];
+    document.querySelectorAll('#tabelBody tr').forEach(tr => {
+      const kolom = Array.from(tr.children).map(td => td.textContent.trim());
+      bodyRows.push(kolom);
+    });
+
+    doc.autoTable({
+      startY: 45,
+      head: [['Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Dinas Luar', 'Tingkat']],
+      body: bodyRows,
+      styles: { fontSize: 8.5, cellPadding: 2.2 },
+      headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [244, 246, 252] },
+      margin: { left: 14, right: 14 }
+    });
+
+    const akhirTabel = doc.lastAutoTable.finalY || 45;
+    doc.setFontSize(8.5); doc.setTextColor(120);
+    doc.text(`Dicetak otomatis dari sistem presensi pada ${new Date().toLocaleString('id-ID')}`, 14, akhirTabel + 8);
+
+    // Kolom tanda tangan
+    const yTtd = Math.min(akhirTabel + 34, doc.internal.pageSize.getHeight() - 20);
+    doc.setTextColor(30);
+    doc.text('Mengetahui,', 14, yTtd);
+    doc.text('Kepala Sekolah', 14, yTtd + 5);
+    doc.text('Operator Presensi', lebar - 55, yTtd + 5);
+    doc.text('(...............................)', 14, yTtd + 28);
+    doc.text('(...............................)', lebar - 55, yTtd + 28);
+
+    const namaFile = `Rekap-Presensi-${NAMA_BULAN[pilihBulan.value-1]}-${pilihTahun.value}.pdf`;
+    doc.save(namaFile);
+  }
+  document.getElementById('btnUnduhPdf').addEventListener('click', unduhRekapPdf);
 
   let riwayatTerakhir = [];
   let grafikTerakhir = null; // menyimpan data grafik terakhir untuk digambar ulang saat resize
@@ -1284,6 +1456,15 @@
     }, 150);
   });
 
+  // Ubah string jam ("07.12", "07:12", "07.12.34") menjadi total menit sejak 00:00, untuk dibandingkan
+  function jamKeMenit(jamStr){
+    if(!jamStr) return null;
+    const bagian = String(jamStr).split(/[.:]/).map(Number);
+    if(bagian.length < 2 || Number.isNaN(bagian[0]) || Number.isNaN(bagian[1])) return null;
+    return bagian[0]*60 + bagian[1];
+  }
+  const BATAS_MENIT_KUNING = 8*60; // 08.00 — hanya penanda visual, terpisah dari aturan resmi terlambat pukul 07.30
+
   function renderRiwayat(daftar){
     const body = document.getElementById('riwayatBody');
     body.innerHTML = '';
@@ -1298,8 +1479,19 @@
       if(row.fotoMasuk) tautanFoto.push(`<a href="${row.fotoMasuk}" target="_blank" rel="noopener">Masuk</a>`);
       if(row.fotoPulang) tautanFoto.push(`<a href="${row.fotoPulang}" target="_blank" rel="noopener">Pulang</a>`);
       const kolomFoto = tautanFoto.length ? tautanFoto.join(' · ') : '—';
+
+      // Penanda "lewat jam 08.00" hanya relevan untuk status Hadir (jam masuk sekolah sungguhan).
+      // Untuk Izin/Sakit/Alfa/Dinas Luar, kolom jam (jika terisi) adalah waktu pengajuan/penyimpanan
+      // status — bukan jam masuk, jadi tidak pantas ditandai "terlambat".
+      const menitMasuk = row.status === 'Hadir' ? jamKeMenit(row.jamMasuk) : null;
+      const telatKuning = menitMasuk !== null && menitMasuk >= BATAS_MENIT_KUNING;
+      const kolomJamMasuk = row.jamMasuk
+        ? (telatKuning ? `<span class="jam-terlambat" title="Absen masuk lewat dari jam 08.00">⚠ ${row.jamMasuk}</span>` : row.jamMasuk)
+        : '—';
+
+      const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span></td><td class="num">${row.jamMasuk || '—'}</td><td class="num">${row.jamPulang || '—'}</td><td class="num">${kolomFoto}</td>`;
+      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span>${badgeOtomatis}</td><td class="num">${kolomJamMasuk}</td><td class="num">${row.jamPulang || '—'}</td><td class="num">${kolomFoto}</td>`;
       body.appendChild(tr);
     });
   }
