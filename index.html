@@ -1368,11 +1368,28 @@
     }
   })();
 
+  // Cache rekap di memori browser (per sesi tab, hilang saat halaman
+  // ditutup/refresh — bukan localStorage). Kalau pengguna balik lagi ke
+  // bulan yang sudah pernah dibuka pada sesi ini, data langsung tampil
+  // dari sini, tanpa menunggu jaringan sama sekali. Bulan berjalan tetap
+  // dianggap "boleh basi maksimal 2 menit" supaya absen baru yang masuk
+  // tetap kelihatan tanpa harus refresh halaman.
+  const cacheRekapBrowser = {}; // { "bulan-tahun": { data, waktuAmbil } }
+  const CACHE_BROWSER_BULAN_INI_MS = 2 * 60 * 1000;
+
+  function _kunciCacheBrowser(bulan, tahun){ return `${bulan}-${tahun}`; }
+  function _iniBulanBerjalan(bulan, tahun){
+    const now = new Date();
+    return (parseInt(bulan,10) === now.getMonth()+1) && (parseInt(tahun,10) === now.getFullYear());
+  }
+
   // Catatan performa: dulu memuat rekap butuh 2 request berurutan ke Apps
   // Script (aksi=rekap, lalu aksi=alfaOtomatisHariIni) — tiap request Apps
   // Script punya overhead start-up sendiri, jadi 2 request ≈ 2x lebih lambat
   // dari yang perlu. Sekarang backend mengirim keduanya sekaligus dalam satu
   // balasan (lihat json.data.alfaHariIni), jadi cukup 1 request per muat.
+  // Ditambah cache di memori tab ini (lihat cacheRekapBrowser di atas) supaya
+  // bulan yang sudah pernah dibuka pada sesi ini tidak perlu fetch ulang.
   async function muatRekap(){
     const muatPesan = document.getElementById('muatPesan');
     const muatSpin = document.getElementById('muatSpin');
@@ -1380,35 +1397,61 @@
     const isiDashboard = document.getElementById('isiDashboard');
     const btnUnduhPdf = document.getElementById('btnUnduhPdf');
     btnUnduhPdf.disabled = true;
+
+    const bulan = pilihBulan.value, tahun = pilihTahun.value;
+    const kunciCache = _kunciCacheBrowser(bulan, tahun);
+    const entriCache = cacheRekapBrowser[kunciCache];
+    const cacheMasihSegar = entriCache && (
+      !_iniBulanBerjalan(bulan, tahun) ||
+      (Date.now() - entriCache.waktuAmbil) < CACHE_BROWSER_BULAN_INI_MS
+    );
+
+    if (cacheMasihSegar) {
+      tampilkanDataRekap(entriCache.data, bulan, tahun);
+      return;
+    }
+
     muatPesan.style.display = 'block';
     muatSpin.style.display = 'block';
     muatTeks.textContent = 'Memuat data...';
     isiDashboard.style.display = 'none';
     try{
-      const res = await fetch(`${API_URL}?aksi=rekap&bulan=${pilihBulan.value}&tahun=${pilihTahun.value}&token=${TOKEN}`);
+      const res = await fetch(`${API_URL}?aksi=rekap&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
-      document.getElementById('judulRekap').textContent =
-        `Rekap Kehadiran — ${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
-      periodeLabel = `${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
-      muatSpin.style.display = 'none';
-      muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
-      isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
-      renderDashboard(json.data);
-      document.getElementById('footerNote').textContent =
-        `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
-      tampilkanBadgeAkhirBulan();
-      tampilkanAlfaBanner(json.data.alfaHariIni);
-      // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
-      // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
-      // hanya melihat tombol "🔒 Unduh PDF (Admin)" yang meminta password.
-      btnUnduhPdf.disabled = !adminTerverifikasi;
+      cacheRekapBrowser[kunciCache] = { data: json.data, waktuAmbil: Date.now() };
+      tampilkanDataRekap(json.data, bulan, tahun);
     }catch(err){
       muatSpin.style.display = 'none';
       muatTeks.textContent = 'Gagal memuat data. Periksa konfigurasi API.';
     }
   }
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
+
+  // Render data rekap ke layar, dipakai baik untuk hasil fetch baru
+  // maupun data yang diambil langsung dari cacheRekapBrowser.
+  function tampilkanDataRekap(data, bulan, tahun){
+    const muatPesan = document.getElementById('muatPesan');
+    const muatSpin = document.getElementById('muatSpin');
+    const isiDashboard = document.getElementById('isiDashboard');
+    const btnUnduhPdf = document.getElementById('btnUnduhPdf');
+
+    document.getElementById('judulRekap').textContent =
+      `Rekap Kehadiran — ${NAMA_BULAN[bulan-1]} ${tahun}`;
+    periodeLabel = `${NAMA_BULAN[bulan-1]} ${tahun}`;
+    muatSpin.style.display = 'none';
+    muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
+    isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
+    renderDashboard(data);
+    document.getElementById('footerNote').textContent =
+      `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
+    tampilkanBadgeAkhirBulan();
+    tampilkanAlfaBanner(data.alfaHariIni);
+    // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
+    // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
+    // hanya melihat tombol "🔒 Unduh PDF (Admin)" yang meminta password.
+    btnUnduhPdf.disabled = !adminTerverifikasi;
+  }
 
   /* ---------- Banner: pegawai belum presensi hari ini (Alfa otomatis) ----------
      Datanya kini ikut terbawa di dalam balasan aksi=rekap (field alfaHariIni),
