@@ -298,6 +298,10 @@
 
   .footer-note{text-align:center;font-size:11.5px;color:var(--faint);margin-top:6px;padding-bottom:6px;}
   .muat{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
+  .muat-spin{width:30px;height:30px;margin:0 auto 12px;border-radius:50%;
+    border:3px solid var(--line);border-top-color:var(--navy);
+    animation:muatPutar .7s linear infinite;}
+  @keyframes muatPutar{to{transform:rotate(360deg);}}
 
   /* ===== Banner: pegawai belum presensi hari ini (Alfa otomatis) ===== */
   .alfa-banner{
@@ -571,7 +575,10 @@
       </div>
     </div>
 
-    <div id="muatPesan" class="muat">Pilih bulan lalu klik Tampilkan.</div>
+    <div id="muatPesan" class="muat">
+      <div id="muatSpin" class="muat-spin" style="display:none;"></div>
+      <div id="muatTeks">Pilih bulan lalu klik Tampilkan.</div>
+    </div>
 
     <div id="isiDashboard" style="display:none;">
 
@@ -1361,12 +1368,22 @@
     }
   })();
 
+  // Catatan performa: dulu memuat rekap butuh 2 request berurutan ke Apps
+  // Script (aksi=rekap, lalu aksi=alfaOtomatisHariIni) — tiap request Apps
+  // Script punya overhead start-up sendiri, jadi 2 request ≈ 2x lebih lambat
+  // dari yang perlu. Sekarang backend mengirim keduanya sekaligus dalam satu
+  // balasan (lihat json.data.alfaHariIni), jadi cukup 1 request per muat.
   async function muatRekap(){
     const muatPesan = document.getElementById('muatPesan');
+    const muatSpin = document.getElementById('muatSpin');
+    const muatTeks = document.getElementById('muatTeks');
     const isiDashboard = document.getElementById('isiDashboard');
     const btnUnduhPdf = document.getElementById('btnUnduhPdf');
     btnUnduhPdf.disabled = true;
-    muatPesan.style.display = 'block'; muatPesan.textContent = 'Memuat data...'; isiDashboard.style.display = 'none';
+    muatPesan.style.display = 'block';
+    muatSpin.style.display = 'block';
+    muatTeks.textContent = 'Memuat data...';
+    isiDashboard.style.display = 'none';
     try{
       const res = await fetch(`${API_URL}?aksi=rekap&bulan=${pilihBulan.value}&tahun=${pilihTahun.value}&token=${TOKEN}`);
       const json = await res.json();
@@ -1374,39 +1391,39 @@
       document.getElementById('judulRekap').textContent =
         `Rekap Kehadiran — ${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
       periodeLabel = `${NAMA_BULAN[pilihBulan.value-1]} ${pilihTahun.value}`;
+      muatSpin.style.display = 'none';
       muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
       isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
       renderDashboard(json.data);
       document.getElementById('footerNote').textContent =
         `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
       tampilkanBadgeAkhirBulan();
-      muatAlfaOtomatisHariIni();
+      tampilkanAlfaBanner(json.data.alfaHariIni);
       // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
       // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
       // hanya melihat tombol "🔒 Unduh PDF (Admin)" yang meminta password.
       btnUnduhPdf.disabled = !adminTerverifikasi;
-    }catch(err){ muatPesan.textContent = 'Gagal memuat data. Periksa konfigurasi API.'; }
+    }catch(err){
+      muatSpin.style.display = 'none';
+      muatTeks.textContent = 'Gagal memuat data. Periksa konfigurasi API.';
+    }
   }
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
 
-  /* ---------- Banner: pegawai belum presensi hari ini (Alfa otomatis) ---------- */
-  async function muatAlfaOtomatisHariIni(){
+  /* ---------- Banner: pegawai belum presensi hari ini (Alfa otomatis) ----------
+     Datanya kini ikut terbawa di dalam balasan aksi=rekap (field alfaHariIni),
+     jadi fungsi ini murni menampilkan, tidak lagi memanggil fetch sendiri. */
+  function tampilkanAlfaBanner(alfaHariIni){
     const banner = document.getElementById('alfaBanner');
     const list = document.getElementById('alfaBannerList');
-    try{
-      const res = await fetch(`${API_URL}?aksi=alfaOtomatisHariIni&token=${TOKEN}`);
-      const json = await res.json();
-      if(!json.ok || !json.data.daftar || !json.data.daftar.length){
-        banner.classList.remove('show');
-        return;
-      }
-      list.innerHTML = json.data.daftar.map(p =>
-        `<span class="alfa-chip">${p.nama} <span>— ${p.jabatan}</span></span>`
-      ).join('');
-      banner.classList.add('show');
-    }catch(err){
+    if(!alfaHariIni || !alfaHariIni.daftar || !alfaHariIni.daftar.length){
       banner.classList.remove('show');
+      return;
     }
+    list.innerHTML = alfaHariIni.daftar.map(p =>
+      `<span class="alfa-chip">${p.nama} <span>— ${p.jabatan}</span></span>`
+    ).join('');
+    banner.classList.add('show');
   }
 
   /* ---------- Badge: hari ini adalah tanggal terakhir bulan yang dipilih ---------- */
