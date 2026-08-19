@@ -1438,7 +1438,13 @@
 
     document.getElementById('judulRekap').textContent =
       `Rekap Kehadiran — ${NAMA_BULAN[bulan-1]} ${tahun}`;
-    periodeLabel = `${NAMA_BULAN[bulan-1]} ${tahun}`;
+    // Label periode sekarang menyertakan rentang tanggal (bukan cuma nama
+    // bulan), mis. "1–31 Januari 2026". Tanggal akhir dihitung otomatis
+    // sesuai jumlah hari bulan itu (28/29/30/31) lewat trik new Date(tahun,
+    // bulan, 0) yang mengembalikan hari terakhir bulan sebelumnya = hari
+    // terakhir bulan yang dimaksud.
+    const tanggalAkhir = new Date(tahun, bulan, 0).getDate();
+    periodeLabel = `1–${tanggalAkhir} ${NAMA_BULAN[bulan-1]} ${tahun}`;
     muatSpin.style.display = 'none';
     muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
     isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
