@@ -7,8 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- jsPDF & jspdf-autotable (± 500KB) TIDAK dimuat di sini lagi.
+     Keduanya hanya dibutuhkan saat pengguna menekan "Unduh PDF",
+     jadi dimuat belakangan (lazy-load) lewat muatLibraryPdf() di script
+     bawah — supaya load awal halaman tetap ringan di jaringan lambat. -->
 <style>
   :root{
     --navy:#0b3d91; --navy-deep:#062454; --gold:#ffb300; --gold-deep:#c98600;
@@ -532,6 +534,26 @@
     </div>
   </div>
 
+  <!-- ===== MODAL: LOGIN ADMIN (khusus akses Unduh PDF) ===== -->
+  <div class="modal-overlay" id="modalAdmin">
+    <div class="modal-box">
+      <button type="button" class="modal-close" id="tutupModalAdmin">✕</button>
+      <h3>Login Admin</h3>
+      <p class="modal-sub">Unduh PDF rekap hanya dapat dilakukan oleh admin/operator sekolah. Masukkan password admin untuk membuka tombol unduh.</p>
+
+      <label for="adminPassword">Password Admin</label>
+      <div class="pin-wrap">
+        <input type="password" id="adminPassword" autocomplete="off" placeholder="Masukkan password admin">
+        <button type="button" class="pin-toggle" id="adminPasswordToggle">LIHAT</button>
+      </div>
+
+      <div class="btn-row tunggal">
+        <button class="btn-simpan" id="adminSimpan">Masuk</button>
+      </div>
+      <div class="modal-pesan" id="adminPesan"></div>
+    </div>
+  </div>
+
   <!-- ===== TAB: DASHBOARD ===== -->
   <section id="view-dashboard" class="view">
 
@@ -544,7 +566,8 @@
         <select id="pilihBulan"></select>
         <select id="pilihTahun"></select>
         <button id="btnMuat">Tampilkan</button>
-        <button id="btnUnduhPdf" class="btn-pdf" disabled>📄 Unduh PDF</button>
+        <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Unduh PDF (Admin)</button>
+        <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF</button>
       </div>
     </div>
 
@@ -972,7 +995,7 @@
       pilihNama.innerHTML = '<option value="">-- Pilih nama --</option>';
       gpNama.innerHTML = '<option value="">-- Pilih nama --</option>';
       json.data.forEach(p => {
-        pegawaiMap[p.nama] = p; // { nama, nuptk, jabatan } — PIN tidak pernah dikirim ke client
+        pegawaiMap[p.nama] = p; // { nama, jabatan } — PIN & NUPTK tidak pernah dikirim ke client
         const opt = document.createElement('option');
         opt.value = p.nama; opt.textContent = `${p.nama} — ${p.jabatan}`;
         pilihNama.appendChild(opt);
@@ -1244,6 +1267,81 @@
     }
   });
 
+  /* ---------- Modal: Login Admin (gerbang akses Unduh PDF) ----------
+     Unduh PDF hanya boleh dilakukan admin/operator sekolah. Verifikasi
+     password dilakukan di server (Apps Script), bukan hanya di JS,
+     supaya password tidak bisa "dikelabui" hanya dengan mengubah kode
+     di browser. Status login hanya disimpan di memori (variabel JS),
+     BUKAN localStorage/sessionStorage, jadi otomatis ter-reset setiap
+     halaman dimuat ulang. */
+  let adminTerverifikasi = false;
+  const modalAdmin = document.getElementById('modalAdmin');
+  const btnLoginAdmin = document.getElementById('btnLoginAdmin');
+  const tutupModalAdmin = document.getElementById('tutupModalAdmin');
+  const adminPasswordEl = document.getElementById('adminPassword');
+  const adminSimpan = document.getElementById('adminSimpan');
+  const adminPesan = document.getElementById('adminPesan');
+
+  function bukaModalAdmin(){
+    adminPasswordEl.value = '';
+    adminPasswordEl.type = 'password';
+    document.getElementById('adminPasswordToggle').textContent = 'LIHAT';
+    adminPesan.textContent = ''; adminPesan.className = 'modal-pesan';
+    modalAdmin.classList.add('show');
+    setTimeout(() => adminPasswordEl.focus(), 50);
+  }
+  function tutupModalAdminFn(){ modalAdmin.classList.remove('show'); }
+
+  btnLoginAdmin.addEventListener('click', bukaModalAdmin);
+  tutupModalAdmin.addEventListener('click', tutupModalAdminFn);
+  modalAdmin.addEventListener('click', (e) => { if(e.target === modalAdmin) tutupModalAdminFn(); });
+
+  document.getElementById('adminPasswordToggle').addEventListener('click', () => {
+    const jadikanTeks = adminPasswordEl.type === 'password';
+    adminPasswordEl.type = jadikanTeks ? 'text' : 'password';
+    document.getElementById('adminPasswordToggle').textContent = jadikanTeks ? 'SEMBUNYIKAN' : 'LIHAT';
+  });
+
+  // Menampilkan tombol "Unduh PDF" asli & menyembunyikan tombol login,
+  // setelah password admin terverifikasi oleh server.
+  function tampilkanTombolPdfAdmin(){
+    btnLoginAdmin.style.display = 'none';
+    const btnPdf = document.getElementById('btnUnduhPdf');
+    btnPdf.style.display = 'inline-flex';
+    // Tombol tetap mengikuti status data: aktif hanya jika rekap sudah dimuat.
+    btnPdf.disabled = !(riwayatTerakhir && riwayatTerakhir.length !== undefined && document.getElementById('tabelBody').children.length);
+  }
+
+  async function verifikasiAdmin(){
+    const pw = adminPasswordEl.value;
+    if(!pw){ adminPesan.textContent = 'Masukkan password admin.'; adminPesan.className = 'modal-pesan err'; return; }
+    adminSimpan.disabled = true;
+    adminPesan.textContent = 'Memverifikasi...'; adminPesan.className = 'modal-pesan';
+    try{
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ token: TOKEN, aksi: 'verifikasiAdmin', passwordAdmin: pw })
+      });
+      const json = await res.json();
+      if(json.ok){
+        adminTerverifikasi = true;
+        adminPesan.textContent = 'Berhasil masuk sebagai admin.';
+        adminPesan.className = 'modal-pesan ok';
+        tampilkanTombolPdfAdmin();
+        setTimeout(tutupModalAdminFn, 900);
+      } else {
+        adminPesan.textContent = json.error || 'Password admin salah.';
+        adminPesan.className = 'modal-pesan err';
+      }
+    }catch(err){
+      adminPesan.textContent = 'Gagal menghubungi server, coba lagi.'; adminPesan.className = 'modal-pesan err';
+    }finally{
+      adminSimpan.disabled = false;
+    }
+  }
+  adminSimpan.addEventListener('click', verifikasiAdmin);
+  adminPasswordEl.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); verifikasiAdmin(); } });
+
   /* ================= TAB DASHBOARD (canvas native, tanpa library) ================= */
   const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const pilihBulan = document.getElementById('pilihBulan');
@@ -1283,7 +1381,10 @@
         `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
       tampilkanBadgeAkhirBulan();
       muatAlfaOtomatisHariIni();
-      btnUnduhPdf.disabled = false;
+      // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
+      // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
+      // hanya melihat tombol "🔒 Unduh PDF (Admin)" yang meminta password.
+      btnUnduhPdf.disabled = !adminTerverifikasi;
     }catch(err){ muatPesan.textContent = 'Gagal memuat data. Periksa konfigurasi API.'; }
   }
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
@@ -1322,9 +1423,49 @@
     badge.classList.toggle('show', iniAkhirBulan);
   }
 
+  /* ---------- Lazy-load jsPDF + jspdf-autotable ----------
+     Dimuat dari CDN hanya saat pertama kali dibutuhkan (klik "Unduh PDF"),
+     bukan saat halaman pertama kali dibuka, supaya ± 500KB ini tidak
+     memperlambat pemuatan awal di jaringan lambat. Promise di-cache
+     supaya klik berikutnya tidak memuat ulang dari jaringan. */
+  let pdfLibsPromise = null;
+  function muatLibraryPdf(){
+    if(pdfLibsPromise) return pdfLibsPromise;
+    pdfLibsPromise = new Promise((resolve, reject) => {
+      const s1 = document.createElement('script');
+      s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s1.onload = () => {
+        const s2 = document.createElement('script');
+        s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+        s2.onload = resolve;
+        s2.onerror = () => reject(new Error('Gagal memuat pustaka PDF'));
+        document.head.appendChild(s2);
+      };
+      s1.onerror = () => reject(new Error('Gagal memuat pustaka PDF'));
+      document.head.appendChild(s1);
+    });
+    return pdfLibsPromise;
+  }
+
   /* ---------- Unduh rekapitulasi bulanan sebagai PDF ---------- */
-  function unduhRekapPdf(){
+  async function unduhRekapPdf(){
+    if(!adminTerverifikasi){
+      bukaModalAdmin();
+      return;
+    }
     if(!riwayatTerakhir || !document.getElementById('tabelBody').children.length){
+      return;
+    }
+    const btnUnduhPdf = document.getElementById('btnUnduhPdf');
+    const labelAsli = btnUnduhPdf.textContent;
+    btnUnduhPdf.disabled = true;
+    btnUnduhPdf.textContent = 'Menyiapkan PDF...';
+    try{
+      await muatLibraryPdf();
+    }catch(err){
+      btnUnduhPdf.textContent = labelAsli;
+      btnUnduhPdf.disabled = false;
+      alert('Gagal memuat komponen PDF. Periksa koneksi internet Anda lalu coba lagi.');
       return;
     }
     const { jsPDF } = window.jspdf;
@@ -1380,6 +1521,9 @@
 
     const namaFile = `Rekap-Presensi-${NAMA_BULAN[pilihBulan.value-1]}-${pilihTahun.value}.pdf`;
     doc.save(namaFile);
+
+    btnUnduhPdf.textContent = labelAsli;
+    btnUnduhPdf.disabled = false;
   }
   document.getElementById('btnUnduhPdf').addEventListener('click', unduhRekapPdf);
 
