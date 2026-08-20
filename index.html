@@ -415,9 +415,26 @@
 
   /* ===== Kalender Pendidikan ===== */
   .kalender-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+  .kalender-grid .kalender-panel{display:flex;flex-direction:column;}
   @media(max-width:760px){.kalender-grid{grid-template-columns:1fr;}}
 
   .kalender-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+
+  /* Kartu ringkasan pengisi kolom yang lebih pendek (mis. Semester 1 vs
+     Semester 2 dengan jumlah agenda berbeda) — ditempel ke bagian bawah
+     kolom lewat margin-top:auto supaya sejajar dengan akhir kolom sebelah,
+     sekaligus memberi info berguna alih-alih menyisakan ruang kosong. */
+  .kalender-ringkasan{
+    margin-top:auto;padding-top:16px;
+  }
+  .kalender-ringkasan-inner{
+    background:var(--bg);border-radius:14px;padding:14px 16px;
+  }
+  .kalender-ringkasan-judul{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+  .kalender-ringkasan-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .kalender-ringkasan-list li{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);}
+  .kalender-ringkasan-list .ico{width:22px;height:22px;border-radius:7px;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+  .kalender-ringkasan-list b{color:var(--ink);font-weight:700;}
   .kalender-badge-semester{
     flex-shrink:0;font-family:var(--font-display);font-weight:800;font-size:11px;letter-spacing:.4px;
     color:var(--navy);background:var(--info-bg);padding:5px 11px;border-radius:999px;
@@ -876,6 +893,18 @@
               <span class="kalender-tipe libur">Libur</span>
             </li>
           </ul>
+
+          <div class="kalender-ringkasan">
+            <div class="kalender-ringkasan-inner">
+              <div class="kalender-ringkasan-judul">Ringkasan Semester 1</div>
+              <ul class="kalender-ringkasan-list">
+                <li><span class="ico">🎒</span> Masa MPLS <b>5 hari</b> (15–17 &amp; 20–21 Jul)</li>
+                <li><span class="ico">📝</span> Asesmen Sumatif Akhir Semester <b>30 Nov – 11 Des</b></li>
+                <li><span class="ico">📌</span> <b>4 hari</b> libur nasional/keagamaan (HUT RI, Maulid Nabi, cuti &amp; libur Natal)</li>
+                <li><span class="ico">🏖️</span> Libur panjang akhir semester mulai <b>28 Desember</b></li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div class="kalender-panel">
