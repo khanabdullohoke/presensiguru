@@ -416,6 +416,7 @@
         </div>
         <button type="button" class="lokasi-retry" id="btnUlangiLokasi" style="display:none;">Coba Lagi</button>
       </div>
+      <div class="lokasi-sub" id="lokasiCatatanOpsional" style="display:none;margin:-2px 0 4px 2px;font-style:italic;">Radius 200 m tidak wajib untuk status Izin / Sakit / Alfa / Dinas Luar — hanya berlaku untuk status Hadir.</div>
 
       <label for="pilihNama">Nama</label>
       <select id="pilihNama"><option value="">Memuat daftar pegawai...</option></select>
@@ -771,6 +772,7 @@
   const lokasiJudul = document.getElementById('lokasiJudul');
   const lokasiSub = document.getElementById('lokasiSub');
   const btnUlangiLokasi = document.getElementById('btnUlangiLokasi');
+  const lokasiCatatanOpsional = document.getElementById('lokasiCatatanOpsional');
 
   function tampilkanStatusLokasi(state, teks, sub){
     lokasiCard.className = 'lokasi-card ' + state;
@@ -1024,7 +1026,16 @@
     } else {
       btnRowHadir.style.display = 'none'; btnRowLain.style.display = 'grid';
     }
+    perbaruiCatatanLokasi();
     perbaruiEnableTombol();
+  }
+
+  // Tampilkan/sembunyikan catatan "tidak wajib" lewat elemen TERPISAH (bukan menimpa
+  // teks lokasiSub), karena lokasiSub terus di-refresh oleh callback watchPosition GPS
+  // setiap ada update posisi — menimpanya langsung akan tertindih lagi dalam hitungan detik.
+  function perbaruiCatatanLokasi(){
+    if(!lokasiCatatanOpsional) return;
+    lokasiCatatanOpsional.style.display = wajibLokasi() ? 'none' : 'block';
   }
 
   // PIN minimal 4 karakter sebelum tombol bisa ditekan
@@ -1032,12 +1043,17 @@
   // Foto wajib diambil (bukti kehadiran) sebelum tombol bisa ditekan
   function fotoValid(){ return !!fotoDataUrl; }
 
+  // Radius 200m dari sekolah hanya wajib untuk status "Hadir" (absen masuk/pulang di lokasi).
+  // Izin, Sakit, Alfa, dan Dinas Luar tidak mensyaratkan berada dalam radius sekolah.
+  function wajibLokasi(){ return pilihStatus.value === 'Hadir'; }
+
   function perbaruiEnableTombol(){
     const nama = pilihNama.value;
     const d = statusHariIniTerakhir;
     const sudahAdaCatatanHariIni = d.sudahMasuk;
+    const lokasiOk = !wajibLokasi() || lokasiTerkini.valid;
 
-    if(!nama || !pinValid() || !fotoValid() || !lokasiTerkini.valid){
+    if(!nama || !pinValid() || !fotoValid() || !lokasiOk){
       btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true; return;
     }
 
@@ -1103,7 +1119,7 @@
     const nama = pilihNama.value; if(!nama) return;
     if(!pinValid()){ tampilPesan('Masukkan kode keamanan (PIN) terlebih dahulu.', 'err'); return; }
     if(!fotoValid()){ tampilPesan('Ambil foto bukti kehadiran terlebih dahulu.', 'err'); return; }
-    if(!lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
+    if(wajibLokasi() && !lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
 
     // Jaring pengaman tambahan di sisi klien: sekali absen masuk & sekali absen pulang per hari.
     // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
