@@ -1632,7 +1632,8 @@
       banner.classList.remove('show');
       return;
     }
-    list.innerHTML = alfaHariIni.daftar.map(p =>
+    const daftarUrut = [...alfaHariIni.daftar].sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
+    list.innerHTML = daftarUrut.map(p =>
       `<span class="alfa-chip">${p.nama} <span>— ${p.jabatan}</span></span>`
     ).join('');
     banner.classList.add('show');
@@ -1801,13 +1802,13 @@
     let totalHadir=0, totalSakit=0, totalIzin=0, totalAlfa=0, totalDinas=0;
     const tabelBody = document.getElementById('tabelBody'); tabelBody.innerHTML = '';
 
-    // hitung persentase per pegawai
+    // hitung persentase per pegawai, lalu urutkan nama A-Z (alfabetis)
     const rekapPersen = namaList.map(nama => {
       const r = rekapPerPegawai[nama];
       const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Alfa||0)+(r['Dinas Luar']||0);
       const persen = totalTercatat > 0 ? Math.round((r.Hadir||0) / totalTercatat * 100) : 0;
       return { nama, r, persen };
-    }).sort((a,b) => b.persen - a.persen);
+    }).sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
 
     rekapPersen.forEach(({nama, r, persen}) => {
       totalHadir += r.Hadir||0; totalSakit += r.Sakit||0; totalIzin += r.Izin||0; totalAlfa += r.Alfa||0; totalDinas += r['Dinas Luar']||0;
