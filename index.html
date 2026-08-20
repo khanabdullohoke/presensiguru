@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presensi & Rekap — SMK Ciledug Al-Musaddadiyah</title>
+<meta name="description" content="Sistem Informasi Kehadiran Digital SMK Ciledug Al-Musaddadiyah — presensi guru & staf terverifikasi lokasi dan kode keamanan pribadi, dengan rekap kehadiran publik yang transparan.">
+<meta name="theme-color" content="#0b3d91">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffb300'/%3E%3Cpath d='M32 14 10 24l22 10 22-10-22-10Z' fill='%230b3d91'/%3E%3Cpath d='M18 29v10c0 4 6 8 14 8s14-4 14-8V29' stroke='%230b3d91' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -177,6 +180,20 @@
   .lokasi-card.checking .lokasi-icon{animation:denyut 1.4s ease-in-out infinite;}
   @keyframes denyut{0%,100%{opacity:1;}50%{opacity:.35;}}
   .status-box{margin-top:16px;padding:11px 13px;border-radius:11px;background:#f4f6fb;font-size:13px;color:var(--muted);display:none;}
+
+  /* ===== Kartu error ramah (gagal memuat daftar pegawai) ===== */
+  .muat-gagal-card{
+    display:none;align-items:flex-start;gap:12px;padding:13px 14px;border-radius:13px;
+    background:var(--warn-bg);border:1.5px solid rgba(247,144,9,0.3);margin:6px 0 4px;
+  }
+  .muat-gagal-card.show{display:flex;}
+  .muat-gagal-icon{font-size:18px;line-height:1;flex-shrink:0;margin-top:1px;}
+  .muat-gagal-text{flex:1;min-width:0;}
+  .muat-gagal-judul{font-size:12.5px;font-weight:700;color:#93590a;}
+  .muat-gagal-sub{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .muat-gagal-retry{
+    flex-shrink:0;padding:7px 12px;font-size:11px;border-radius:9px;background:var(--navy);color:#fff;font-weight:700;
+  }
   .status-box.show{display:block;}
   .status-box.warn{background:var(--warn-bg);color:var(--warn-deep,#93590a);}
   .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
@@ -221,6 +238,8 @@
   .dash-top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
   .dash-title h2{font-size:20px;margin:0 0 4px;color:var(--navy);font-weight:800;}
   .dash-title p{margin:0;font-size:12.5px;color:var(--muted);}
+  .terakhir-diperbarui{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 9px;border-radius:999px;background:var(--ok-bg);color:#0a7a49;font-size:10.5px;font-weight:700;white-space:nowrap;}
+  .terakhir-diperbarui::before{content:'●';font-size:8px;color:var(--ok);}
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .controls select{padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1.5px solid var(--line);transition:border-color .15s;}
   .controls select:focus{outline:none;border-color:var(--navy);}
@@ -280,7 +299,10 @@
   .panel{
     background:var(--card);border-radius:18px;padding:20px;
     box-shadow:0 10px 28px rgba(11,61,145,0.06);border:1px solid var(--line);margin-bottom:16px;
+    transition:box-shadow .18s ease,border-color .18s ease;
   }
+  .panel:hover{box-shadow:0 14px 34px rgba(11,61,145,0.1);border-color:#dbe2f3;}
+  @media(prefers-reduced-motion:reduce){.panel{transition:none;}}
   .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;}
   .panel h3{font-size:14px;margin:0 0 2px;color:var(--navy);font-weight:700;}
   .panel .panel-sub{font-size:11.5px;color:var(--faint);margin:0;}
@@ -297,8 +319,16 @@
   th{color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;}
   tr:last-child td{border-bottom:none;}
   tbody tr{transition:background .12s ease;}
-  tbody tr:hover{background:#f8faff;}
+  tbody tr:nth-child(even){background:#fafbfe;}
+  tbody tr:hover{background:#eef3fd;}
   td.num{text-align:center;font-variant-numeric:tabular-nums;}
+
+  /* ===== Header kolom yang bisa diklik untuk sort ===== */
+  th.sortable{cursor:pointer;user-select:none;position:relative;transition:color .12s ease;}
+  th.sortable:hover{color:var(--navy);}
+  th.sortable .panah{display:inline-block;margin-left:3px;font-size:9px;opacity:.35;transition:opacity .12s ease;}
+  th.sortable.aktif .panah{opacity:1;color:var(--navy);}
+  th.sortable.aktif{color:var(--navy);}
 
   .footer-note{text-align:center;font-size:11.5px;color:var(--faint);margin-top:6px;padding-bottom:6px;}
   .muat{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
@@ -462,6 +492,14 @@
 
       <label for="pilihNama">Nama</label>
       <select id="pilihNama"><option value="">Memuat daftar pegawai...</option></select>
+      <div class="muat-gagal-card" id="muatGagalCard">
+        <div class="muat-gagal-icon">⚠️</div>
+        <div class="muat-gagal-text">
+          <div class="muat-gagal-judul">Daftar pegawai gagal dimuat</div>
+          <div class="muat-gagal-sub">Periksa koneksi internet Anda, lalu coba lagi.</div>
+        </div>
+        <button type="button" class="muat-gagal-retry" id="btnUlangiMuatPegawai">Coba Lagi</button>
+      </div>
 
       <label for="pilihStatus">Status Kehadiran</label>
       <select id="pilihStatus">
@@ -637,7 +675,7 @@
     <div class="dash-top">
       <div class="dash-title">
         <h2 id="judulRekap">Rekap Kehadiran</h2>
-        <p>Data resmi, ditarik langsung dari sistem absensi sekolah</p>
+        <p>Data resmi, ditarik langsung dari sistem absensi sekolah <span id="terakhirDiperbarui" class="terakhir-diperbarui"></span></p>
       </div>
       <div class="controls">
         <select id="pilihBulan"></select>
@@ -716,12 +754,21 @@
 
       <div class="panel">
         <div class="panel-head">
-          <div><h3>Detail per Pegawai</h3><p class="panel-sub">Rincian lengkap kehadiran bulan berjalan</p></div>
+          <div><h3>Detail per Pegawai</h3><p class="panel-sub">Rincian lengkap kehadiran bulan berjalan &middot; klik judul kolom untuk mengurutkan</p></div>
         </div>
         <div class="tabel-scroll">
         <table>
           <thead>
-            <tr><th>Nama</th><th>Periode</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
+            <tr>
+              <th class="sortable aktif" data-sort="nama" data-tipe="teks">Nama<span class="panah">▲</span></th>
+              <th>Periode</th>
+              <th class="num sortable" data-sort="Hadir" data-tipe="angka">Hadir<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Sakit" data-tipe="angka">Sakit<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Izin" data-tipe="angka">Izin<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Alfa" data-tipe="angka">Alfa<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Dinas Luar" data-tipe="angka">Dinas Luar<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="persen" data-tipe="angka">Tingkat<span class="panah">▼</span></th>
+            </tr>
           </thead>
           <tbody id="tabelBody"></tbody>
         </table>
@@ -1275,10 +1322,12 @@
   });
 
   async function muatDaftarPegawai(){
+    const kartuGagal = document.getElementById('muatGagalCard');
     try{
       const res = await fetch(`${API_URL}?aksi=daftarPegawai&token=${TOKEN}`);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
+      kartuGagal.classList.remove('show');
       pilihNama.innerHTML = '<option value="">-- Pilih nama --</option>';
       gpNama.innerHTML = '<option value="">-- Pilih nama --</option>';
       json.data.forEach(p => {
@@ -1292,8 +1341,9 @@
         gpNama.appendChild(optGp);
       });
     }catch(err){
-      pilihNama.innerHTML = '<option value="">Gagal memuat daftar</option>';
-      gpNama.innerHTML = '<option value="">Gagal memuat daftar</option>';
+      pilihNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
+      gpNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
+      kartuGagal.classList.add('show');
     }
   }
 
@@ -1563,6 +1613,11 @@
   modalUcapan.addEventListener('click', (e) => { if(e.target === modalUcapan) tutupUcapanFn(); });
 
   muatDaftarPegawai();
+  document.getElementById('btnUlangiMuatPegawai').addEventListener('click', () => {
+    pilihNama.innerHTML = '<option value="">Memuat daftar pegawai...</option>';
+    gpNama.innerHTML = '<option value="">Memuat daftar pegawai...</option>';
+    muatDaftarPegawai();
+  });
   perbaruiTampilanTombol();
   mulaiPantauLokasi();
 
@@ -1812,6 +1867,8 @@
     muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
     isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
     renderDashboard(data);
+    const jamSekarang = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('terakhirDiperbarui').textContent = `Diperbarui ${jamSekarang} WIB`;
     document.getElementById('footerNote').textContent =
       `Data terpantau publik · diperbarui ${new Date().toLocaleString('id-ID')}`;
     tampilkanBadgeAkhirBulan();
@@ -1996,11 +2053,56 @@
     requestAnimationFrame(frame);
   }
 
+  // Data terakhir dari rekapPersen (dengan periode) disimpan di sini supaya
+  // tabel Detail per Pegawai bisa diurutkan ulang (sort) tanpa perlu
+  // menghitung ulang dari rekapPerPegawai setiap kali kolom header diklik.
+  let dataTabelTerakhir = [];
+  let sortKolomAktif = 'nama';
+  let sortArahAktif = 'asc'; // 'asc' | 'desc'
+
+  function renderTabelDetail(){
+    const tabelBody = document.getElementById('tabelBody');
+    tabelBody.innerHTML = '';
+    const arah = sortArahAktif === 'asc' ? 1 : -1;
+    const terurut = [...dataTabelTerakhir].sort((a,b) => {
+      if(sortKolomAktif === 'nama') return a.nama.localeCompare(b.nama, 'id') * arah;
+      if(sortKolomAktif === 'persen') return (a.persen - b.persen) * arah;
+      return ((a.r[sortKolomAktif]||0) - (b.r[sortKolomAktif]||0)) * arah;
+    });
+    terurut.forEach(({nama, r, persen}) => {
+      const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tabelBody.appendChild(tr);
+    });
+    // perbarui indikator panah & kolom aktif di header
+    document.querySelectorAll('th.sortable').forEach(th => {
+      const aktif = th.dataset.sort === sortKolomAktif;
+      th.classList.toggle('aktif', aktif);
+      const panah = th.querySelector('.panah');
+      if(aktif) panah.textContent = sortArahAktif === 'asc' ? '▲' : '▼';
+      else panah.textContent = th.dataset.tipe === 'teks' ? '▲' : '▼';
+    });
+  }
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const kolom = th.dataset.sort;
+      if(sortKolomAktif === kolom){
+        sortArahAktif = sortArahAktif === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKolomAktif = kolom;
+        // default: teks (Nama) menaik A-Z, angka menurun (yang terbanyak duluan)
+        sortArahAktif = th.dataset.tipe === 'teks' ? 'asc' : 'desc';
+      }
+      renderTabelDetail();
+    });
+  });
+
   function renderDashboard(data){
     const { rekapPerPegawai, trenHarian, daftarHarian } = data;
     const namaList = Object.keys(rekapPerPegawai);
     let totalHadir=0, totalSakit=0, totalIzin=0, totalAlfa=0, totalDinas=0;
-    const tabelBody = document.getElementById('tabelBody'); tabelBody.innerHTML = '';
 
     // hitung persentase per pegawai, lalu urutkan nama A-Z (alfabetis)
     const rekapPersen = namaList.map(nama => {
@@ -2010,14 +2112,13 @@
       return { nama, r, persen, totalTercatat };
     }).sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
 
-    rekapPersen.forEach(({nama, r, persen}) => {
+    rekapPersen.forEach(({r}) => {
       totalHadir += r.Hadir||0; totalSakit += r.Sakit||0; totalIzin += r.Izin||0; totalAlfa += r.Alfa||0; totalDinas += r['Dinas Luar']||0;
-
-      const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
-      tabelBody.appendChild(tr);
     });
+
+    // simpan untuk sort interaktif & render dengan urutan sort yang sedang aktif
+    dataTabelTerakhir = rekapPersen;
+    renderTabelDetail();
 
     animasiAngka(document.getElementById('totalHadir'), totalHadir);
     animasiAngka(document.getElementById('totalSakit'), totalSakit);
