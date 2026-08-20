@@ -272,7 +272,7 @@
 
   .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch;}
   .panel-grid .panel{display:flex;flex-direction:column;}
-  .peringkat-scroll{height:220px;overflow-y:auto;padding-right:4px;}
+  .peringkat-scroll{flex:1 1 auto;min-height:220px;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;justify-content:center;}
   .peringkat-scroll::-webkit-scrollbar{width:5px;}
   .peringkat-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
   @media(max-width:800px){.panel-grid{grid-template-columns:1fr;}}
@@ -2106,10 +2106,12 @@
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.clientWidth;
     const rowH = 32;
-    // Tinggi kanvas mengikuti jumlah baris (agar tiap baris tetap terbaca),
-    // sedangkan wrapper .peringkat-scroll yang membatasi tinggi 220px & memberi scroll,
-    // sehingga tinggi PANEL tetap sama persis dengan panel Tren Kehadiran Harian.
-    const H = Math.max(220, daftar.length * rowH + 20);
+    // Tinggi kanvas mengikuti tinggi wrapper .peringkat-scroll yang sebenarnya
+    // (wrapper ini fleksibel mengikuti tinggi panel Tren Kehadiran Harian di sampingnya),
+    // sehingga tidak ada ruang kosong tersisa di bawah daftar peringkat.
+    const wrapper = canvas.parentElement;
+    const tinggiWrapper = wrapper ? wrapper.clientHeight : 0;
+    const H = Math.max(220, tinggiWrapper, daftar.length * rowH + 20);
     canvas.style.height = H + 'px';
     canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr, dpr);
     ctx.clearRect(0,0,W,H);
