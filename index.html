@@ -456,7 +456,7 @@
         </select>
         <label for="pnCapaian">Capaian Pembelajaran <span style="color:#e53e3e;">*</span></label>
         <textarea id="pnCapaian" rows="2" placeholder="Capaian pembelajaran yang seharusnya diajarkan"></textarea>
-        <label>Jam Kosong <span style="color:#e53e3e;">*</span></label>
+        <label>Jam Penugasan <span style="color:#e53e3e;">*</span></label>
         <div id="pnJamWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px;">
           <!-- checkbox jam 1-12 diisi lewat JS -->
         </div>
@@ -711,7 +711,7 @@
       <div class="tabel-scroll">
         <table>
           <thead>
-            <tr><th>Tanggal</th><th>Nama Guru</th><th>Status</th><th>Kelas</th><th>Jurusan</th><th>Capaian Pembelajaran</th><th>Jam Kosong</th><th>Tugas</th></tr>
+            <tr><th>Tanggal</th><th>Nama Guru</th><th>Status</th><th>Kelas</th><th>Jurusan</th><th>Capaian Pembelajaran</th><th>Jam Penugasan</th><th>Tugas</th></tr>
           </thead>
           <tbody id="penugasanBody"></tbody>
         </table>
@@ -1268,10 +1268,14 @@
         pinEl.value = ''; resetFoto();
         keteranganEl.value = ''; pnKelas.value = ''; pnJurusan.value = ''; pnCapaian.value = ''; pnTugas.value = '';
         pnJamBoxes.forEach(cb => cb.checked = false);
-        // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi;
-        // status lain (Sakit/Izin/Alfa/Dinas Luar) memakai tipe 'masuk' juga tapi bukan check-in, jadi dilewati.
+        // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi.
+        // Izin/Sakit/Dinas Luar (diisi manual oleh pegawai) juga diberi ucapan
+        // bernada positif, tapi Alfa TIDAK — karena Alfa tercatat otomatis oleh
+        // sistem, bukan pengajuan sadar dari pegawai, jadi tidak pantas diberi ucapan.
         if(pilihStatus.value === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
           tampilkanUcapan(tipe, nama, json.jam || '');
+        } else if(['Izin','Sakit','Dinas Luar'].includes(pilihStatus.value)){
+          tampilkanUcapan(pilihStatus.value, nama, '');
         }
       }
       await cekStatus();
@@ -1299,6 +1303,21 @@
     'Terima kasih telah hadir sepenuhnya untuk murid-murid hari ini. Semoga rumah menyambut dengan kehangatan yang sama seperti yang Bapak/Ibu berikan di sekolah.',
     'Satu hari penuh pengabdian telah selesai. Selamat pulang, dan terima kasih sudah menjadi bagian penting dari perjalanan pendidikan mereka.'
   ];
+  const PESAN_IZIN = [
+    'Terima kasih sudah menyampaikan kabar dengan jujur dan tepat waktu. Semoga urusan yang sedang dijalani berjalan lancar, dan sampai jumpa lagi di sekolah.',
+    'Kepercayaan itu dijaga lewat hal-hal kecil seperti ini. Terima kasih atas keterbukaannya, semoga semua urusan Bapak/Ibu dimudahkan hari ini.',
+    'Sesekali ada hal penting di luar sekolah yang perlu diutamakan, dan itu wajar. Semoga semuanya berjalan baik, kami menunggu kehadiran Bapak/Ibu kembali.'
+  ];
+  const PESAN_SAKIT = [
+    'Terima kasih sudah memberi kabar. Istirahat yang cukup dulu ya, Bapak/Ibu — kesehatan selalu jadi yang utama. Semoga segera pulih dan bugar kembali.',
+    'Semoga lekas membaik, Bapak/Ibu. Jangan dipaksakan, kelas bisa menunggu, tapi kesehatan Bapak/Ibu jauh lebih penting untuk dijaga sekarang.',
+    'Kabar ini sudah tercatat, sekarang saatnya fokus beristirahat. Semoga Bapak/Ibu segera sehat dan bisa kembali mengajar dengan semangat penuh.'
+  ];
+  const PESAN_DINAS = [
+    'Terima kasih atas dedikasinya menjalankan tugas di luar sekolah. Semoga kegiatan dinas hari ini berjalan lancar dan membawa manfaat bagi sekolah.',
+    'Selamat menjalankan tugas, Bapak/Ibu. Apa yang dikerjakan di luar sekolah hari ini tetap menjadi bagian dari pengabdian yang berharga.',
+    'Semoga perjalanan dan tugas dinas hari ini dimudahkan. Terima kasih sudah mewakili sekolah dengan baik, hati-hati di jalan.'
+  ];
 
   const modalUcapan = document.getElementById('modalUcapan');
   const ucapanIco = document.getElementById('ucapanIco');
@@ -1307,6 +1326,25 @@
   const ucapanQuote = document.getElementById('ucapanQuote');
 
   function tampilkanUcapan(tipe, nama, jam){
+    // tipe: 'masuk' | 'pulang' (status Hadir) ATAU 'Izin' | 'Sakit' | 'Dinas Luar'
+    const PETA_NONHADIR = {
+      'Izin':       { ico: '📋', judul: 'Izin Tercatat',      pesan: PESAN_IZIN },
+      'Sakit':      { ico: '🩺', judul: 'Semoga Lekas Sembuh', pesan: PESAN_SAKIT },
+      'Dinas Luar': { ico: '🧳', judul: 'Dinas Luar Tercatat', pesan: PESAN_DINAS }
+    };
+
+    if (PETA_NONHADIR[tipe]) {
+      const info = PETA_NONHADIR[tipe];
+      const pesan = info.pesan[Math.floor(Math.random() * info.pesan.length)];
+      ucapanIco.textContent = info.ico;
+      ucapanIco.classList.remove('pulang');
+      ucapanJudul.textContent = info.judul;
+      ucapanSub.innerHTML = `Terima kasih, <strong>${nama}</strong> — status sudah tercatat`;
+      ucapanQuote.textContent = pesan;
+      modalUcapan.classList.add('show');
+      return;
+    }
+
     const masuk = tipe === 'masuk';
     const daftarPesan = masuk ? PESAN_MASUK : PESAN_PULANG;
     const pesan = daftarPesan[Math.floor(Math.random() * daftarPesan.length)];
