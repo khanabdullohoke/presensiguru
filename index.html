@@ -382,6 +382,43 @@
   .faq-item summary::after{content:"+";font-size:18px;font-weight:400;color:var(--faint);flex-shrink:0;}
   .faq-item[open] summary::after{content:"–";}
   .faq-item p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.7;padding-right:20px;}
+
+  /* ===== Kalender Pendidikan ===== */
+  .kalender-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+  @media(max-width:760px){.kalender-grid{grid-template-columns:1fr;}}
+
+  .kalender-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .kalender-badge-semester{
+    flex-shrink:0;font-family:var(--font-display);font-weight:800;font-size:11px;letter-spacing:.4px;
+    color:var(--navy);background:var(--info-bg);padding:5px 11px;border-radius:999px;
+  }
+
+  .kalender-list{list-style:none;margin:0;padding:0;}
+  .kalender-list li{
+    display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);
+  }
+  .kalender-list li:last-child{border-bottom:none;}
+  .kalender-tgl{
+    flex-shrink:0;width:64px;text-align:center;font-family:var(--font-display);font-weight:800;
+    color:var(--navy);font-size:11.5px;line-height:1.35;padding-top:1px;
+  }
+  .kalender-body{flex:1;min-width:0;}
+  .kalender-body .judul{font-size:13px;font-weight:700;color:var(--ink);line-height:1.4;}
+  .kalender-body .ket{font-size:11.5px;color:var(--faint);margin-top:2px;}
+  .kalender-tipe{
+    flex-shrink:0;align-self:flex-start;margin-top:1px;font-size:10px;font-weight:700;padding:3px 8px;
+    border-radius:999px;white-space:nowrap;
+  }
+  .kalender-tipe.masuk{background:var(--ok-bg);color:var(--ok);}
+  .kalender-tipe.libur{background:var(--err-bg);color:var(--err);}
+  .kalender-tipe.ujian{background:var(--info-bg);color:var(--info);}
+  .kalender-tipe.rapor{background:var(--warn-bg);color:#93590a;}
+  .kalender-tipe.perkiraan{background:#f1eefc;color:#7c4dcf;}
+
+  .kalender-catatan{
+    margin-top:2px;padding:12px 14px;border-radius:12px;background:var(--bg);
+    font-size:11.5px;color:var(--muted);line-height:1.7;
+  }
 </style>
 </head>
 <body>
@@ -732,6 +769,161 @@
         dan profesionalisme bersama — supaya siswa, orang tua, dan masyarakat percaya
         bahwa sekolah dikelola dengan tertib dan terbuka.
       </p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h3>📅 Kalender Pendidikan</h3><p class="panel-sub">Tahun Ajaran 2026/2027 — SMK Ciledug Al-Musaddadiyah</p></div>
+      </div>
+
+      <div class="kalender-grid">
+        <div class="kalender-panel">
+          <div class="panel-head">
+            <h3 style="font-size:13px;margin:0;">Semester 1</h3>
+            <span class="kalender-badge-semester">JUL — DES 2026</span>
+          </div>
+          <ul class="kalender-list">
+            <li>
+              <div class="kalender-tgl">15 Jul</div>
+              <div class="kalender-body"><div class="judul">Hari Pertama Masuk Sekolah</div></div>
+              <span class="kalender-tipe masuk">Masuk</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">15–17 &amp;<br>20–21 Jul</div>
+              <div class="kalender-body"><div class="judul">MPLS</div><div class="ket">Masa Pengenalan Lingkungan Sekolah</div></div>
+              <span class="kalender-tipe masuk">Agenda</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">17 Agu</div>
+              <div class="kalender-body"><div class="judul">Libur HUT Kemerdekaan RI</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">25 Agu</div>
+              <div class="kalender-body"><div class="judul">Libur Maulid Nabi</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">30 Nov–<br>11 Des</div>
+              <div class="kalender-body"><div class="judul">Asesmen Sumatif Akhir Semester</div></div>
+              <span class="kalender-tipe ujian">Ujian</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">23 Des</div>
+              <div class="kalender-body"><div class="judul">Pembagian Rapor Semester 1</div></div>
+              <span class="kalender-tipe rapor">Rapor</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">24 Des</div>
+              <div class="kalender-body"><div class="judul">Cuti Bersama Natal</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">25 Des</div>
+              <div class="kalender-body"><div class="judul">Libur Natal</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">28 Des–<br>8 Jan</div>
+              <div class="kalender-body"><div class="judul">Libur Semester 1</div><div class="ket">2026 – 2027</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="kalender-panel">
+          <div class="panel-head">
+            <h3 style="font-size:13px;margin:0;">Semester 2</h3>
+            <span class="kalender-badge-semester">JAN — JUN 2027</span>
+          </div>
+          <ul class="kalender-list">
+            <li>
+              <div class="kalender-tgl">1 Jan</div>
+              <div class="kalender-body"><div class="judul">Tahun Baru</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">5 Jan</div>
+              <div class="kalender-body"><div class="judul">Isra Mi'raj</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">11 Jan</div>
+              <div class="kalender-body"><div class="judul">Awal Semester 2</div></div>
+              <span class="kalender-tipe masuk">Masuk</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">6 Feb</div>
+              <div class="kalender-body"><div class="judul">Imlek</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">8–12 Feb</div>
+              <div class="kalender-body"><div class="judul">Libur Awal Ramadan</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">9 Mar</div>
+              <div class="kalender-body"><div class="judul">Nyepi</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">8–19 Mar</div>
+              <div class="kalender-body"><div class="judul">Libur Idulfitri</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">26 Apr</div>
+              <div class="kalender-body"><div class="judul">Wafat Isa Almasih</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">1 Mei</div>
+              <div class="kalender-body"><div class="judul">Hari Buruh</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">6 Mei</div>
+              <div class="kalender-body"><div class="judul">Kenaikan Isa Almasih</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">16 Mei</div>
+              <div class="kalender-body"><div class="judul">Waisak</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">17 Mei</div>
+              <div class="kalender-body"><div class="judul">Iduladha</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">1 Jun</div>
+              <div class="kalender-body"><div class="judul">Hari Lahir Pancasila</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">6 Jun</div>
+              <div class="kalender-body"><div class="judul">Tahun Baru Islam</div><div class="ket">Tanggal perkiraan</div></div>
+              <span class="kalender-tipe perkiraan">Perkiraan</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">25 Jun</div>
+              <div class="kalender-body"><div class="judul">Pembagian Rapor Semester 2</div></div>
+              <span class="kalender-tipe rapor">Rapor</span>
+            </li>
+            <li>
+              <div class="kalender-tgl">28 Jun–<br>9 Jul</div>
+              <div class="kalender-body"><div class="judul">Libur Akhir Tahun Ajaran</div></div>
+              <span class="kalender-tipe libur">Libur</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="kalender-catatan">
+        📌 Tanggal yang bertanda <strong>"Perkiraan"</strong> mengikuti penetapan hari libur keagamaan/nasional oleh pemerintah dan dapat berubah sewaktu-waktu menyesuaikan Surat Keputusan Bersama (SKB) resmi terbaru.
+      </div>
     </div>
 
     <div class="info-grid">
