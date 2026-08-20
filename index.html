@@ -436,9 +436,23 @@
 
       <div id="penugasanWrap" style="display:none;">
         <label for="pnKelas">Kelas <span style="color:#e53e3e;">*</span></label>
-        <input type="text" id="pnKelas" placeholder="Contoh: XI TKJ 2">
+        <select id="pnKelas">
+          <option value="">-- Pilih kelas --</option>
+          <option value="X">X</option>
+          <option value="XI">XI</option>
+          <option value="XII">XII</option>
+        </select>
         <label for="pnJurusan">Jurusan <span style="color:#e53e3e;">*</span></label>
-        <input type="text" id="pnJurusan" placeholder="Contoh: Teknik Komputer dan Jaringan">
+        <select id="pnJurusan">
+          <option value="">-- Pilih jurusan --</option>
+          <option value="Akuntansi">Akuntansi</option>
+          <option value="Manajemen Perkantoran">Manajemen Perkantoran</option>
+          <option value="Bisnis Digital Pemasaran">Bisnis Digital Pemasaran</option>
+          <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+          <option value="Teknik Jaringan Komputer & Telekomunikasi">Teknik Jaringan Komputer & Telekomunikasi</option>
+          <option value="Teknik Sepeda Motor">Teknik Sepeda Motor</option>
+          <option value="Teknik Kendaraan Ringan">Teknik Kendaraan Ringan</option>
+        </select>
         <label for="pnCapaian">Capaian Pembelajaran <span style="color:#e53e3e;">*</span></label>
         <textarea id="pnCapaian" rows="2" placeholder="Capaian pembelajaran yang seharusnya diajarkan"></textarea>
         <label for="pnTugas">Tugas <span style="color:#e53e3e;">*</span></label>
@@ -1144,6 +1158,7 @@
   pilihStatus.addEventListener('change', perbaruiTampilanTombol);
   pinEl.addEventListener('input', perbaruiEnableTombol);
   [pnKelas, pnJurusan, pnCapaian, pnTugas].forEach(el => el.addEventListener('input', perbaruiEnableTombol));
+  [pnKelas, pnJurusan].forEach(el => el.addEventListener('change', perbaruiEnableTombol));
 
   function resetFoto(){
     fotoDataUrl = '';
