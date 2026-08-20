@@ -270,7 +270,11 @@
   .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:var(--info-bg);}
   .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:var(--err-bg);}
 
-  .panel-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px;align-items:start;}
+  .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch;}
+  .panel-grid .panel{display:flex;flex-direction:column;}
+  .peringkat-scroll{height:220px;overflow-y:auto;padding-right:4px;}
+  .peringkat-scroll::-webkit-scrollbar{width:5px;}
+  .peringkat-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
   @media(max-width:800px){.panel-grid{grid-template-columns:1fr;}}
 
   .panel{
@@ -614,23 +618,11 @@
         </div>
         <div class="panel">
           <div class="panel-head">
-            <div><h3>Peringkat Kehadiran</h3><p class="panel-sub">Diurutkan dari persentase hadir tertinggi</p></div>
+            <div><h3>15 Peringkat Kehadiran Tertinggi</h3><p class="panel-sub">Diurutkan dari persentase hadir terbaik</p></div>
           </div>
-          <canvas id="chartPeringkat" height="220"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div><h3>Detail per Pegawai</h3><p class="panel-sub">Rincian lengkap kehadiran bulan berjalan</p></div>
-        </div>
-        <div class="tabel-scroll">
-        <table>
-          <thead>
-            <tr><th>Nama</th><th>Periode</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
-          </thead>
-          <tbody id="tabelBody"></tbody>
-        </table>
+          <div class="peringkat-scroll">
+            <canvas id="chartPeringkat"></canvas>
+          </div>
         </div>
       </div>
 
@@ -651,6 +643,20 @@
             <tbody id="riwayatBody"></tbody>
           </table>
         </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Detail per Pegawai</h3><p class="panel-sub">Rincian lengkap kehadiran bulan berjalan</p></div>
+        </div>
+        <div class="tabel-scroll">
+        <table>
+          <thead>
+            <tr><th>Nama</th><th>Periode</th><th class="num">Hadir</th><th class="num">Sakit</th><th class="num">Izin</th><th class="num">Alfa</th><th class="num">Dinas Luar</th><th class="num">Tingkat</th></tr>
+          </thead>
+          <tbody id="tabelBody"></tbody>
+        </table>
         </div>
       </div>
 
@@ -1592,14 +1598,38 @@
     doc.setFontSize(8.5); doc.setTextColor(120);
     doc.text(`Dicetak otomatis dari sistem presensi pada ${new Date().toLocaleString('id-ID')}`, 14, akhirTabel + 8);
 
-    // Kolom tanda tangan
-    const yTtd = Math.min(akhirTabel + 34, doc.internal.pageSize.getHeight() - 20);
-    doc.setTextColor(30);
-    doc.text('Mengetahui,', 14, yTtd);
-    doc.text('Kepala Sekolah', 14, yTtd + 5);
-    doc.text('Operator Presensi', lebar - 55, yTtd + 5);
-    doc.text('(...............................)', 14, yTtd + 28);
-    doc.text('(...............................)', lebar - 55, yTtd + 28);
+    // Kolom tanda tangan (dua kolom simetris: kiri = Kepala Sekolah, kanan = Operator Presensi)
+    // Diberi jarak aman & cek sisa ruang halaman, supaya kalau tabel panjang
+    // dan mepet ke bawah, blok tanda tangan pindah ke halaman baru — bukan
+    // malah menumpuk/terpotong di baris paling bawah.
+    const tinggiBlokTtd = 48; // kira-kira ruang total yang dibutuhkan blok tanda tangan (mm)
+    const tinggiHalaman = doc.internal.pageSize.getHeight();
+    let yTtd = akhirTabel + 20;
+    if(yTtd + tinggiBlokTtd > tinggiHalaman - 10){
+      doc.addPage();
+      yTtd = 22;
+    }
+
+    const tanggalCetak = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+    const kolomKiriX = lebar * 0.27;   // titik tengah kolom kiri (Kepala Sekolah)
+    const kolomKananX = lebar * 0.73;  // titik tengah kolom kanan (Operator Presensi)
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(30);
+    doc.text('Mengetahui,', kolomKiriX, yTtd, { align: 'center' });
+    doc.text('Kepala Sekolah', kolomKiriX, yTtd + 5, { align: 'center' });
+    doc.text(`Ciledug, ${tanggalCetak}`, kolomKananX, yTtd, { align: 'center' });
+    doc.text('Operator Presensi', kolomKananX, yTtd + 5, { align: 'center' });
+
+    // garis tanda tangan (pengganti titik-titik, sejajar rapi di kedua kolom,
+    // dengan ruang kosong di atasnya untuk tanda tangan asli)
+    const lebarGaris = 45;
+    doc.setDrawColor(120); doc.setLineWidth(0.3);
+    doc.line(kolomKiriX - lebarGaris/2, yTtd + 26, kolomKiriX + lebarGaris/2, yTtd + 26);
+    doc.line(kolomKananX - lebarGaris/2, yTtd + 26, kolomKananX + lebarGaris/2, yTtd + 26);
+
+    doc.setFontSize(8.5); doc.setTextColor(90);
+    doc.text('(.............................)', kolomKiriX, yTtd + 31, { align: 'center' });
+    doc.text('(.............................)', kolomKananX, yTtd + 31, { align: 'center' });
 
     const namaFile = `Rekap-Presensi-${NAMA_BULAN[pilihBulan.value-1]}-${pilihTahun.value}.pdf`;
     doc.save(namaFile);
@@ -1660,12 +1690,12 @@
     const tanggalList = Object.keys(trenHarian).sort();
     const labelTren = tanggalList.map(t => t.split('-')[2]);
     const nilaiTren = tanggalList.map(t => trenHarian[t]);
-    const top8 = rekapPersen.slice(0, 8);
+    const top15 = rekapPersen.slice(0, 15);
     gambarGrafikGaris('chartTren', labelTren, nilaiTren);
-    gambarPeringkat('chartPeringkat', top8);
+    gambarPeringkat('chartPeringkat', top15);
 
     // simpan untuk digambar ulang saat ukuran layar berubah (responsif tanpa hitung ulang data)
-    grafikTerakhir = { labelTren, nilaiTren, top8 };
+    grafikTerakhir = { labelTren, nilaiTren, top15 };
 
     riwayatTerakhir = daftarHarian || [];
     renderRiwayat(riwayatTerakhir);
@@ -1678,7 +1708,7 @@
     resizeTimer = setTimeout(() => {
       if(!grafikTerakhir) return;
       gambarGrafikGaris('chartTren', grafikTerakhir.labelTren, grafikTerakhir.nilaiTren);
-      gambarPeringkat('chartPeringkat', grafikTerakhir.top8);
+      gambarPeringkat('chartPeringkat', grafikTerakhir.top15);
     }, 150);
   });
 
@@ -1873,6 +1903,9 @@
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.clientWidth;
     const rowH = 32;
+    // Tinggi kanvas mengikuti jumlah baris (agar tiap baris tetap terbaca),
+    // sedangkan wrapper .peringkat-scroll yang membatasi tinggi 220px & memberi scroll,
+    // sehingga tinggi PANEL tetap sama persis dengan panel Tren Kehadiran Harian.
     const H = Math.max(220, daftar.length * rowH + 20);
     canvas.style.height = H + 'px';
     canvas.width = W*dpr; canvas.height = H*dpr; ctx.scale(dpr, dpr);
