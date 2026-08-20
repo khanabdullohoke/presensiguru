@@ -434,7 +434,19 @@
         <option value="Dinas Luar">Dinas Luar</option>
       </select>
 
-      <label for="keterangan">Catatan tambahan (opsional)</label>
+      <div id="penugasanWrap" style="display:none;">
+        <label for="pnKelas">Kelas <span style="color:#e53e3e;">*</span></label>
+        <input type="text" id="pnKelas" placeholder="Contoh: XI TKJ 2">
+        <label for="pnJurusan">Jurusan <span style="color:#e53e3e;">*</span></label>
+        <input type="text" id="pnJurusan" placeholder="Contoh: Teknik Komputer dan Jaringan">
+        <label for="pnCapaian">Capaian Pembelajaran <span style="color:#e53e3e;">*</span></label>
+        <textarea id="pnCapaian" rows="2" placeholder="Capaian pembelajaran yang seharusnya diajarkan"></textarea>
+        <label for="pnTugas">Tugas <span style="color:#e53e3e;">*</span></label>
+        <textarea id="pnTugas" rows="2" placeholder="Tugas yang diberikan kepada siswa selama guru berhalangan hadir"></textarea>
+        <div class="field-hint">Wajib diisi karena Anda tercatat sebagai guru dan mengajukan Izin/Dinas Luar, agar kelas tetap mendapat penugasan.</div>
+      </div>
+
+      <label for="keterangan" id="labelKeterangan">Catatan tambahan (opsional)</label>
       <textarea id="keterangan" rows="2" placeholder="Contoh: izin keperluan keluarga"></textarea>
 
       <label for="pin">Kode Keamanan (PIN)</label>
@@ -779,6 +791,11 @@
   const lokasiSub = document.getElementById('lokasiSub');
   const btnUlangiLokasi = document.getElementById('btnUlangiLokasi');
   const lokasiCatatanOpsional = document.getElementById('lokasiCatatanOpsional');
+  const penugasanWrap = document.getElementById('penugasanWrap');
+  const pnKelas = document.getElementById('pnKelas');
+  const pnJurusan = document.getElementById('pnJurusan');
+  const pnCapaian = document.getElementById('pnCapaian');
+  const pnTugas = document.getElementById('pnTugas');
 
   function tampilkanStatusLokasi(state, teks, sub){
     lokasiCard.className = 'lokasi-card ' + state;
@@ -1025,6 +1042,21 @@
     }
   }
 
+  // Guru (bukan staf non-guru) yang mengajukan Izin/Dinas Luar wajib mengisi
+  // tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) agar kelas
+  // yang ditinggalkan tetap mendapat arahan. Staf cukup catatan opsional.
+  function isGuru(){
+    const p = pegawaiMap[pilihNama.value];
+    return !!p && /guru/i.test(p.jabatan || '');
+  }
+  function perluPenugasan(){
+    return (pilihStatus.value === 'Izin' || pilihStatus.value === 'Dinas Luar') && isGuru();
+  }
+  function penugasanValid(){
+    if(!perluPenugasan()) return true;
+    return pnKelas.value.trim() && pnJurusan.value.trim() && pnCapaian.value.trim() && pnTugas.value.trim();
+  }
+
   // Menampilkan set tombol yang sesuai (Hadir = masuk/pulang, lainnya = simpan sekali)
   function perbaruiTampilanTombol(){
     if(pilihStatus.value === 'Hadir'){
@@ -1032,6 +1064,7 @@
     } else {
       btnRowHadir.style.display = 'none'; btnRowLain.style.display = 'grid';
     }
+    penugasanWrap.style.display = perluPenugasan() ? 'block' : 'none';
     perbaruiCatatanLokasi();
     perbaruiEnableTombol();
   }
@@ -1059,7 +1092,7 @@
     const sudahAdaCatatanHariIni = d.sudahMasuk;
     const lokasiOk = !wajibLokasi() || lokasiTerkini.valid;
 
-    if(!nama || !pinValid() || !fotoValid() || !lokasiOk){
+    if(!nama || !pinValid() || !fotoValid() || !lokasiOk || !penugasanValid()){
       btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true; return;
     }
 
@@ -1107,9 +1140,10 @@
       perbaruiEnableTombol();
     }catch(err){ statusBox.textContent = 'Gagal mengecek status.'; }
   }
-  pilihNama.addEventListener('change', cekStatus);
+  pilihNama.addEventListener('change', () => { cekStatus(); perbaruiTampilanTombol(); });
   pilihStatus.addEventListener('change', perbaruiTampilanTombol);
   pinEl.addEventListener('input', perbaruiEnableTombol);
+  [pnKelas, pnJurusan, pnCapaian, pnTugas].forEach(el => el.addEventListener('input', perbaruiEnableTombol));
 
   function resetFoto(){
     fotoDataUrl = '';
@@ -1126,6 +1160,7 @@
     if(!pinValid()){ tampilPesan('Masukkan kode keamanan (PIN) terlebih dahulu.', 'err'); return; }
     if(!fotoValid()){ tampilPesan('Ambil foto bukti kehadiran terlebih dahulu.', 'err'); return; }
     if(wajibLokasi() && !lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
+    if(!penugasanValid()){ tampilPesan('Lengkapi tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) terlebih dahulu.', 'err'); return; }
 
     // Jaring pengaman tambahan di sisi klien: sekali absen masuk & sekali absen pulang per hari.
     // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
@@ -1155,6 +1190,10 @@
           tipe: tipe,
           status: pilihStatus.value,
           keterangan: keteranganEl.value,
+          kelas: perluPenugasan() ? pnKelas.value.trim() : '',
+          jurusan: perluPenugasan() ? pnJurusan.value.trim() : '',
+          capaian: perluPenugasan() ? pnCapaian.value.trim() : '',
+          tugas: perluPenugasan() ? pnTugas.value.trim() : '',
           pin: pinEl.value,
           lat: lokasiTerkini.lat,
           lng: lokasiTerkini.lng,
@@ -1165,6 +1204,7 @@
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
       if(json.ok){
         pinEl.value = ''; resetFoto();
+        keteranganEl.value = ''; pnKelas.value = ''; pnJurusan.value = ''; pnCapaian.value = ''; pnTugas.value = '';
         // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi;
         // status lain (Sakit/Izin/Alfa/Dinas Luar) memakai tipe 'masuk' juga tapi bukan check-in, jadi dilewati.
         if(pilihStatus.value === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
