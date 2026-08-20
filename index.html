@@ -606,7 +606,7 @@
         <select id="pilihBulan"></select>
         <select id="pilihTahun"></select>
         <button id="btnMuat">Tampilkan</button>
-        <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Unduh PDF (Admin)</button>
+        <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Login Admin</button>
         <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF</button>
       </div>
     </div>
@@ -1034,8 +1034,11 @@
 
   /* ---------- Ambil foto + kompresi otomatis di perangkat ---------- */
   // Mengecilkan gambar ke lebar maksimum & kualitas JPEG tertentu di
-  // canvas sebelum dikirim, supaya ukuran data tetap ringan.
-  function kompresGambar(file, maxWidth = 640, quality = 0.6){
+  // canvas sebelum dikirim, supaya ukuran data tetap sangat ringan
+  // (± 25–45 KB per foto pada kondisi normal) demi menghemat ruang
+  // penyimpanan Drive. 420px & kualitas 0.45 masih cukup jelas untuk
+  // keperluan bukti kehadiran (bukan foto resolusi tinggi).
+  function kompresGambar(file, maxWidth = 420, quality = 0.45){
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -1498,6 +1501,11 @@
         adminPesan.textContent = 'Berhasil masuk sebagai admin.';
         adminPesan.className = 'modal-pesan ok';
         tampilkanTombolPdfAdmin();
+        // Render ulang tabel riwayat (mempertahankan filter pencarian yang
+        // sedang aktif) supaya tautan foto langsung terbuka untuk admin,
+        // tanpa perlu memuat ulang data dari server.
+        const qAktif = document.getElementById('cariRiwayat').value.trim().toLowerCase();
+        renderRiwayat(qAktif ? riwayatTerakhir.filter(r => r.nama.toLowerCase().includes(qAktif)) : riwayatTerakhir);
         setTimeout(tutupModalAdminFn, 900);
       } else {
         adminPesan.textContent = json.error || 'Password admin salah.';
@@ -1618,7 +1626,7 @@
     tampilkanAlfaBanner(data.alfaHariIni);
     // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
     // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
-    // hanya melihat tombol "🔒 Unduh PDF (Admin)" yang meminta password.
+    // hanya melihat tombol "🔒 Login Admin" yang meminta password.
     btnUnduhPdf.disabled = !adminTerverifikasi;
   }
 
@@ -1634,7 +1642,7 @@
     }
     const daftarUrut = [...alfaHariIni.daftar].sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
     list.innerHTML = daftarUrut.map(p =>
-      `<span class="alfa-chip">${p.nama} <span>— ${p.jabatan}</span></span>`
+      `<span class="alfa-chip">${escapeHtml(p.nama)} <span>— ${escapeHtml(p.jabatan)}</span></span>`
     ).join('');
     banner.classList.add('show');
   }
@@ -1815,7 +1823,7 @@
 
       const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${nama}</td><td>${periodeLabel}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tr.innerHTML = `<td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
       tabelBody.appendChild(tr);
     });
 
@@ -1832,7 +1840,7 @@
     const tanggalList = Object.keys(trenHarian).sort();
     const labelTren = tanggalList.map(t => t.split('-')[2]);
     const nilaiTren = tanggalList.map(t => trenHarian[t]);
-    const top15 = rekapPersen.slice(0, 15);
+    const top15 = [...rekapPersen].sort((a,b) => b.persen - a.persen).slice(0, 15);
     gambarGrafikGaris('chartTren', labelTren, nilaiTren);
     gambarPeringkat('chartPeringkat', top15);
 
@@ -1856,6 +1864,20 @@
   });
 
   // Ubah string jam ("07.12", "07:12", "07.12.34") menjadi total menit sejak 00:00, untuk dibandingkan
+  // Escape karakter HTML sebelum data teks bebas (nama, tugas, capaian, dll.)
+  // dimasukkan ke innerHTML. Halaman ini terbuka untuk publik tanpa login,
+  // jadi data apa pun yang berasal dari input manual (mis. kolom Tugas yang
+  // diisi guru) wajib di-escape agar tidak bisa dipakai untuk XSS.
+  function escapeHtml(str){
+    if(str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function jamKeMenit(jamStr){
     if(!jamStr) return null;
     const bagian = String(jamStr).split(/[.:]/).map(Number);
@@ -1864,19 +1886,40 @@
   }
   const BATAS_MENIT_KUNING = 8*60; // 08.00 — hanya penanda visual, terpisah dari aturan resmi terlambat pukul 07.30
 
-  function renderRiwayat(daftar){
-    const body = document.getElementById('riwayatBody');
-    body.innerHTML = '';
+  // Helper generik untuk mengisi <tbody>: menghindari duplikasi pola yang
+  // sama persis di renderRiwayat & renderPenugasan (kosongkan isi lama →
+  // tampilkan pesan bila data kosong → render baris satu per satu).
+  function renderTabel(bodyEl, daftar, kolomKosong, pesanKosong, buatBarisHtml){
+    bodyEl.innerHTML = '';
     if(!daftar.length){
-      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:20px;">Belum ada data untuk periode ini</td></tr>';
+      bodyEl.innerHTML = `<tr><td colspan="${kolomKosong}" style="text-align:center;color:var(--faint);padding:20px;">${pesanKosong}</td></tr>`;
       return;
     }
     daftar.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = buatBarisHtml(row);
+      bodyEl.appendChild(tr);
+    });
+  }
+
+  function renderRiwayat(daftar){
+    const body = document.getElementById('riwayatBody');
+    renderTabel(body, daftar, 6, 'Belum ada data untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
-      const kelasStatus = row.status.replace(/\s+/g,'');
+      const kelasStatus = escapeHtml(row.status.replace(/\s+/g,''));
+      // Foto bukti kehadiran bersifat pribadi. Dashboard ini terbuka untuk
+      // publik demi transparansi status kehadiran, tapi tautan foto asli
+      // hanya ditampilkan sebagai link yang bisa dibuka untuk admin yang
+      // sudah login — publik hanya melihat indikator "ada/tidak" foto,
+      // tanpa bisa membuka isinya.
       const tautanFoto = [];
-      if(row.fotoMasuk) tautanFoto.push(`<a href="${row.fotoMasuk}" target="_blank" rel="noopener">Masuk</a>`);
-      if(row.fotoPulang) tautanFoto.push(`<a href="${row.fotoPulang}" target="_blank" rel="noopener">Pulang</a>`);
+      if(adminTerverifikasi){
+        if(row.fotoMasuk) tautanFoto.push(`<a href="${escapeHtml(row.fotoMasuk)}" target="_blank" rel="noopener">Masuk</a>`);
+        if(row.fotoPulang) tautanFoto.push(`<a href="${escapeHtml(row.fotoPulang)}" target="_blank" rel="noopener">Pulang</a>`);
+      } else {
+        if(row.fotoMasuk) tautanFoto.push('<span title="Foto tersimpan, hanya terlihat oleh admin">Masuk 🔒</span>');
+        if(row.fotoPulang) tautanFoto.push('<span title="Foto tersimpan, hanya terlihat oleh admin">Pulang 🔒</span>');
+      }
       const kolomFoto = tautanFoto.length ? tautanFoto.join(' · ') : '—';
 
       // Penanda "lewat jam 08.00" hanya relevan untuk status Hadir (jam masuk sekolah sungguhan).
@@ -1885,13 +1928,11 @@
       const menitMasuk = row.status === 'Hadir' ? jamKeMenit(row.jamMasuk) : null;
       const telatKuning = menitMasuk !== null && menitMasuk >= BATAS_MENIT_KUNING;
       const kolomJamMasuk = row.jamMasuk
-        ? (telatKuning ? `<span class="jam-terlambat" title="Absen masuk lewat dari jam 08.00">⚠ ${row.jamMasuk}</span>` : row.jamMasuk)
+        ? (telatKuning ? `<span class="jam-terlambat" title="Absen masuk lewat dari jam 08.00">⚠ ${escapeHtml(row.jamMasuk)}</span>` : escapeHtml(row.jamMasuk))
         : '—';
 
       const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span>${badgeOtomatis}</td><td class="num">${kolomJamMasuk}</td><td class="num">${row.jamPulang || '—'}</td><td class="num">${kolomFoto}</td>`;
-      body.appendChild(tr);
+      return `<td>${tglLabel}</td><td>${escapeHtml(row.nama)}</td><td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span>${badgeOtomatis}</td><td class="num">${kolomJamMasuk}</td><td class="num">${escapeHtml(row.jamPulang) || '—'}</td><td class="num">${kolomFoto}</td>`;
     });
   }
 
@@ -1907,18 +1948,11 @@
   function renderPenugasan(daftar){
     penugasanTerakhir = (daftar || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Dinas Luar'));
     const body = document.getElementById('penugasanBody');
-    body.innerHTML = '';
-    if(!penugasanTerakhir.length){
-      body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--faint);padding:20px;">Belum ada penugasan untuk periode ini</td></tr>';
-      return;
-    }
-    penugasanTerakhir.forEach(row => {
+    renderTabel(body, penugasanTerakhir, 8, 'Belum ada penugasan untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
-      const kelasStatus = row.status.replace(/\s+/g,'');
+      const kelasStatus = escapeHtml(row.status.replace(/\s+/g,''));
       const jamLabel = row.jam ? row.jam.split(',').map(j => `Jam ${j}`).join(', ') : '—';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${tglLabel}</td><td>${row.nama}</td><td><span class="status-tag ${kelasStatus}">${row.status}</span></td><td>${row.kelas}</td><td>${row.jurusan || '—'}</td><td>${row.capaian || '—'}</td><td>${jamLabel}</td><td>${row.tugas || '—'}</td>`;
-      body.appendChild(tr);
+      return `<td>${tglLabel}</td><td>${escapeHtml(row.nama)}</td><td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span></td><td>${escapeHtml(row.kelas)}</td><td>${escapeHtml(row.jurusan) || '—'}</td><td>${escapeHtml(row.capaian) || '—'}</td><td>${escapeHtml(jamLabel)}</td><td>${escapeHtml(row.tugas) || '—'}</td>`;
     });
   }
   document.getElementById('cariPenugasan').addEventListener('input', (e) => {
@@ -2091,8 +2125,13 @@
     const persenW = 42;
     const barMaxW = W - labelW - persenW - 6;
 
+    // Bila jumlah baris tidak memenuhi tinggi panel (220px), baris dipusatkan
+    // secara vertikal supaya tidak ada kesan "ruang kosong" menumpuk di bawah.
+    const tinggiIsi = daftar.length * rowH;
+    const offsetY = Math.max(0, (H - tinggiIsi) / 2) - 13;
+
     daftar.forEach((item, i) => {
-      const y = 13 + i*rowH;
+      const y = 13 + offsetY + i*rowH;
       const barH = 14;
       const barW = barMaxW * (item.persen/100);
       const warna = warnaPersen(item.persen);
