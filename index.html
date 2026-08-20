@@ -686,7 +686,7 @@
         </div>
         <div class="panel">
           <div class="panel-head">
-            <div><h3>15 Peringkat Kehadiran Tertinggi</h3><p class="panel-sub">Diurutkan dari persentase hadir terbaik</p></div>
+            <div><h3>15 Peringkat Kehadiran Tertinggi</h3><p class="panel-sub">Diurutkan dari persentase hadir terbaik &middot; hanya pegawai dengan catatan kehadiran cukup bulan ini</p></div>
           </div>
           <div class="peringkat-scroll">
             <canvas id="chartPeringkat"></canvas>
@@ -2007,7 +2007,7 @@
       const r = rekapPerPegawai[nama];
       const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Alfa||0)+(r['Dinas Luar']||0);
       const persen = totalTercatat > 0 ? Math.round((r.Hadir||0) / totalTercatat * 100) : 0;
-      return { nama, r, persen };
+      return { nama, r, persen, totalTercatat };
     }).sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
 
     rekapPersen.forEach(({nama, r, persen}) => {
@@ -2032,7 +2032,20 @@
     const tanggalList = Object.keys(trenHarian).sort();
     const labelTren = tanggalList.map(t => t.split('-')[2]);
     const nilaiTren = tanggalList.map(t => trenHarian[t]);
-    const top15 = [...rekapPersen].sort((a,b) => b.persen - a.persen).slice(0, 15);
+
+    // Syarat minimal hari tercatat supaya masuk peringkat: mencegah pegawai
+    // yang baru punya sedikit catatan bulan ini (mis. baru gabung/data belum
+    // lengkap) tampil di posisi teratas hanya karena kebetulan seluruh catatan
+    // sedikitnya itu berstatus Hadir. Ambang batas mengikuti separuh dari
+    // jumlah hari tercatat TERBANYAK di antara semua pegawai bulan ini (bukan
+    // angka tetap), supaya tetap wajar dipakai di bulan pendek maupun panjang.
+    const maxTercatat = Math.max(0, ...rekapPersen.map(p => p.totalTercatat));
+    const minHariUntukPeringkat = Math.max(5, Math.ceil(maxTercatat * 0.5));
+    const layakPeringkat = rekapPersen.filter(p => p.totalTercatat >= minHariUntukPeringkat);
+
+    const top15 = [...layakPeringkat]
+      .sort((a,b) => b.persen - a.persen || b.totalTercatat - a.totalTercatat)
+      .slice(0, 15);
     gambarGrafikGaris('chartTren', labelTren, nilaiTren);
     gambarPeringkat('chartPeringkat', top15);
 
