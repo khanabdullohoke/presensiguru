@@ -220,6 +220,10 @@
   }
   .status-box.show{display:block;}
   .status-box.warn{background:var(--warn-bg);color:var(--warn-deep,#93590a);}
+  /* Banner "tidak terjadwal hari ini" (guru tanpa jadwal mengajar pada
+     blok aktif minggu ini) — dibedakan dari .warn (perhatian/masalah)
+     supaya tidak terkesan seperti kesalahan, hanya informasi netral. */
+  .status-box.info{background:var(--info-bg);color:#1c5b9e;}
   .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
   .btn-row.tunggal{grid-template-columns:1fr;}
   button{padding:13px 10px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:transform .16s ease,box-shadow .18s ease,opacity .18s ease,background .18s ease;}
@@ -1129,6 +1133,11 @@
         </details>
 
         <details class="faq-item">
+          <summary>Apakah semua guru wajib presensi setiap hari kerja?</summary>
+          <p>Tidak. Sekolah memakai jadwal mengajar bergantian mingguan (Blok A dan Blok B). Guru hanya wajib mengisi presensi pada hari ia benar-benar terjadwal mengajar sesuai blok yang sedang berjalan minggu itu; sistem tidak menandai "Alfa" pada hari guru tersebut tidak memiliki jadwal. Guru tetap dapat mengisi presensi secara sukarela di hari mana pun ia berangkat ke sekolah. Staf/tenaga kependidikan, dan guru yang sekaligus merangkap jabatan staf, tetap wajib presensi setiap hari kerja (Senin-Jumat) tanpa mengikuti jadwal blok.</p>
+        </details>
+
+        <details class="faq-item">
           <summary>Apakah data presensi ini aman?</summary>
           <p>Data tersimpan aman di Basis Data SMK Ciledug Al-Musaddadiyah dan hanya dapat diubah melalui sistem resmi ini. Halaman publik hanya menampilkan rekap, bukan akses langsung ke data mentah. Setiap pengisian juga diverifikasi lewat kode keamanan pribadi dan validasi lokasi di lingkungan sekolah.</p>
         </details>
@@ -1534,12 +1543,12 @@
   async function cekStatus(){
     const nama = pilihNama.value;
     if(!nama){
-      statusBox.classList.remove('show');
+      statusBox.classList.remove('show', 'warn', 'info');
       statusHariIniTerakhir = { sudahMasuk:false, sudahPulang:false, status:null };
       perbaruiEnableTombol();
       return;
     }
-    statusBox.classList.remove('warn');
+    statusBox.classList.remove('warn', 'info');
     statusBox.classList.add('show'); statusBox.textContent = 'Mengecek status...';
     try{
       const res = await fetch(`${API_URL}?aksi=statusHariIni&nama=${encodeURIComponent(nama)}&token=${TOKEN}`);
@@ -1552,8 +1561,18 @@
       if(pilihNama.value !== nama) return;
       statusHariIniTerakhir = d;
 
+      // BARU: guru yang tidak terjadwal mengajar hari ini di Blok yang
+      // sedang aktif TIDAK dituntut presensi (lihat backend
+      // _apakahWajibPresensiHariIni). Ditampilkan sebagai info netral,
+      // bukan peringatan — dan sengaja TIDAK memblokir tombol presensi,
+      // supaya guru yang tetap datang ke sekolah bisa tetap mengisi kalau mau.
       if(!d.sudahMasuk){
-        statusBox.textContent = 'Belum ada catatan presensi hari ini.';
+        if(d.wajibHariIni === false){
+          statusBox.textContent = `Hari ini Anda tidak terjadwal mengajar (Blok ${d.blokAktif} sedang aktif) — presensi tidak diwajibkan. Anda tetap bisa mengisi bila berangkat ke sekolah.`;
+          statusBox.classList.add('info');
+        } else {
+          statusBox.textContent = 'Belum ada catatan presensi hari ini.';
+        }
       } else if(d.status && d.status !== 'Hadir'){
         statusBox.textContent = `Hari ini sudah tercatat dengan status "${d.status}".`;
         statusBox.classList.add('warn');
