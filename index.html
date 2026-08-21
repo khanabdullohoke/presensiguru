@@ -285,7 +285,7 @@
       radial-gradient(120% 140% at 50% -10%, rgba(11,61,145,0.05), transparent 60%),
       var(--card);
     border-radius:22px;padding:26px 20px 22px;
-    box-shadow:0 14px 34px rgba(11,61,145,0.09);border:1px solid var(--line);
+    box-shadow:0 1px 2px rgba(11,61,145,0.06), 0 18px 40px -6px rgba(11,61,145,0.14);border:1px solid var(--line);
     display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   }
   .gauge-panel::after{
@@ -310,13 +310,13 @@
   .kartu:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(11,61,145,0.11);}
   .kartu:hover::before{width:5px;}
   .kartu-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-  .kartu .ico{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-  .kartu .angka{font-size:25px;font-weight:800;font-family:var(--font-display);line-height:1.15;letter-spacing:-.3px;margin-top:9px;font-variant-numeric:tabular-nums;}
+  .kartu .ico{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);}
+  .kartu .angka{font-size:25px;font-weight:800;font-family:var(--font-display);line-height:1.15;letter-spacing:-.3px;margin-top:11px;font-variant-numeric:tabular-nums;}
   .kartu .label{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;}
-  .kartu.hadir::before{background:var(--ok);} .kartu.hadir .angka{color:var(--ok);} .kartu.hadir .ico{background:var(--ok-bg);}
-  .kartu.sakit::before{background:var(--warn);} .kartu.sakit .angka{color:var(--warn);} .kartu.sakit .ico{background:var(--warn-bg);}
-  .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:var(--info-bg);}
-  .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:var(--err-bg);}
+  .kartu.hadir::before{background:var(--ok);} .kartu.hadir .angka{color:var(--ok);} .kartu.hadir .ico{background:radial-gradient(circle at 30% 25%, #6ee7b0, var(--ok-bg) 75%);}
+  .kartu.sakit::before{background:var(--warn);} .kartu.sakit .angka{color:var(--warn);} .kartu.sakit .ico{background:radial-gradient(circle at 30% 25%, #ffd48a, var(--warn-bg) 75%);}
+  .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:radial-gradient(circle at 30% 25%, #a9d4ff, var(--info-bg) 75%);}
+  .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:radial-gradient(circle at 30% 25%, #ffb3ac, var(--err-bg) 75%);}
 
   .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch;}
   .panel-grid .panel{display:flex;flex-direction:column;}
@@ -327,15 +327,31 @@
 
   .panel{
     background:var(--card);border-radius:18px;padding:20px;
-    box-shadow:0 10px 28px rgba(11,61,145,0.06);border:1px solid var(--line);margin-bottom:16px;
+    box-shadow:0 1px 2px rgba(11,61,145,0.05), 0 14px 32px -8px rgba(11,61,145,0.10);border:1px solid var(--line);margin-bottom:16px;
     transition:box-shadow .18s ease,border-color .18s ease;
   }
-  .panel:hover{box-shadow:0 14px 34px rgba(11,61,145,0.1);border-color:#dbe2f3;}
+  .panel:hover{box-shadow:0 1px 2px rgba(11,61,145,0.06), 0 18px 38px -6px rgba(11,61,145,0.14);border-color:#dbe2f3;}
   @media(prefers-reduced-motion:reduce){.panel{transition:none;}}
   .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;}
   .panel h3{font-size:14px;margin:0 0 2px;color:var(--navy);font-weight:700;}
   .panel .panel-sub{font-size:11.5px;color:var(--faint);margin:0;}
   canvas{width:100%;display:block;}
+  #chartTren,#chartPeringkat{cursor:crosshair;}
+
+  /* ===== Tooltip interaktif untuk grafik Tren & Peringkat =====
+     Satu elemen tooltip dipakai bersama oleh kedua grafik, position:fixed
+     supaya posisinya akurat terhadap kursor tanpa perlu wrapper relative,
+     dan tetap benar walau halaman di-scroll. */
+  .chart-tooltip{
+    position:fixed;pointer-events:none;z-index:200;
+    background:rgba(16,24,43,0.95);color:#fff;padding:8px 12px;border-radius:10px;
+    font-size:12px;line-height:1.55;box-shadow:0 10px 24px rgba(6,36,84,0.3);
+    transform:translate(-50%,-100%);margin-top:-12px;white-space:nowrap;
+    opacity:0;transition:opacity .1s ease;font-family:var(--font-body);
+  }
+  .chart-tooltip.show{opacity:1;}
+  .chart-tooltip b{color:var(--gold);font-family:var(--font-display);font-size:13px;}
+  .chart-tooltip .tt-sub{color:#aebadf;font-size:10.5px;margin-top:2px;}
 
   .status-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
   .status-pill.tinggi{background:var(--ok-bg);color:var(--ok);}
@@ -351,6 +367,7 @@
   tbody tr:nth-child(even){background:#fafbfe;}
   tbody tr:hover{background:#eef3fd;}
   td.num{text-align:center;font-variant-numeric:tabular-nums;}
+  th.no-urut, td.no-urut{width:1%;white-space:nowrap;text-align:center;color:var(--faint);font-variant-numeric:tabular-nums;font-weight:600;}
 
   /* ===== Header kolom yang bisa diklik untuk sort ===== */
   th.sortable{cursor:pointer;user-select:none;position:relative;transition:color .12s ease;}
@@ -779,16 +796,18 @@
         </div>
       </div>
 
+      <div id="chartTooltip" class="chart-tooltip"></div>
+
       <div class="panel-grid">
         <div class="panel">
           <div class="panel-head">
-            <div><h3>Tren Kehadiran Harian</h3><p class="panel-sub">Jumlah pegawai hadir setiap tanggal dalam bulan ini</p></div>
+            <div><h3>Tren Kehadiran Harian</h3><p class="panel-sub">Jumlah pegawai hadir setiap tanggal dalam bulan ini &middot; arahkan kursor untuk detail</p></div>
           </div>
           <canvas id="chartTren" height="220"></canvas>
         </div>
         <div class="panel">
           <div class="panel-head">
-            <div><h3>15 Peringkat Kehadiran Tertinggi</h3><p class="panel-sub">Diurutkan dari persentase hadir terbaik &middot; hanya pegawai dengan catatan kehadiran cukup bulan ini</p></div>
+            <div><h3>15 Peringkat Kehadiran Tertinggi</h3><p class="panel-sub">Diurutkan dari persentase hadir terbaik &middot; arahkan kursor untuk detail</p></div>
           </div>
           <div class="peringkat-scroll">
             <canvas id="chartPeringkat"></canvas>
@@ -808,7 +827,7 @@
         <div class="tabel-scroll">
           <table>
             <thead>
-              <tr><th>Tanggal</th><th>Nama</th><th>Status</th><th class="num">Jam Masuk</th><th class="num">Jam Pulang</th><th class="num">Foto</th></tr>
+              <tr><th class="no-urut">No</th><th>Tanggal</th><th>Nama</th><th>Status</th><th class="num">Jam Masuk</th><th class="num">Jam Pulang</th><th class="num">Foto</th></tr>
             </thead>
             <tbody id="riwayatBody"></tbody>
           </table>
@@ -824,6 +843,7 @@
         <table>
           <thead>
             <tr>
+              <th class="no-urut">No</th>
               <th class="sortable aktif" data-sort="nama" data-tipe="teks">Nama<span class="panah">▲</span></th>
               <th>Periode</th>
               <th class="num sortable" data-sort="Hadir" data-tipe="angka">Hadir<span class="panah">▼</span></th>
@@ -859,7 +879,7 @@
       <div class="tabel-scroll">
         <table>
           <thead>
-            <tr><th>Tanggal</th><th>Nama Guru</th><th>Status</th><th>Kelas</th><th>Jurusan</th><th>Capaian Pembelajaran</th><th>Jam Penugasan</th><th>Tugas</th></tr>
+            <tr><th class="no-urut">No</th><th>Tanggal</th><th>Nama Guru</th><th>Status</th><th>Kelas</th><th>Jurusan</th><th>Capaian Pembelajaran</th><th>Jam Penugasan</th><th>Tugas</th></tr>
           </thead>
           <tbody id="penugasanBody"></tbody>
         </table>
@@ -2085,7 +2105,7 @@
 
     doc.autoTable({
       startY: 45,
-      head: [['Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Dinas Luar', 'Tingkat']],
+      head: [['No', 'Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Dinas Luar', 'Tingkat']],
       body: bodyRows,
       styles: { fontSize: 8.5, cellPadding: 2.2 },
       headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
@@ -2169,10 +2189,10 @@
       if(sortKolomAktif === 'persen') return (a.persen - b.persen) * arah;
       return ((a.r[sortKolomAktif]||0) - (b.r[sortKolomAktif]||0)) * arah;
     });
-    terurut.forEach(({nama, r, persen}) => {
+    terurut.forEach(({nama, r, persen}, i) => {
       const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tr.innerHTML = `<td class="no-urut">${i+1}</td><td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
       tabelBody.appendChild(tr);
     });
     // perbarui indikator panah & kolom aktif di header
@@ -2295,22 +2315,24 @@
   // Helper generik untuk mengisi <tbody>: menghindari duplikasi pola yang
   // sama persis di renderRiwayat & renderPenugasan (kosongkan isi lama →
   // tampilkan pesan bila data kosong → render baris satu per satu).
+  // Setiap baris otomatis diberi kolom nomor urut (1, 2, 3, ...) mengikuti
+  // urutan tampil saat ini di tabel — bukan id dari server.
   function renderTabel(bodyEl, daftar, kolomKosong, pesanKosong, buatBarisHtml){
     bodyEl.innerHTML = '';
     if(!daftar.length){
       bodyEl.innerHTML = `<tr><td colspan="${kolomKosong}" style="text-align:center;color:var(--faint);padding:20px;">${pesanKosong}</td></tr>`;
       return;
     }
-    daftar.forEach(row => {
+    daftar.forEach((row, i) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = buatBarisHtml(row);
+      tr.innerHTML = `<td class="no-urut">${i+1}</td>` + buatBarisHtml(row);
       bodyEl.appendChild(tr);
     });
   }
 
   function renderRiwayat(daftar){
     const body = document.getElementById('riwayatBody');
-    renderTabel(body, daftar, 6, 'Belum ada data untuk periode ini', row => {
+    renderTabel(body, daftar, 7, 'Belum ada data untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
       const kelasStatus = escapeHtml(row.status.replace(/\s+/g,''));
       // Foto bukti kehadiran bersifat pribadi. Dashboard ini terbuka untuk
@@ -2354,7 +2376,7 @@
   function renderPenugasan(daftar){
     penugasanTerakhir = (daftar || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Dinas Luar'));
     const body = document.getElementById('penugasanBody');
-    renderTabel(body, penugasanTerakhir, 8, 'Belum ada penugasan untuk periode ini', row => {
+    renderTabel(body, penugasanTerakhir, 9, 'Belum ada penugasan untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
       const kelasStatus = escapeHtml(row.status.replace(/\s+/g,''));
       // Jaring pengaman: row.jam SEHARUSNYA selalu teks (lihat perbaikan di
@@ -2381,6 +2403,18 @@
     if(p >= 95) return '#12b76a';
     if(p >= 85) return '#f79009';
     return '#f04438';
+  }
+
+  // Menerangkan (percent > 0) atau menggelapkan (percent < 0) warna hex,
+  // dipakai untuk membuat gradien 2 warna dari 1 warna dasar tanpa perlu
+  // mendefinisikan palet gradien terpisah untuk tiap status.
+  function shadeColor(hex, percent){
+    const num = parseInt(hex.replace('#',''), 16);
+    let r = (num >> 16) + Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00FF) + Math.round(2.55 * percent);
+    let b = (num & 0x0000FF) + Math.round(2.55 * percent);
+    r = Math.min(255, Math.max(0, r)); g = Math.min(255, Math.max(0, g)); b = Math.min(255, Math.max(0, b));
+    return '#' + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
   }
 
   const kurangGerak = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2412,15 +2446,27 @@
       ctx.arc(cx, cy, r, 0, Math.PI*2);
       ctx.strokeStyle = '#eef1f8'; ctx.lineWidth = tebal; ctx.stroke();
 
-      // progres
+      // progres — gradien konis mengikuti arah lingkaran (bukan warna flat),
+      // dipadukan glow tipis di baliknya supaya terasa lebih modern & "hidup".
+      const sudutAkhir = mulai + (Math.PI*2 * p/100);
+      let strokeProgres = warna;
+      if(ctx.createConicGradient){
+        const grad = ctx.createConicGradient(mulai, cx, cy);
+        grad.addColorStop(0, warna);
+        grad.addColorStop(Math.max(0.001, p/100), shadeColor(warna, 22));
+        grad.addColorStop(1, warna);
+        strokeProgres = grad;
+      }
+      ctx.save();
+      ctx.shadowColor = warna; ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(cx, cy, r, mulai, mulai + (Math.PI*2 * p/100));
-      ctx.strokeStyle = warna; ctx.lineWidth = tebal; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.arc(cx, cy, r, mulai, sudutAkhir);
+      ctx.strokeStyle = strokeProgres; ctx.lineWidth = tebal; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.restore();
 
       // titik ujung progres (aksen)
       if(p > 0.5){
-        const sudutUjung = mulai + (Math.PI*2 * p/100);
-        const ux = cx + r*Math.cos(sudutUjung), uy = cy + r*Math.sin(sudutUjung);
+        const ux = cx + r*Math.cos(sudutAkhir), uy = cy + r*Math.sin(sudutAkhir);
         ctx.beginPath(); ctx.arc(ux, uy, tebal/2 - 2, 0, Math.PI*2);
         ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1;
       }
@@ -2440,8 +2486,13 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---- Grafik garis dengan area gradient, native canvas ---- */
-  function gambarGrafikGaris(canvasId, labels, values){
+  /* ---- Grafik garis dengan area gradient, native canvas ----
+     trenChartState menyimpan layout titik dari render terakhir supaya listener
+     mousemove (lihat di bawah) bisa mencari titik terdekat & memicu redraw
+     dengan highlight tanpa menghitung ulang seluruh data dari nol. */
+  let trenChartState = null;
+  function gambarGrafikGaris(canvasId, labels, values, hoverIdx){
+    hoverIdx = (typeof hoverIdx === 'number') ? hoverIdx : -1;
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -2452,6 +2503,7 @@
     const pad = { l:28, r:14, t:16, b:26 };
 
     if(values.length === 0){
+      trenChartState = null;
       ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText('Belum ada data untuk periode ini', W/2, H/2);
       return;
@@ -2463,6 +2515,7 @@
       x: pad.l + i*stepX,
       y: pad.t + (H-pad.t-pad.b) * (1 - v/maxVal)
     }));
+    trenChartState = { canvasId, labels, values, titik, pad, W, H };
 
     // grid halus + label nilai maksimum
     ctx.strokeStyle = '#eef1f8'; ctx.lineWidth = 1;
@@ -2476,7 +2529,7 @@
 
     // area gradient di bawah garis
     const grad = ctx.createLinearGradient(0, pad.t, 0, H-pad.b);
-    grad.addColorStop(0, 'rgba(11,61,145,0.20)');
+    grad.addColorStop(0, 'rgba(11,61,145,0.22)');
     grad.addColorStop(1, 'rgba(11,61,145,0.0)');
     ctx.beginPath();
     ctx.moveTo(titik[0].x, H-pad.b);
@@ -2485,7 +2538,11 @@
     ctx.closePath();
     ctx.fillStyle = grad; ctx.fill();
 
-    // garis halus (smoothing sederhana pakai titik tengah)
+    // garis dengan gradien warna horizontal (navy → biru muda) — aksen modern
+    // yang tetap halus lewat smoothing quadratic titik-tengah seperti semula.
+    const gradGaris = ctx.createLinearGradient(pad.l, 0, W-pad.r, 0);
+    gradGaris.addColorStop(0, '#0b3d91');
+    gradGaris.addColorStop(1, '#2e63c9');
     ctx.beginPath();
     ctx.moveTo(titik[0].x, titik[0].y);
     for(let i=0;i<titik.length-1;i++){
@@ -2494,7 +2551,7 @@
       ctx.quadraticCurveTo(titik[i].x, titik[i].y, midX, midY);
     }
     ctx.lineTo(titik[titik.length-1].x, titik[titik.length-1].y);
-    ctx.strokeStyle = '#0b3d91'; ctx.lineWidth = 2.5; ctx.lineJoin='round'; ctx.stroke();
+    ctx.strokeStyle = gradGaris; ctx.lineWidth = 2.5; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
 
     // titik-titik halus di sepanjang garis (hanya jika data tidak terlalu padat)
     if(titik.length <= 31){
@@ -2512,11 +2569,29 @@
     const lompat = Math.ceil(labels.length / 8);
     ctx.fillStyle = '#98a2b8'; ctx.font = '10px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     labels.forEach((lab,i) => { if(i % lompat === 0) ctx.fillText(lab, titik[i].x, H-8); });
+
+    // garis panduan vertikal + titik yang di-hover (dipicu listener mousemove)
+    if(hoverIdx >= 0 && hoverIdx < titik.length){
+      const hp = titik[hoverIdx];
+      ctx.save();
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle = 'rgba(11,61,145,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hp.x, pad.t); ctx.lineTo(hp.x, H-pad.b); ctx.stroke();
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(hp.x, hp.y, 6, 0, Math.PI*2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#0b3d91'; ctx.stroke();
+    }
   }
 
-  /* ---- Peringkat kehadiran: bar horizontal, diurutkan, mudah dianalisis ---- */
+  /* ---- Peringkat kehadiran: bar horizontal, diurutkan, mudah dianalisis ----
+     peringkatChartState menyimpan posisi baris dari render terakhir supaya
+     listener mousemove bisa mendeteksi baris mana yang di-hover tanpa
+     menghitung ulang layout. */
   const MEDALI = ['#ffb300', '#9aa5bd', '#c98553'];
-  function gambarPeringkat(canvasId, daftar){
+  let peringkatChartState = null;
+  function gambarPeringkat(canvasId, daftar, hoverIdx){
+    hoverIdx = (typeof hoverIdx === 'number') ? hoverIdx : -1;
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -2533,6 +2608,7 @@
     ctx.clearRect(0,0,W,H);
 
     if(daftar.length === 0){
+      peringkatChartState = null;
       ctx.fillStyle = '#98a2b8'; ctx.font = '13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText('Belum ada data untuk periode ini', W/2, H/2);
       return;
@@ -2548,11 +2624,21 @@
     const tinggiIsi = daftar.length * rowH;
     const offsetY = Math.max(0, (H - tinggiIsi) / 2) - 13;
 
+    const rowsMeta = [];
+
     daftar.forEach((item, i) => {
       const y = 13 + offsetY + i*rowH;
       const barH = 14;
       const barW = barMaxW * (item.persen/100);
       const warna = warnaPersen(item.persen);
+      const diHover = i === hoverIdx;
+      rowsMeta.push({ top: y - (rowH-barH)/2, bottom: y + barH + (rowH-barH)/2, item });
+
+      // latar baris saat di-hover — memberi konteks baris mana yang sedang disorot
+      if(diHover){
+        ctx.fillStyle = 'rgba(11,61,145,0.05)';
+        roundRect(ctx, 0, y - (rowH-barH)/2, W, rowH, 8); ctx.fill();
+      }
 
       // peringkat (medali untuk 3 besar)
       if(i < 3){
@@ -2564,7 +2650,7 @@
       }
 
       // nama (dipotong bila panjang)
-      ctx.fillStyle = '#10182b'; ctx.font = '600 11.5px Inter'; ctx.textAlign = 'left'; ctx.textBaseline='middle';
+      ctx.fillStyle = '#10182b'; ctx.font = (diHover ? '700' : '600') + ' 11.5px Inter'; ctx.textAlign = 'left'; ctx.textBaseline='middle';
       const nama = item.nama.length > 14 ? item.nama.slice(0,13)+'…' : item.nama;
       ctx.fillText(nama, rankW, y + barH/2);
 
@@ -2572,14 +2658,22 @@
       ctx.fillStyle = '#eef1f8';
       roundRect(ctx, labelW, y, barMaxW, barH, 7); ctx.fill();
 
-      // progres
-      ctx.fillStyle = warna;
+      // progres — gradien horizontal dari warna dasar ke variannya yang lebih terang,
+      // sedikit lebih tebal & bercahaya saat baris sedang di-hover.
+      const gradBar = ctx.createLinearGradient(labelW, 0, labelW + Math.max(barW, 8), 0);
+      gradBar.addColorStop(0, shadeColor(warna, -8));
+      gradBar.addColorStop(1, shadeColor(warna, 14));
+      if(diHover){ ctx.save(); ctx.shadowColor = warna; ctx.shadowBlur = 6; }
+      ctx.fillStyle = gradBar;
       roundRect(ctx, labelW, y, Math.max(barW, 8), barH, 7); ctx.fill();
+      if(diHover) ctx.restore();
 
       // persen
-      ctx.fillStyle = '#65708a'; ctx.font = '700 11px Inter'; ctx.textAlign = 'right';
+      ctx.fillStyle = diHover ? '#10182b' : '#65708a'; ctx.font = (diHover ? '800' : '700') + ' 11px Inter'; ctx.textAlign = 'right';
       ctx.fillText(item.persen + '%', W, y + barH/2);
     });
+
+    peringkatChartState = { canvasId, daftar, rowsMeta, W, H };
   }
 
   function roundRect(ctx, x, y, w, h, r){
@@ -2592,6 +2686,70 @@
     ctx.arcTo(x,y,x+w,y,r);
     ctx.closePath();
   }
+
+  /* ================= TOOLTIP INTERAKTIF: Tren & Peringkat =================
+     Satu elemen tooltip dipakai bersama (lihat #chartTooltip di HTML & CSS
+     .chart-tooltip). Listener di bawah membaca *ChartState yang disimpan
+     oleh gambarGrafikGaris/gambarPeringkat pada render terakhir, sehingga
+     tidak perlu menghitung ulang layout tiap gerakan mouse — cukup mencari
+     titik/baris terdekat dari koordinat kursor lalu redraw dengan highlight. */
+  const chartTooltipEl = document.getElementById('chartTooltip');
+  let trenHoverIdx = -1, peringkatHoverIdx = -1;
+
+  document.getElementById('chartTren').addEventListener('mousemove', (e) => {
+    if(!trenChartState || !trenChartState.titik.length) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    let idx = 0, dMin = Infinity;
+    trenChartState.titik.forEach((p,i) => { const d = Math.abs(p.x - mx); if(d < dMin){ dMin = d; idx = i; } });
+
+    if(idx !== trenHoverIdx){
+      trenHoverIdx = idx;
+      gambarGrafikGaris(trenChartState.canvasId, trenChartState.labels, trenChartState.values, idx);
+    }
+    const p = trenChartState.titik[idx];
+    chartTooltipEl.innerHTML = `<b>${trenChartState.values[idx]} hadir</b><div class="tt-sub">Tanggal ${escapeHtml(trenChartState.labels[idx])}</div>`;
+    chartTooltipEl.style.left = rect.left + p.x + 'px';
+    chartTooltipEl.style.top = rect.top + p.y + 'px';
+    chartTooltipEl.classList.add('show');
+  });
+  document.getElementById('chartTren').addEventListener('mouseleave', () => {
+    if(trenHoverIdx === -1) return;
+    trenHoverIdx = -1;
+    chartTooltipEl.classList.remove('show');
+    if(trenChartState) gambarGrafikGaris(trenChartState.canvasId, trenChartState.labels, trenChartState.values, -1);
+  });
+
+  document.getElementById('chartPeringkat').addEventListener('mousemove', (e) => {
+    if(!peringkatChartState || !peringkatChartState.rowsMeta.length) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const my = e.clientY - rect.top;
+    const idx = peringkatChartState.rowsMeta.findIndex(row => my >= row.top && my <= row.bottom);
+    if(idx === -1){
+      if(peringkatHoverIdx !== -1){
+        peringkatHoverIdx = -1;
+        gambarPeringkat(peringkatChartState.canvasId, peringkatChartState.daftar, -1);
+        chartTooltipEl.classList.remove('show');
+      }
+      return;
+    }
+    if(idx !== peringkatHoverIdx){
+      peringkatHoverIdx = idx;
+      gambarPeringkat(peringkatChartState.canvasId, peringkatChartState.daftar, idx);
+    }
+    const { item } = peringkatChartState.rowsMeta[idx];
+    const totalTercatat = (item.r.Hadir||0)+(item.r.Sakit||0)+(item.r.Izin||0)+(item.r.Alfa||0)+(item.r['Dinas Luar']||0);
+    chartTooltipEl.innerHTML = `<b>${escapeHtml(item.nama)}</b><div class="tt-sub">${item.persen}% hadir &middot; ${item.r.Hadir||0} dari ${totalTercatat} hari tercatat</div>`;
+    chartTooltipEl.style.left = rect.left + rect.width/2 + 'px';
+    chartTooltipEl.style.top = rect.top + (peringkatChartState.rowsMeta[idx].top + peringkatChartState.rowsMeta[idx].bottom)/2 + 'px';
+    chartTooltipEl.classList.add('show');
+  });
+  document.getElementById('chartPeringkat').addEventListener('mouseleave', () => {
+    if(peringkatHoverIdx === -1) return;
+    peringkatHoverIdx = -1;
+    chartTooltipEl.classList.remove('show');
+    if(peringkatChartState) gambarPeringkat(peringkatChartState.canvasId, peringkatChartState.daftar, -1);
+  });
 </script>
 
 </body>
