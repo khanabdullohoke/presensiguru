@@ -787,59 +787,17 @@
         <select id="pilihTahun"></select>
         <button id="btnMuat">Tampilkan</button>
         <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Login Admin</button>
-        <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF</button>
+        <!-- Kedua tombol unduh PDF (bulanan & harian per blok) sengaja
+             ditaruh berdampingan di sini, sejajar, dan sama-sama baru
+             muncul setelah admin login lewat modal "Login Admin" di atas
+             (lihat tampilkanTombolPdfAdmin()) — satu kali login membuka
+             keduanya sekaligus. -->
+        <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF Bulanan</button>
+        <button id="btnUnduhLaporanBlokPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF Harian</button>
       </div>
     </div>
 
-    <!-- ===== PANEL: LAPORAN ABSENSI HARIAN SESUAI JADWAL BLOK AKTIF =====
-         Terpisah dari rekap bulanan di atas: panel ini menjawab pertanyaan
-         "hari ini/tanggal X, siapa saja yang WAJIB presensi menurut jadwal
-         Blok A/B yang aktif minggu itu, dan bagaimana status kehadirannya?"
-         Diambil lewat aksi=laporanHarianBlok (satu request, backend yang
-         menggabungkan sheet Pegawai + JadwalBlok + Absensi untuk tanggal
-         terpilih), independen dari filter bulan/tahun rekap di atas. -->
-    <div class="panel" id="panelLaporanBlok">
-      <div class="panel-head">
-        <div>
-          <h3>Laporan Absensi Harian — Jadwal Blok Aktif</h3>
-          <p class="panel-sub">Kewajiban &amp; status kehadiran seluruh guru/staf pada tanggal terpilih, mengikuti jadwal Blok A/B yang aktif minggu itu</p>
-        </div>
-        <div class="controls">
-          <input type="date" id="tglLaporanBlok">
-          <button id="btnMuatLaporanBlok" type="button">Tampilkan</button>
-          <button id="btnUnduhLaporanBlokPdf" class="btn-pdf" type="button" disabled>📄 Unduh PDF</button>
-        </div>
-      </div>
-
-      <div id="ringkasanBlokWrap" style="display:none;">
-        <div class="blok-info-bar" id="blokInfoBar"></div>
-        <div class="blok-ringkas-grid" id="blokRingkasGrid"></div>
-      </div>
-
-      <div id="laporanBlokPesan" class="muat">
-        <div id="laporanBlokSpin" class="muat-spin" style="display:none;"></div>
-        <div id="laporanBlokTeks">Pilih tanggal lalu klik Tampilkan.</div>
-      </div>
-
-      <div class="riwayat-head" id="laporanBlokTabelHead" style="display:none;">
-        <div></div>
-        <input type="text" id="cariLaporanBlok" placeholder="Cari nama...">
-      </div>
-      <div class="tabel-scroll" id="laporanBlokTabelWrap" style="display:none;">
-        <table>
-          <thead>
-            <tr>
-              <th class="no-urut">No</th><th>Nama</th><th>Jabatan</th><th>Wajib Hadir</th>
-              <th>Alasan Jadwal</th><th>Status</th><th class="num">Jam Masuk</th>
-              <th class="num">Jam Pulang</th><th>Keterangan</th>
-            </tr>
-          </thead>
-          <tbody id="laporanBlokBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="muatPesan" class="muat">
+    <div id="muatPesan" class="muat"
       <div id="muatSpin" class="muat-spin" style="display:none;"></div>
       <div id="muatTeks">Pilih bulan lalu klik Tampilkan.</div>
     </div>
@@ -904,6 +862,60 @@
             <tbody id="riwayatBody"></tbody>
           </table>
         </div>
+        </div>
+      </div>
+
+      <!-- ===== PANEL: LAPORAN ABSENSI HARIAN SESUAI JADWAL BLOK AKTIF =====
+           Ditaruh di bawah "Riwayat Kehadiran Harian" di atas. Independen
+           dari filter bulan/tahun rekap bulanan — panel ini menjawab
+           pertanyaan "hari ini/tanggal X, siapa saja yang WAJIB presensi
+           menurut jadwal Blok A/B yang aktif minggu itu, dan bagaimana
+           status kehadirannya?" Diambil lewat aksi=laporanHarianBlok (satu
+           request, backend menggabungkan sheet Pegawai + JadwalBlok +
+           Absensi untuk tanggal terpilih). Hanya menampilkan pegawai yang
+           WAJIB hadir hari itu: guru yang aktif di jadwal blok hari
+           tersebut, ditambah staf (termasuk guru rangkap staf) yang wajib
+           hadir 5 hari kerja/minggu — lihat renderLaporanBlokTabel(). Guru
+           yang sedang tidak ada jadwal mengajar (Tidak Wajib) tidak
+           dimunculkan di tabel ini. Tombol unduh PDF-nya sudah dipindah ke
+           baris kontrol atas, sejajar dengan tombol Unduh PDF Bulanan. -->
+      <div class="panel" id="panelLaporanBlok">
+        <div class="panel-head">
+          <div>
+            <h3>Laporan Absensi Harian — Jadwal Blok Aktif</h3>
+            <p class="panel-sub">Guru yang aktif jadwal Blok A/B hari itu, beserta staf yang wajib hadir 5 hari kerja/minggu &mdash; lengkap dengan status kehadirannya</p>
+          </div>
+          <div class="controls">
+            <input type="date" id="tglLaporanBlok">
+            <button id="btnMuatLaporanBlok" type="button">Tampilkan</button>
+          </div>
+        </div>
+
+        <div id="ringkasanBlokWrap" style="display:none;">
+          <div class="blok-info-bar" id="blokInfoBar"></div>
+          <div class="blok-ringkas-grid" id="blokRingkasGrid"></div>
+        </div>
+
+        <div id="laporanBlokPesan" class="muat">
+          <div id="laporanBlokSpin" class="muat-spin" style="display:none;"></div>
+          <div id="laporanBlokTeks">Pilih tanggal lalu klik Tampilkan.</div>
+        </div>
+
+        <div class="riwayat-head" id="laporanBlokTabelHead" style="display:none;">
+          <div></div>
+          <input type="text" id="cariLaporanBlok" placeholder="Cari nama...">
+        </div>
+        <div class="tabel-scroll" id="laporanBlokTabelWrap" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th class="no-urut">No</th><th>Nama</th><th>Jabatan</th>
+                <th>Alasan Jadwal</th><th>Status</th><th class="num">Jam Masuk</th>
+                <th class="num">Jam Pulang</th><th>Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="laporanBlokBody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -1959,11 +1971,14 @@
     btnPdf.style.display = 'inline-flex';
     // Tombol tetap mengikuti status data: aktif hanya jika rekap sudah dimuat.
     btnPdf.disabled = !(riwayatTerakhir && riwayatTerakhir.length !== undefined && document.getElementById('tabelBody').children.length);
-    // Login admin yang sama juga membuka tombol PDF Laporan Absensi Harian
-    // per Blok — hanya aktif kalau laporan tanggal tersebut sudah dimuat.
+    // Login admin yang sama juga menampilkan tombol PDF Laporan Absensi
+    // Harian per Blok (sekarang berdampingan dengan tombol PDF bulanan di
+    // atas) — hanya aktif kalau laporan tanggal tersebut sudah dimuat.
     const btnPdfBlok = document.getElementById('btnUnduhLaporanBlokPdf');
     if(btnPdfBlok){
-      btnPdfBlok.disabled = !(typeof laporanBlokTerakhir !== 'undefined' && laporanBlokTerakhir && laporanBlokTerakhir.daftar && laporanBlokTerakhir.daftar.length);
+      btnPdfBlok.style.display = 'inline-flex';
+      btnPdfBlok.disabled = !(typeof laporanBlokTerakhir !== 'undefined' && laporanBlokTerakhir
+        && typeof daftarWajibSaja === 'function' && daftarWajibSaja(laporanBlokTerakhir.daftar).length);
     }
   }
 
@@ -2364,17 +2379,27 @@
       `<div class="blok-ringkas-item"><div class="angka">${it.angka}</div><div class="label">${escapeHtml(it.label)}</div></div>`
     ).join('');
 
-    renderLaporanBlokTabel(data.daftar || []);
-    btnUnduhLaporanBlokPdf.disabled = !adminTerverifikasi || !(data.daftar && data.daftar.length);
+    renderLaporanBlokTabel(daftarWajibSaja(data.daftar || []));
+    btnUnduhLaporanBlokPdf.disabled = !adminTerverifikasi || !daftarWajibSaja(data.daftar).length;
+  }
+
+  // Laporan Harian ini HANYA menampilkan pegawai yang wajib hadir hari itu:
+  // guru yang aktif jadwal Blok A/B hari tersebut, ditambah staf (termasuk
+  // guru rangkap staf) yang wajib hadir 5 hari kerja/minggu. Backend sudah
+  // menghitung field `wajib` per pegawai (lihat getLaporanHarianBlok di
+  // Code.gs) — guru yang sedang tidak ada jadwal mengajar (wajib=false)
+  // cukup disaring di sini, tanpa perlu mengubah data mentah dari server
+  // (data mentah tetap dipakai utuh untuk ringkasan Wajib/Tidak Wajib).
+  function daftarWajibSaja(daftar){
+    return (daftar || []).filter(row => row.wajib);
   }
 
   function renderLaporanBlokTabel(daftar){
     const body = document.getElementById('laporanBlokBody');
-    renderTabel(body, daftar, 9, 'Tidak ada data pegawai untuk tanggal ini', row => {
+    renderTabel(body, daftar, 8, 'Tidak ada pegawai yang wajib hadir pada tanggal ini', row => {
       const kelasStatus = escapeHtml(String(row.status || '').replace(/\s+/g,''));
-      const pillWajib = row.wajib ? '<span class="wajib-pill">Wajib</span>' : '<span class="wajib-pill tidak">Tidak Wajib</span>';
       const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
-      return `<td>${escapeHtml(row.nama)}</td><td>${escapeHtml(row.jabatan || '—')}</td><td>${pillWajib}</td>`
+      return `<td>${escapeHtml(row.nama)}</td><td>${escapeHtml(row.jabatan || '—')}</td>`
         + `<td style="white-space:normal;min-width:180px;">${escapeHtml(row.alasan || '—')}</td>`
         + `<td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span>${badgeOtomatis}</td>`
         + `<td class="num">${row.jamMasuk ? escapeHtml(row.jamMasuk) : '—'}</td>`
@@ -2386,7 +2411,7 @@
   document.getElementById('cariLaporanBlok').addEventListener('input', (e) => {
     if(!laporanBlokTerakhir) return;
     const q = e.target.value.trim().toLowerCase();
-    const sumber = laporanBlokTerakhir.daftar || [];
+    const sumber = daftarWajibSaja(laporanBlokTerakhir.daftar || []);
     renderLaporanBlokTabel(q ? sumber.filter(r => r.nama.toLowerCase().includes(q)) : sumber);
   });
 
@@ -2396,7 +2421,7 @@
       bukaModalAdmin();
       return;
     }
-    if(!laporanBlokTerakhir || !laporanBlokTerakhir.daftar || !laporanBlokTerakhir.daftar.length){
+    if(!laporanBlokTerakhir || !daftarWajibSaja(laporanBlokTerakhir.daftar).length){
       return;
     }
     const btn = btnUnduhLaporanBlokPdf;
@@ -2433,19 +2458,22 @@
       12, 35
     );
 
-    const bodyRows = data.daftar.map((row, i) => [
-      i+1, row.nama, row.jabatan || '-', row.wajib ? 'Wajib' : 'Tidak Wajib',
+    // PDF hanya memuat pegawai yang wajib hadir hari itu (sama seperti
+    // tabel di layar) — lihat daftarWajibSaja().
+    const daftarWajib = daftarWajibSaja(data.daftar);
+    const bodyRows = daftarWajib.map((row, i) => [
+      i+1, row.nama, row.jabatan || '-',
       row.alasan || '-', row.status, row.jamMasuk || '-', row.jamPulang || '-', row.keterangan || '-'
     ]);
 
     doc.autoTable({
       startY: 40,
-      head: [['No','Nama','Jabatan','Wajib','Alasan Jadwal','Status','Jam Masuk','Jam Pulang','Keterangan']],
+      head: [['No','Nama','Jabatan','Alasan Jadwal','Status','Jam Masuk','Jam Pulang','Keterangan']],
       body: bodyRows,
       styles: { fontSize: 7.8, cellPadding: 1.8 },
       headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [244, 246, 252] },
-      columnStyles: { 0: { cellWidth: 8 }, 4: { cellWidth: 55 }, 8: { cellWidth: 45 } },
+      columnStyles: { 0: { cellWidth: 8 }, 3: { cellWidth: 55 }, 7: { cellWidth: 45 } },
       margin: { left: 12, right: 12 }
     });
 
