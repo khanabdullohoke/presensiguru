@@ -2357,7 +2357,17 @@
     renderTabel(body, penugasanTerakhir, 8, 'Belum ada penugasan untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
       const kelasStatus = escapeHtml(row.status.replace(/\s+/g,''));
-      const jamLabel = row.jam ? row.jam.split(',').map(j => `Jam ${j}`).join(', ') : '—';
+      // Jaring pengaman: row.jam SEHARUSNYA selalu teks (lihat perbaikan di
+      // Code.gs — kolom Jam Penugasan sekarang dipaksa "Plain text" sebelum
+      // ditulis). Tapi untuk baris LAMA yang sempat tersimpan sebagai Angka
+      // (mis. "1,2" -> 1.2) atau Tanggal sebelum perbaikan itu dipasang,
+      // row.jam bisa jadi bukan string — kalau langsung dipanggil .split()
+      // tanpa dibungkus String() dulu, ini bikin JS error dan seluruh
+      // rendering forEach berhenti di tengah jalan (baris-baris lain yang
+      // sebenarnya valid ikut tidak tampil). String(...) di sini memastikan
+      // rendering tetap jalan untuk semua baris walau salah satu datanya rusak.
+      const jamStr = String(row.jam || '');
+      const jamLabel = jamStr ? jamStr.split(',').map(j => `Jam ${j}`).join(', ') : '—';
       return `<td>${tglLabel}</td><td>${escapeHtml(row.nama)}</td><td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span></td><td>${escapeHtml(row.kelas)}</td><td>${escapeHtml(row.jurusan) || '—'}</td><td>${escapeHtml(row.capaian) || '—'}</td><td>${escapeHtml(jamLabel)}</td><td>${escapeHtml(row.tugas) || '—'}</td>`;
     });
   }
