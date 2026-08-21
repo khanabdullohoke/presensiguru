@@ -1388,6 +1388,38 @@
   }
   btnUlangiLokasi.addEventListener('click', mulaiPantauLokasi);
 
+  // BARU (FIX RINGAN — hemat baterai) — hentikan watch GPS saat tidak
+  // dibutuhkan. AKAR MASALAH: mulaiPantauLokasi() dipanggil sekali saat
+  // halaman dimuat (lihat pemanggilan di bagian akhir skrip) lalu watchPosition
+  // terus mengalirkan pembaruan lokasi TANPA PERNAH dihentikan — bahkan
+  // setelah pengguna pindah ke tab Rekap Bulanan/Penugasan/Info yang sama
+  // sekali tidak memakai lokasi, atau saat layar HP dikunci/aplikasi
+  // dipindah ke background. Dengan enableHighAccuracy: true, ini berarti
+  // chip GPS tetap menyala terus-menerus sia-sia selama halaman terbuka.
+  // PERBAIKAN: watch dihentikan begitu tab Absen ditinggalkan atau halaman
+  // disembunyikan, dan dipantau ulang begitu pengguna kembali ke tab Absen
+  // / membuka lagi halamannya — supaya lokasi yang ditampilkan tetap segar,
+  // bukan sisa lokasi lama. Akurasi presensi TIDAK diturunkan sedikit pun:
+  // enableHighAccuracy tetap true persis seperti sebelumnya, hanya DURASI
+  // GPS menyala yang dipersingkat sesuai kebutuhan nyata.
+  function hentikanPantauLokasi(){
+    if(watchIdLokasi !== null){
+      navigator.geolocation.clearWatch(watchIdLokasi);
+      watchIdLokasi = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    const tabAktif = document.querySelector('.tab-btn.active');
+    const sedangDiTabPresensi = tabAktif && tabAktif.dataset.tab === 'presensi';
+    if(!sedangDiTabPresensi) return; // tab lain memang sudah tidak memantau GPS (lihat navigasi tab di bawah)
+    if(document.hidden){
+      hentikanPantauLokasi();
+    } else {
+      mulaiPantauLokasi();
+    }
+  });
+
   /* ---------- Navigasi tab (tanpa reload halaman) ---------- */
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabIndikator = document.getElementById('tabIndikator');
@@ -1417,6 +1449,15 @@
       // Paksa reflow supaya animasi masuk (lihat CSS .view.active) berjalan
       // ulang tiap kali pindah tab, bukan cuma sekali di load pertama.
       viewBaru.classList.remove('masuk-halus'); void viewBaru.offsetWidth; viewBaru.classList.add('masuk-halus');
+      // BARU (FIX RINGAN — hemat baterai) — GPS cuma perlu aktif di tab
+      // Absen. Pindah ke tab lain -> hentikan watch. Kembali ke tab Absen
+      // -> pantau ulang supaya lokasi yang tampil tetap segar (lihat
+      // hentikanPantauLokasi() untuk detail akar masalah & alasannya).
+      if(btn.dataset.tab === 'presensi'){
+        mulaiPantauLokasi();
+      } else {
+        hentikanPantauLokasi();
+      }
       if((btn.dataset.tab === 'dashboard' || btn.dataset.tab === 'penugasan') && !dashboardDimuat){
         dashboardDimuat = true;
         muatRekap();
