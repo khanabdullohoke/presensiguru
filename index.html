@@ -253,6 +253,8 @@
   .status-tag.Izin{background:var(--info-bg);color:var(--info);}
   .status-tag.Alfa{background:var(--err-bg);color:var(--err);}
   .status-tag.DinasLuar{background:#f0ecff;color:#6941c6;}
+  .status-tag.BelumPresensi{background:var(--err-bg);color:var(--err);}
+  .status-tag.TidakWajib{background:#eef1f8;color:var(--muted);}
   .tag-otomatis{
     display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;
     font-size:9.5px;font-weight:700;background:#fde8e6;color:#b3261e;vertical-align:middle;
@@ -273,6 +275,8 @@
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .controls select{padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1.5px solid var(--line);transition:border-color .15s;}
   .controls select:focus{outline:none;border-color:var(--navy);}
+  .controls input[type="date"]{padding:8px 14px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--navy);background:#fff;border:1.5px solid var(--line);font-family:inherit;transition:border-color .15s;}
+  .controls input[type="date"]:focus{outline:none;border-color:var(--navy);}
   .controls button{padding:9px 18px;border-radius:999px;background:var(--navy);color:#fff;font-size:13px;box-shadow:0 6px 14px rgba(11,61,145,0.2);}
   .controls button:not(:disabled):hover{box-shadow:0 10px 22px rgba(11,61,145,0.3);}
 
@@ -412,6 +416,23 @@
     font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px;margin-bottom:14px;
   }
   .akhir-bulan-badge.show{display:inline-flex;}
+
+  /* ===== Panel: Laporan Absensi Harian per Blok (Blok A/B aktif) ===== */
+  .blok-info-bar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    background:var(--info-bg);color:#0b3d91;border:1px solid rgba(46,144,250,0.25);
+    border-radius:14px;padding:10px 14px;margin-bottom:14px;font-size:12px;font-weight:700;
+  }
+  .blok-info-bar.libur{background:var(--warn-bg);color:#93590a;border-color:rgba(247,144,9,0.28);}
+  .blok-ringkas-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .blok-ringkas-item{
+    flex:1 1 100px;background:#f8faff;border:1px solid var(--line);border-radius:12px;
+    padding:10px 10px;text-align:center;
+  }
+  .blok-ringkas-item .angka{font-size:18px;font-weight:800;font-family:var(--font-display);color:var(--navy);font-variant-numeric:tabular-nums;}
+  .blok-ringkas-item .label{font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.3px;}
+  .wajib-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:700;background:var(--ok-bg);color:var(--ok);white-space:nowrap;}
+  .wajib-pill.tidak{background:#eef1f8;color:var(--muted);}
 
   @media(prefers-reduced-motion:reduce){
     .kartu,.kartu::before{transition:none;}
@@ -767,6 +788,54 @@
         <button id="btnMuat">Tampilkan</button>
         <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Login Admin</button>
         <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF</button>
+      </div>
+    </div>
+
+    <!-- ===== PANEL: LAPORAN ABSENSI HARIAN SESUAI JADWAL BLOK AKTIF =====
+         Terpisah dari rekap bulanan di atas: panel ini menjawab pertanyaan
+         "hari ini/tanggal X, siapa saja yang WAJIB presensi menurut jadwal
+         Blok A/B yang aktif minggu itu, dan bagaimana status kehadirannya?"
+         Diambil lewat aksi=laporanHarianBlok (satu request, backend yang
+         menggabungkan sheet Pegawai + JadwalBlok + Absensi untuk tanggal
+         terpilih), independen dari filter bulan/tahun rekap di atas. -->
+    <div class="panel" id="panelLaporanBlok">
+      <div class="panel-head">
+        <div>
+          <h3>Laporan Absensi Harian — Jadwal Blok Aktif</h3>
+          <p class="panel-sub">Kewajiban &amp; status kehadiran seluruh guru/staf pada tanggal terpilih, mengikuti jadwal Blok A/B yang aktif minggu itu</p>
+        </div>
+        <div class="controls">
+          <input type="date" id="tglLaporanBlok">
+          <button id="btnMuatLaporanBlok" type="button">Tampilkan</button>
+          <button id="btnUnduhLaporanBlokPdf" class="btn-pdf" type="button" disabled>📄 Unduh PDF</button>
+        </div>
+      </div>
+
+      <div id="ringkasanBlokWrap" style="display:none;">
+        <div class="blok-info-bar" id="blokInfoBar"></div>
+        <div class="blok-ringkas-grid" id="blokRingkasGrid"></div>
+      </div>
+
+      <div id="laporanBlokPesan" class="muat">
+        <div id="laporanBlokSpin" class="muat-spin" style="display:none;"></div>
+        <div id="laporanBlokTeks">Pilih tanggal lalu klik Tampilkan.</div>
+      </div>
+
+      <div class="riwayat-head" id="laporanBlokTabelHead" style="display:none;">
+        <div></div>
+        <input type="text" id="cariLaporanBlok" placeholder="Cari nama...">
+      </div>
+      <div class="tabel-scroll" id="laporanBlokTabelWrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th class="no-urut">No</th><th>Nama</th><th>Jabatan</th><th>Wajib Hadir</th>
+              <th>Alasan Jadwal</th><th>Status</th><th class="num">Jam Masuk</th>
+              <th class="num">Jam Pulang</th><th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="laporanBlokBody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -1341,6 +1410,7 @@
       if((btn.dataset.tab === 'dashboard' || btn.dataset.tab === 'penugasan') && !dashboardDimuat){
         dashboardDimuat = true;
         muatRekap();
+        muatLaporanBlok();
       } else if(btn.dataset.tab === 'penugasan'){
         renderPenugasan(riwayatTerakhir);
       }
@@ -1889,6 +1959,12 @@
     btnPdf.style.display = 'inline-flex';
     // Tombol tetap mengikuti status data: aktif hanya jika rekap sudah dimuat.
     btnPdf.disabled = !(riwayatTerakhir && riwayatTerakhir.length !== undefined && document.getElementById('tabelBody').children.length);
+    // Login admin yang sama juga membuka tombol PDF Laporan Absensi Harian
+    // per Blok — hanya aktif kalau laporan tanggal tersebut sudah dimuat.
+    const btnPdfBlok = document.getElementById('btnUnduhLaporanBlokPdf');
+    if(btnPdfBlok){
+      btnPdfBlok.disabled = !(typeof laporanBlokTerakhir !== 'undefined' && laporanBlokTerakhir && laporanBlokTerakhir.daftar && laporanBlokTerakhir.daftar.length);
+    }
   }
 
   async function verifikasiAdmin(){
@@ -2196,6 +2272,218 @@
     btnUnduhPdf.disabled = false;
   }
   document.getElementById('btnUnduhPdf').addEventListener('click', unduhRekapPdf);
+
+  /* ================= PANEL: LAPORAN ABSENSI HARIAN PER BLOK =================
+     Independen dari filter bulan/tahun rekap bulanan di atas — panel ini
+     memuat satu tanggal spesifik lewat aksi=laporanHarianBlok (backend
+     menggabungkan sheet Pegawai + JadwalBlok + Absensi untuk tanggal itu
+     dalam satu balasan), lalu menampilkan siapa saja yang WAJIB presensi
+     hari itu menurut jadwal Blok A/B aktif beserta status kehadirannya.
+     Unduh PDF memakai gerbang admin yang SAMA dengan rekap bulanan
+     (adminTerverifikasi) — satu kali login admin membuka kedua tombol PDF. */
+  const tglLaporanBlokEl = document.getElementById('tglLaporanBlok');
+  const btnMuatLaporanBlok = document.getElementById('btnMuatLaporanBlok');
+  const btnUnduhLaporanBlokPdf = document.getElementById('btnUnduhLaporanBlokPdf');
+  let laporanBlokTerakhir = null;
+
+  (function isiTanggalDefaultLaporanBlok(){
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    tglLaporanBlokEl.value = `${yyyy}-${mm}-${dd}`;
+  })();
+
+  async function muatLaporanBlok(){
+    const tgl = tglLaporanBlokEl.value;
+    if(!tgl) return;
+    const pesan = document.getElementById('laporanBlokPesan');
+    const spin = document.getElementById('laporanBlokSpin');
+    const teks = document.getElementById('laporanBlokTeks');
+    const wrapRingkasan = document.getElementById('ringkasanBlokWrap');
+    const tabelHead = document.getElementById('laporanBlokTabelHead');
+    const tabelWrap = document.getElementById('laporanBlokTabelWrap');
+
+    btnUnduhLaporanBlokPdf.disabled = true;
+    wrapRingkasan.style.display = 'none';
+    tabelHead.style.display = 'none';
+    tabelWrap.style.display = 'none';
+    pesan.style.display = 'block';
+    spin.style.display = 'block';
+    teks.textContent = 'Memuat data...';
+
+    try{
+      const res = await fetch(`${API_URL}?aksi=laporanHarianBlok&tanggal=${encodeURIComponent(tgl)}&token=${TOKEN}`);
+      const json = await res.json();
+      if(!json.ok) throw new Error(json.error || 'Gagal memuat data');
+      // Jaring pengaman sama seperti cekStatus/cekJadwalBlok: kalau tanggal
+      // sudah diganti lagi sebelum request ini selesai, abaikan balasan basi.
+      if(tglLaporanBlokEl.value !== tgl) return;
+      laporanBlokTerakhir = json.data;
+      tampilkanLaporanBlok(json.data);
+    }catch(err){
+      if(tglLaporanBlokEl.value !== tgl) return;
+      spin.style.display = 'none';
+      teks.textContent = 'Gagal memuat data. Periksa konfigurasi API.';
+    }
+  }
+  btnMuatLaporanBlok.addEventListener('click', muatLaporanBlok);
+
+  function tampilkanLaporanBlok(data){
+    const pesan = document.getElementById('laporanBlokPesan');
+    const wrapRingkasan = document.getElementById('ringkasanBlokWrap');
+    const tabelHead = document.getElementById('laporanBlokTabelHead');
+    const tabelWrap = document.getElementById('laporanBlokTabelWrap');
+    const infoBar = document.getElementById('blokInfoBar');
+    const ringkasGrid = document.getElementById('blokRingkasGrid');
+
+    pesan.style.display = 'none';
+    wrapRingkasan.style.display = 'block';
+    tabelHead.style.display = 'flex';
+    tabelWrap.style.display = 'block';
+
+    const tglLabel = data.tanggal.split('-').reverse().join('-');
+    const isLibur = !!data.hariLibur;
+    infoBar.classList.toggle('libur', isLibur);
+    infoBar.textContent = isLibur
+      ? `📅 ${tglLabel} (${data.hari}) — ${data.liburLabel || 'Akhir pekan'}. Presensi tidak diwajibkan hari ini.`
+      : `📅 ${tglLabel} (${data.hari}) — Blok ${data.blokAktif} aktif minggu ini.`;
+
+    const r = data.ringkasan;
+    const items = [
+      { label:'Wajib Presensi', angka: r.totalWajib || 0 },
+      { label:'Tidak Wajib', angka: r.totalTidakWajib || 0 },
+      { label:'Hadir', angka: r.Hadir || 0 },
+      { label:'Sakit', angka: r.Sakit || 0 },
+      { label:'Izin', angka: r.Izin || 0 },
+      { label:'Dinas Luar', angka: r['Dinas Luar'] || 0 },
+      { label:'Alfa', angka: r.Alfa || 0 },
+      { label:'Belum Presensi', angka: r.belumPresensi || 0 }
+    ];
+    ringkasGrid.innerHTML = items.map(it =>
+      `<div class="blok-ringkas-item"><div class="angka">${it.angka}</div><div class="label">${escapeHtml(it.label)}</div></div>`
+    ).join('');
+
+    renderLaporanBlokTabel(data.daftar || []);
+    btnUnduhLaporanBlokPdf.disabled = !adminTerverifikasi || !(data.daftar && data.daftar.length);
+  }
+
+  function renderLaporanBlokTabel(daftar){
+    const body = document.getElementById('laporanBlokBody');
+    renderTabel(body, daftar, 9, 'Tidak ada data pegawai untuk tanggal ini', row => {
+      const kelasStatus = escapeHtml(String(row.status || '').replace(/\s+/g,''));
+      const pillWajib = row.wajib ? '<span class="wajib-pill">Wajib</span>' : '<span class="wajib-pill tidak">Tidak Wajib</span>';
+      const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
+      return `<td>${escapeHtml(row.nama)}</td><td>${escapeHtml(row.jabatan || '—')}</td><td>${pillWajib}</td>`
+        + `<td style="white-space:normal;min-width:180px;">${escapeHtml(row.alasan || '—')}</td>`
+        + `<td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span>${badgeOtomatis}</td>`
+        + `<td class="num">${row.jamMasuk ? escapeHtml(row.jamMasuk) : '—'}</td>`
+        + `<td class="num">${row.jamPulang ? escapeHtml(row.jamPulang) : '—'}</td>`
+        + `<td style="white-space:normal;min-width:140px;">${escapeHtml(row.keterangan) || '—'}</td>`;
+    });
+  }
+
+  document.getElementById('cariLaporanBlok').addEventListener('input', (e) => {
+    if(!laporanBlokTerakhir) return;
+    const q = e.target.value.trim().toLowerCase();
+    const sumber = laporanBlokTerakhir.daftar || [];
+    renderLaporanBlokTabel(q ? sumber.filter(r => r.nama.toLowerCase().includes(q)) : sumber);
+  });
+
+  /* ---------- Unduh laporan absensi harian per blok sebagai PDF ---------- */
+  async function unduhLaporanBlokPdf(){
+    if(!adminTerverifikasi){
+      bukaModalAdmin();
+      return;
+    }
+    if(!laporanBlokTerakhir || !laporanBlokTerakhir.daftar || !laporanBlokTerakhir.daftar.length){
+      return;
+    }
+    const btn = btnUnduhLaporanBlokPdf;
+    const labelAsli = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Menyiapkan PDF...';
+    try{
+      await muatLibraryPdf();
+    }catch(err){
+      btn.textContent = labelAsli; btn.disabled = false;
+      alert('Gagal memuat komponen PDF. Periksa koneksi internet Anda lalu coba lagi.');
+      return;
+    }
+
+    const data = laporanBlokTerakhir;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const lebar = doc.internal.pageSize.getWidth();
+    const tglLabel = data.tanggal.split('-').reverse().join('-');
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text('SMK Ciledug Al-Musaddadiyah', lebar/2, 14, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text('Laporan Absensi Kehadiran Harian — Jadwal Blok Aktif', lebar/2, 20.5, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+    const keteranganHari = data.hariLibur ? (data.liburLabel || 'Akhir pekan') : `Blok ${data.blokAktif} aktif`;
+    doc.text(`Tanggal: ${tglLabel} (${data.hari})   ·   ${keteranganHari}`, lebar/2, 26, { align: 'center' });
+    doc.setDrawColor(11, 61, 145); doc.setLineWidth(0.6);
+    doc.line(12, 29.5, lebar-12, 29.5);
+
+    const r = data.ringkasan;
+    doc.setFontSize(9);
+    doc.text(
+      `Wajib: ${r.totalWajib||0}   Tidak Wajib: ${r.totalTidakWajib||0}   Hadir: ${r.Hadir||0}   Sakit: ${r.Sakit||0}   Izin: ${r.Izin||0}   Dinas Luar: ${r['Dinas Luar']||0}   Alfa: ${r.Alfa||0}   Belum Presensi: ${r.belumPresensi||0}`,
+      12, 35
+    );
+
+    const bodyRows = data.daftar.map((row, i) => [
+      i+1, row.nama, row.jabatan || '-', row.wajib ? 'Wajib' : 'Tidak Wajib',
+      row.alasan || '-', row.status, row.jamMasuk || '-', row.jamPulang || '-', row.keterangan || '-'
+    ]);
+
+    doc.autoTable({
+      startY: 40,
+      head: [['No','Nama','Jabatan','Wajib','Alasan Jadwal','Status','Jam Masuk','Jam Pulang','Keterangan']],
+      body: bodyRows,
+      styles: { fontSize: 7.8, cellPadding: 1.8 },
+      headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [244, 246, 252] },
+      columnStyles: { 0: { cellWidth: 8 }, 4: { cellWidth: 55 }, 8: { cellWidth: 45 } },
+      margin: { left: 12, right: 12 }
+    });
+
+    const akhirTabel = doc.lastAutoTable.finalY || 40;
+    doc.setFontSize(8); doc.setTextColor(120);
+    doc.text(`Dicetak otomatis dari sistem presensi pada ${new Date().toLocaleString('id-ID')}`, 12, akhirTabel + 7);
+
+    const tinggiBlokTtd = 42;
+    const tinggiHalaman = doc.internal.pageSize.getHeight();
+    let yTtd = akhirTabel + 15;
+    if(yTtd + tinggiBlokTtd > tinggiHalaman - 8){
+      doc.addPage('a4', 'landscape');
+      yTtd = 20;
+    }
+
+    const tanggalCetak = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+    const kolomKiriX = lebar * 0.27, kolomKananX = lebar * 0.73;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(30);
+    doc.text('Mengetahui,', kolomKiriX, yTtd, { align: 'center' });
+    doc.text('Kepala Sekolah', kolomKiriX, yTtd + 5, { align: 'center' });
+    doc.text(`Ciledug, ${tanggalCetak}`, kolomKananX, yTtd, { align: 'center' });
+    doc.text('Operator Presensi', kolomKananX, yTtd + 5, { align: 'center' });
+
+    const lebarGaris = 45;
+    doc.setDrawColor(120); doc.setLineWidth(0.3);
+    doc.line(kolomKiriX - lebarGaris/2, yTtd + 24, kolomKiriX + lebarGaris/2, yTtd + 24);
+    doc.line(kolomKananX - lebarGaris/2, yTtd + 24, kolomKananX + lebarGaris/2, yTtd + 24);
+    doc.setFontSize(8); doc.setTextColor(90);
+    doc.text('(.............................)', kolomKiriX, yTtd + 29, { align: 'center' });
+    doc.text('(.............................)', kolomKananX, yTtd + 29, { align: 'center' });
+
+    const namaFile = `Laporan-Absensi-Harian-Blok${data.blokAktif}-${data.tanggal}.pdf`;
+    doc.save(namaFile);
+
+    btn.textContent = labelAsli;
+    btn.disabled = false;
+  }
+  btnUnduhLaporanBlokPdf.addEventListener('click', unduhLaporanBlokPdf);
 
   let riwayatTerakhir = [];
   let grafikTerakhir = null; // menyimpan data grafik terakhir untuk digambar ulang saat resize
