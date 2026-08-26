@@ -2902,7 +2902,18 @@
       const d = disiplinPerPegawai[row.nama];
       d.hariHadir++;
       const menitMasuk = jamKeMenit(row.jamMasuk);
-      if(menitMasuk !== null && menitMasuk < BATAS_MENIT_KUNING) d.masukTepat++;
+      // FIX: sebelumnya pakai BATAS_MENIT_KUNING (08.00) — ambang itu murni
+      // penanda visual warna kuning di tabel Riwayat, LEBIH LONGGAR daripada
+      // aturan resmi presensi (lihat panel "Ketentuan Presensi": masuk
+      // paling lambat 07.30 WIB, lewat itu terlambat). Akibatnya pegawai
+      // yang absen masuk mis. 07.45 tercatat "terlambat" secara resmi TAPI
+      // tetap dihitung "masukTepat" di skor Kedisiplinan — skor jadi lebih
+      // tinggi dari kedisiplinan sesungguhnya. Sekarang pakai
+      // BATAS_MENIT_DISIPLIN (07.30) supaya skor "ketepatan absen masuk"
+      // sungguh-sungguh mencerminkan aturan resmi, terpisah dari
+      // BATAS_MENIT_KUNING yang tetap dipakai apa adanya untuk pewarnaan
+      // tabel Riwayat (tidak diubah, supaya tampilan itu tidak berubah).
+      if(menitMasuk !== null && menitMasuk < BATAS_MENIT_DISIPLIN) d.masukTepat++;
       if(row.jamPulang) d.pulangLengkap++;
     });
     const rekapDisiplin = namaList.map(nama => {
@@ -2969,7 +2980,13 @@
     if(bagian.length < 2 || Number.isNaN(bagian[0]) || Number.isNaN(bagian[1])) return null;
     return bagian[0]*60 + bagian[1];
   }
-  const BATAS_MENIT_KUNING = 8*60; // 08.00 — hanya penanda visual, terpisah dari aturan resmi terlambat pukul 07.30
+  const BATAS_MENIT_KUNING = 8*60; // 08.00 — hanya penanda visual warna kuning di tabel Riwayat, terpisah dari aturan resmi terlambat pukul 07.30
+  // BARU — FIX skor Peringkat Kedisiplinan: dulu skor "masuk tepat waktu" ikut
+  // memakai BATAS_MENIT_KUNING (08.00) di atas, padahal aturan resmi presensi
+  // (panel "Ketentuan Presensi") menetapkan batas masuk 07.30 WIB. Konstanta
+  // terpisah ini dipakai KHUSUS untuk menghitung skor Kedisiplinan, supaya
+  // sesuai aturan resmi, tanpa mengubah ambang warna kuning di tabel Riwayat.
+  const BATAS_MENIT_DISIPLIN = 7*60 + 30; // 07.30 — sesuai Ketentuan Presensi No.1
 
   // Helper generik untuk mengisi <tbody>: menghindari duplikasi pola yang
   // sama persis di renderRiwayat & renderPenugasan (kosongkan isi lama →
