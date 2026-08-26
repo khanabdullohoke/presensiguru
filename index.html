@@ -950,18 +950,26 @@
            BARU — Akumulasi jam lembur per pegawai untuk bulan/tahun yang
            sama dengan filter Rekap Bulanan di atas. Lembur dihitung di
            backend (lihat _hitungLembur() pada Code.gs) dalam dua kondisi:
-           (1) pegawai kategori "guru rangkap staf" yang absen pulang
-           lewat jam 15:00 (jam pulang resmi) pada hari kerja biasa — lembur
-           = selisih dengan jam 15:00; (2) siapa pun yang tetap masuk pada tanggal
-           merah/akhir pekan — seluruh durasi kerja hari itu dihitung
-           lembur. Diambil lewat aksi=lemburBulanan, request TERPISAH
-           dari aksi=rekap supaya render dashboard utama tidak pernah
+           (1) pegawai kategori "guru rangkap staf" ATAU "staf" (kategori
+           dengan jam kerja resmi tetap 07.00–15.00, lihat _infoWajibPresensi)
+           yang absen pulang lewat jam 15:00 (jam pulang resmi) pada hari
+           kerja biasa — lembur = selisih dengan jam 15:00; (2) siapa pun
+           yang tetap masuk pada tanggal merah/akhir pekan — seluruh
+           durasi kerja hari itu dihitung lembur. FIX: sebelumnya kondisi
+           (1) hanya mencakup "guru rangkap staf", sehingga staf murni
+           (mis. Kepala Sekolah, TU) yang tidak ditandai "Guru+Staff" di
+           kolom E sheet Pegawai tidak pernah muncul di panel ini kalau
+           tidak pernah masuk pada hari libur — sekarang sudah tercakup.
+           Kategori "guru" murni SENGAJA tetap dikecualikan karena jam
+           kerjanya mengikuti jadwal blok yang variatif, bukan jam pulang
+           tetap. Diambil lewat aksi=lemburBulanan, request TERPISAH dari
+           aksi=rekap supaya render dashboard utama tidak pernah
            menunggu/gagal gara-gara panel ini — lihat muatLembur(). -->
       <div class="panel" id="panelLembur">
         <div class="panel-head">
           <div>
             <h3>Info Lembur Bulanan</h3>
-            <p class="panel-sub">Guru rangkap staf yang pulang lewat jam 15:00 (jam pulang resmi), atau pegawai yang masuk pada tanggal merah</p>
+            <p class="panel-sub">Guru rangkap staf &amp; staf yang pulang lewat jam 15:00 (jam pulang resmi), atau pegawai yang masuk pada tanggal merah</p>
           </div>
         </div>
         <div id="lemburKosong" class="muat">
