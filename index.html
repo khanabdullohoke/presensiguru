@@ -1473,6 +1473,21 @@
       hentikanPantauLokasi();
     } else {
       mulaiPantauLokasi();
+      // FIX (tombol Absen Pulang macet setelah HP dikunci/di-background lalu
+      // dibuka lagi): sebelumnya hanya GPS yang di-refresh di sini, sedangkan
+      // statusHariIniTerakhir (penentu tombol Masuk/Pulang menyala) TETAP
+      // memakai nilai lama yang tersimpan di memori sejak halaman terakhir
+      // aktif — karena cekStatus() hanya terpanggil saat dropdown nama
+      // diubah atau setelah submit berhasil, bukan saat tab kembali aktif.
+      // Akibatnya: kalau layar terkunci setelah Absen Masuk berhasil (atau
+      // tanggal berganti saat HP idle semalaman), tombol Pulang bisa tetap
+      // terkunci walau di database sudah ada catatan terbaru, sampai
+      // pengguna memilih ulang namanya secara manual.
+      // PERBAIKAN: begitu tab Presensi aktif kembali & sudah ada nama
+      // terpilih, status presensi ditarik ulang dari server (sama seperti
+      // saat dropdown nama diubah), lalu tombol disegarkan mengikuti data
+      // terbaru — tanpa menyentuh tampilan/CSS sama sekali.
+      if(pilihNama.value) cekStatus();
     }
   });
 
