@@ -2917,17 +2917,28 @@
   // tampilkan pesan bila data kosong → render baris satu per satu).
   // Setiap baris otomatis diberi kolom nomor urut (1, 2, 3, ...) mengikuti
   // urutan tampil saat ini di tabel — bukan id dari server.
+  // OPTIMASI (load data terasa berat saat buka Dashboard/Penugasan untuk
+  // bulan dengan banyak baris — bisa ratusan sampai ribuan baris gabungan
+  // semua pegawai): SEBELUMNYA setiap baris dibuat lewat
+  // document.createElement('tr') + bodyEl.appendChild(tr) satu-satu di
+  // dalam forEach. Tiap appendChild ke tabel yang sudah ada di DOM bisa
+  // memicu browser menghitung ulang layout tabel berkali-kali (reflow
+  // per baris), yang terasa berat/patah-patah di HP kelas menengah ke
+  // bawah untuk daftar besar.
+  // PERBAIKAN: seluruh baris dirangkai dulu jadi satu string HTML di
+  // memori (array + join, pola yang sama seperti renderLembur() di file
+  // ini), baru dimasukkan ke DOM lewat SATU kali innerHTML — browser
+  // hanya perlu menghitung layout sekali untuk seluruh tabel, bukan
+  // sekali per baris. Hasil visual & urutan kolom 100% identik dengan
+  // versi sebelumnya, murni cara memasukkannya ke DOM yang lebih ringan.
   function renderTabel(bodyEl, daftar, kolomKosong, pesanKosong, buatBarisHtml){
-    bodyEl.innerHTML = '';
     if(!daftar.length){
       bodyEl.innerHTML = `<tr><td colspan="${kolomKosong}" style="text-align:center;color:var(--faint);padding:20px;">${pesanKosong}</td></tr>`;
       return;
     }
-    daftar.forEach((row, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="no-urut">${i+1}</td>` + buatBarisHtml(row);
-      bodyEl.appendChild(tr);
-    });
+    bodyEl.innerHTML = daftar.map((row, i) =>
+      `<tr><td class="no-urut">${i+1}</td>${buatBarisHtml(row)}</tr>`
+    ).join('');
   }
 
   function renderRiwayat(daftar){
