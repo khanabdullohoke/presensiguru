@@ -1631,29 +1631,80 @@
     }
   });
 
+  // OPTIMASI PERFORMA (agar tidak "loading lama" tiap buka halaman):
+  // daftar pegawai jarang berubah (hanya saat ada pegawai baru/keluar),
+  // tapi sebelumnya dropdown nama SELALU menunggu penuh 1 kali panggilan
+  // ke Apps Script sebelum tampil — dan "cold start" Apps Script bisa
+  // makan waktu 1-3 detik sendiri untuk permintaan pertama. Sekarang
+  // dipakai pola "stale-while-revalidate": kalau ada salinan daftar
+  // pegawai tersimpan di localStorage perangkat ini, dropdown langsung
+  // diisi dari situ (instan, tanpa menunggu jaringan sama sekali),
+  // SEKALIGUS tetap mengambil data terbaru dari server di latar
+  // belakang untuk menimpanya begitu selesai — supaya data tidak pernah
+  // basi untuk waktu lama. Pilihan nama yang sudah diklik pengguna
+  // (kalau sempat memilih dari data cache lebih dulu) tetap
+  // dipertahankan saat dropdown ditimpa data terbaru.
+  const CACHE_PEGAWAI_KEY = 'spa_daftarPegawai_v1';
+  const CACHE_PEGAWAI_TTL_TAMPIL_AWAL_MS = 24 * 60 * 60 * 1000; // 24 jam
+
+  function _renderDaftarPegawai(daftar){
+    const pilihanNamaSebelumnya = pilihNama.value;
+    const pilihanGpSebelumnya = gpNama.value;
+
+    pegawaiMap = {};
+    pilihNama.innerHTML = '<option value="">-- Pilih nama --</option>';
+    gpNama.innerHTML = '<option value="">-- Pilih nama --</option>';
+    daftar.forEach(p => {
+      pegawaiMap[p.nama] = p; // { nama, jabatan } — PIN & NUPTK tidak pernah dikirim ke client
+      const opt = document.createElement('option');
+      opt.value = p.nama; opt.textContent = `${p.nama} — ${p.jabatan}`;
+      pilihNama.appendChild(opt);
+
+      const optGp = document.createElement('option');
+      optGp.value = p.nama; optGp.textContent = `${p.nama} — ${p.jabatan}`;
+      gpNama.appendChild(optGp);
+    });
+
+    // Jangan sampai render ulang (mis. setelah data terbaru datang di
+    // belakang layar) diam-diam mengosongkan pilihan yang sudah dibuat
+    // pengguna dari tampilan cache sebelumnya.
+    if(pilihanNamaSebelumnya && pegawaiMap[pilihanNamaSebelumnya]) pilihNama.value = pilihanNamaSebelumnya;
+    if(pilihanGpSebelumnya && pegawaiMap[pilihanGpSebelumnya]) gpNama.value = pilihanGpSebelumnya;
+  }
+
   async function muatDaftarPegawai(){
     const kartuGagal = document.getElementById('muatGagalCard');
+    let tampilDariCache = false;
+
+    try{
+      const mentah = localStorage.getItem(CACHE_PEGAWAI_KEY);
+      if(mentah){
+        const cache = JSON.parse(mentah);
+        const cukupSegarUntukTampilAwal = cache && (Date.now() - (cache.waktu || 0)) < CACHE_PEGAWAI_TTL_TAMPIL_AWAL_MS;
+        if(cache && Array.isArray(cache.data) && cache.data.length && cukupSegarUntukTampilAwal){
+          _renderDaftarPegawai(cache.data);
+          kartuGagal.classList.remove('show');
+          tampilDariCache = true;
+        }
+      }
+    }catch(err){ /* localStorage tidak tersedia / data korup -> abaikan, lanjut fetch seperti biasa */ }
+
     try{
       const res = await fetch(`${API_URL}?aksi=daftarPegawai&token=${TOKEN}`);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
       kartuGagal.classList.remove('show');
-      pilihNama.innerHTML = '<option value="">-- Pilih nama --</option>';
-      gpNama.innerHTML = '<option value="">-- Pilih nama --</option>';
-      json.data.forEach(p => {
-        pegawaiMap[p.nama] = p; // { nama, jabatan } — PIN & NUPTK tidak pernah dikirim ke client
-        const opt = document.createElement('option');
-        opt.value = p.nama; opt.textContent = `${p.nama} — ${p.jabatan}`;
-        pilihNama.appendChild(opt);
-
-        const optGp = document.createElement('option');
-        optGp.value = p.nama; optGp.textContent = `${p.nama} — ${p.jabatan}`;
-        gpNama.appendChild(optGp);
-      });
+      _renderDaftarPegawai(json.data);
+      try{ localStorage.setItem(CACHE_PEGAWAI_KEY, JSON.stringify({ data: json.data, waktu: Date.now() })); }catch(err){ /* mis. kuota localStorage penuh -> tidak fatal, lain kali coba lagi */ }
     }catch(err){
-      pilihNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
-      gpNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
-      kartuGagal.classList.add('show');
+      // Kalau tadi sudah sempat tampil dari cache, biarkan tetap tampil
+      // (lebih baik data sedikit basi daripada dropdown kosong) — cukup
+      // simpan lewat kartu gagal untuk kasus TIDAK ada cache sama sekali.
+      if(!tampilDariCache){
+        pilihNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
+        gpNama.innerHTML = '<option value="">Daftar pegawai belum termuat</option>';
+        kartuGagal.classList.add('show');
+      }
     }
   }
 
