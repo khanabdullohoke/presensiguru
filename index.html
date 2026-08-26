@@ -1883,16 +1883,32 @@
     // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
     // atau kondisi tombol yang belum sempat ter-update.
     const d = statusHariIniTerakhir;
+    // FIX (urutan pengecekan — pesan error yang salah untuk status non-Hadir):
+    // tombol "Simpan" (Izin/Sakit/Alfa/Dinas Luar) SELALU memanggil
+    // kirimAbsen('masuk') — lihat btnSimpan.addEventListener di bawah — jadi
+    // `tipe === 'masuk'` selalu bernilai true untuk status non-Hadir juga.
+    // Sebelumnya cek "pilihStatus.value !== 'Hadir'" ditaruh PALING BAWAH,
+    // di BAWAH cek "tipe==='masuk' && d.sudahMasuk" — akibatnya begitu
+    // pegawai memilih status non-Hadir (mis. Izin) padahal hari ini sudah
+    // ada catatan, cek pertama itu SELALU lebih dulu cocok dan pegawai
+    // melihat pesan "Absen masuk hari ini sudah tercatat, tidak bisa diisi
+    // ulang." — membingungkan karena dia tidak sedang absen masuk. Pesan
+    // yang lebih tepat ("Hari ini sudah ada catatan presensi...") jadi
+    // TIDAK PERNAH tercapai (dead code) untuk kombinasi ini. Diperbaiki:
+    // cek status non-Hadir dipindah ke PALING ATAS supaya pesannya akurat
+    // untuk kasusnya sendiri, sebelum jatuh ke cek generik tipe='masuk'.
+    // Perilaku (tombol tetap terkunci) tidak berubah sama sekali — murni
+    // perbaikan teks pesan yang ditampilkan.
+    if(pilihStatus.value !== 'Hadir' && d.sudahMasuk){
+      tampilPesan('Hari ini sudah ada catatan presensi, tidak bisa disimpan ulang.', 'err');
+      perbaruiEnableTombol(); return;
+    }
     if(tipe === 'masuk' && d.sudahMasuk){
       tampilPesan('Absen masuk hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
       perbaruiEnableTombol(); return;
     }
     if(tipe === 'pulang' && d.sudahPulang){
       tampilPesan('Absen pulang hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
-      perbaruiEnableTombol(); return;
-    }
-    if(pilihStatus.value !== 'Hadir' && d.sudahMasuk){
-      tampilPesan('Hari ini sudah ada catatan presensi, tidak bisa disimpan ulang.', 'err');
       perbaruiEnableTombol(); return;
     }
 
@@ -2233,7 +2249,20 @@
       if(i+1 === now.getMonth()+1) opt.selected = true;
       pilihBulan.appendChild(opt);
     });
-    for(let t = 2030; t >= now.getFullYear()-2; t--){
+    // FIX (bug laten tahun depan): batas atas dulu di-hardcode ke 2030. Itu
+    // aman untuk sekarang (tahun berjalan masih di bawahnya), TAPI begitu
+    // tahun berjalan sungguhan melewati 2030, tahun berjalan itu sendiri
+    // tidak akan pernah muncul di dropdown (loop dimulai dari 2030 lalu
+    // MENURUN, tidak pernah naik ke tahun yang lebih besar) — akibatnya
+    // tidak ada opsi yang otomatis "selected" sesuai tahun sekarang, dan
+    // Dashboard/Rekap tidak bisa memuat data tahun berjalan tanpa mengedit
+    // kode ini secara manual setiap beberapa tahun. Diperbaiki: batas atas
+    // sekarang mengikuti mana yang lebih besar antara 2030 (nilai lama,
+    // dipertahankan supaya tampilan/rentang tahun SAAT INI 100% identik)
+    // atau (tahun berjalan + 2) — sehingga tahun berjalan & 2 tahun ke
+    // depan selalu tersedia, tanpa perlu diedit lagi di masa mendatang.
+    const batasAtasTahun = Math.max(2030, now.getFullYear() + 2);
+    for(let t = batasAtasTahun; t >= now.getFullYear()-2; t--){
       const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
       if(t === now.getFullYear()) opt.selected = true;
       pilihTahun.appendChild(opt);
