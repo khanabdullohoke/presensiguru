@@ -2996,8 +2996,14 @@
       : Math.max(1, Math.ceil(jumlahHariTercatat * 0.5));
     const layakPeringkat = rekapDisiplin.filter(p => p.hariHadir >= minHariUntukPeringkat);
 
+    // Urutkan berdasarkan Wilson score (lihat catatan panjang di
+    // wilsonLowerBound di bawah) — bukan `persen` mentah — supaya rekam jejak
+    // panjang yang hampir sempurna tidak kalah oleh rekam jejak pendek yang
+    // kebetulan mulus. `sukses` = total kejadian tepat waktu & lengkap pulang
+    // (masukTepat + pulangLengkap), `n` = total kesempatan (hariHadir * 2).
     const top15 = [...layakPeringkat]
-      .sort((a,b) => b.persen - a.persen || b.hariHadir - a.hariHadir)
+      .map(p => ({ ...p, wilson: wilsonLowerBound(p.masukTepat + p.pulangLengkap, p.hariHadir * 2) }))
+      .sort((a,b) => b.wilson - a.wilson || b.persen - a.persen || b.hariHadir - a.hariHadir)
       .slice(0, 15);
     gambarGrafikGaris('chartTren', labelTren, nilaiTren);
     gambarPeringkat('chartPeringkat', top15);
@@ -3049,6 +3055,45 @@
   // terpisah ini dipakai KHUSUS untuk menghitung skor Kedisiplinan, supaya
   // sesuai aturan resmi, tanpa mengubah ambang warna kuning di tabel Riwayat.
   const BATAS_MENIT_DISIPLIN = 7*60 + 30; // 07.30 — sesuai Ketentuan Presensi No.1
+
+  // FIX (keadilan Peringkat Kedisiplinan — sampel sedikit vs sampel banyak):
+  // Sebelumnya top15 diurutkan MURNI dari `persen` (masukTepat+pulangLengkap
+  // dibagi hariHadir*2). Masalahnya: persentase murni menguntungkan pegawai
+  // dengan SEDIKIT hari hadir secara tidak adil — cukup 12 hari tanpa cela
+  // sekalipun untuk tembus 100%, sedangkan pegawai dengan 25 hari hadir yang
+  // hanya SATU kali telat/lupa pulang (98%, jauh lebih banyak "bukti" konsisten
+  // disiplin) malah kalah peringkat oleh yang baru 12 hari itu — tidak masuk
+  // akal karena rekam jejak yang lebih panjang & hampir sempurna semestinya
+  // lebih meyakinkan daripada rekam jejak pendek yang kebetulan mulus.
+  //
+  // Diperbaiki dengan Wilson score interval (metode statistik standar untuk
+  // membandingkan proporsi/rate dari ukuran sampel yang berbeda jauh — dipakai
+  // Reddit, Yelp, dan berbagai sistem "sort by rating" lain persis untuk kasus
+  // ini): bukan memakai persentase mentah, tapi BATAS BAWAH interval
+  // kepercayaan 95%-nya. Efeknya: pegawai dengan sedikit hari (sampel kecil)
+  // "dihukum" dengan batas bawah yang jauh di bawah persentase mentahnya
+  // (karena datanya belum cukup meyakinkan), sedangkan pegawai dengan banyak
+  // hari & tingkat sukses tinggi (sampel besar) batas bawahnya mendekati
+  // persentase mentahnya (karena datanya sudah sangat meyakinkan) — sehingga
+  // rekam jejak panjang yang hampir sempurna kini bisa mengalahkan rekam
+  // jejak pendek yang kebetulan sempurna, seperti semestinya.
+  //
+  // CATATAN: persentase yang DITAMPILKAN di bar & tooltip tetap `persen` asli
+  // (jujur, apa adanya) — Wilson score HANYA dipakai sebagai kunci URUTAN,
+  // sama seperti pola "weighted rating untuk mengurutkan, raw rating untuk
+  // ditampilkan" yang dipakai IMDb Top 250. Konsekuensinya, urutan tampil
+  // TIDAK selalu 100% sejajar dengan panjang bar (mis. #2 bisa persen sedikit
+  // di bawah #3) — itu bukan bug, itu justru inti perbaikannya: mengutamakan
+  // konsistensi jangka panjang di atas persentase sesaat dari sampel kecil.
+  function wilsonLowerBound(sukses, n, z){
+    z = z || 1.96; // 95% confidence — standar umum untuk kasus semacam ini
+    if(n <= 0) return 0;
+    const p = sukses / n;
+    const denom = 1 + (z*z)/n;
+    const pusat = p + (z*z)/(2*n);
+    const margin = z * Math.sqrt((p*(1-p) + (z*z)/(4*n)) / n);
+    return (pusat - margin) / denom;
+  }
 
   // Helper generik untuk mengisi <tbody>: menghindari duplikasi pola yang
   // sama persis di renderRiwayat & renderPenugasan (kosongkan isi lama →
