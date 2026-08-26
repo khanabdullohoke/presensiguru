@@ -2896,8 +2896,15 @@
       return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
     })();
     const disiplinPerPegawai = {};
+    // Kumpulan tanggal unik yang BENAR-BENAR punya minimal satu catatan Hadir
+    // bulan ini (dari pegawai mana pun), dengan pengecualian yang SAMA persis
+    // seperti disiplinPerPegawai di bawah (status Hadir & bukan hari ini) —
+    // dipakai sebagai basis ambang minimal peringkat (lihat catatan di
+    // minHariUntukPeringkat), BUKAN dari rekor tertinggi 1 pegawai.
+    const hariTercatatSet = new Set();
     (daftarHarian || []).forEach(row => {
       if(row.status !== 'Hadir' || row.tanggal === hariIniStr) return;
+      hariTercatatSet.add(row.tanggal);
       if(!disiplinPerPegawai[row.nama]) disiplinPerPegawai[row.nama] = { hariHadir:0, masukTepat:0, pulangLengkap:0 };
       const d = disiplinPerPegawai[row.nama];
       d.hariHadir++;
@@ -2927,33 +2934,37 @@
     // Syarat minimal hari Hadir tercatat supaya masuk peringkat: mencegah pegawai
     // yang baru punya sedikit hari Hadir bulan ini (mis. baru gabung/mayoritas
     // Izin-Sakit) tampil di posisi teratas hanya karena kebetulan sedikit hari
-    // Hadir-nya itu semua tepat waktu. Ambang batas mengikuti separuh dari
-    // jumlah hari Hadir TERBANYAK di antara semua pegawai bulan ini (bukan
-    // angka tetap), supaya tetap wajar dipakai di bulan pendek maupun panjang.
+    // Hadir-nya itu semua tepat waktu.
     //
-    // FIX (panel Peringkat nyaris kosong di awal bulan/awal tahun ajaran):
-    // sebelumnya ambang dipaksa `Math.max(5, ...)` — SELALU minimal 5 hari
-    // Hadir, apa pun kondisinya. Di awal bulan/tahun ajaran (baru ~5 hari
-    // kerja berjalan), rekor hadir TERBANYAK di antara SEMUA pegawai
-    // (`maxHadirTercatat`) itu sendiri baru sekitar 5 — sehingga ambang 5
-    // ini efektif hanya meloloskan pegawai yang hadir 100% tanpa bolong
-    // SATU HARI PUN. Pegawai lain yang izin/sakit sehari saja langsung
-    // tersingkir, dan panel "15 Peringkat" jadi cuma menampilkan 1 nama
-    // walau total Hadir bulan itu sudah puluhan/ratusan (lihat kartu Total
-    // Hadir) — bukan berarti datanya salah, tapi ambangnya terlalu ketat
-    // untuk kondisi bulan yang masih baru berjalan.
+    // FIX v2 (basis ambang diganti ke KEHADIRAN YANG TERCATAT, bukan rekor 1
+    // pegawai): versi sebelumnya memakai `maxHadirTercatat` — rekor hariHadir
+    // TERTINGGI di antara pegawai — sebagai basis ambang. Itu sudah memperbaiki
+    // bug utama (panel nyaris kosong di awal bulan/tahun ajaran), TAPI basis
+    // itu masih bisa condong ke perilaku SATU orang: kalau ada satu pegawai
+    // yang kebetulan rajin datang di hari-hari SUKARELA (akhir pekan/tanggal
+    // merah, yang presensinya memang tidak wajib — lihat _infoWajibPresensi di
+    // Code.gs), rekornya bisa melebihi jumlah hari kerja WAJIB yang sebenarnya
+    // sudah berlalu, sehingga ambang ikut naik melebihi wajar dan pegawai lain
+    // yang sudah 100% hadir di semua hari WAJIB (tapi tidak ikut hari sukarela)
+    // bisa tersaring tanpa alasan yang adil.
     //
-    // Diperbaiki: ambang "minimal 5 hari" (proteksi anti-sampel-kecil) HANYA
-    // diberlakukan setelah rekor tertinggi bulan ini sudah cukup besar
-    // (>= 10 hari, kira-kira 2 minggu kerja) — supaya tetap melindungi dari
-    // bias sampel kecil begitu data sudah cukup banyak, TAPI di awal bulan
-    // (rekor tertinggi masih < 10) ambang murni mengikuti separuh dari rekor
-    // tertinggi saat itu (minimal 1), sehingga tidak pernah memaksa syarat
-    // yang bahkan pegawai paling rajin sekalipun baru pas-pasan mencapainya.
-    const maxHadirTercatat = Math.max(0, ...rekapDisiplin.map(p => p.hariHadir));
-    const minHariUntukPeringkat = maxHadirTercatat >= 10
-      ? Math.max(5, Math.ceil(maxHadirTercatat * 0.5))
-      : Math.max(1, Math.ceil(maxHadirTercatat * 0.5));
+    // Diperbaiki: ambang sekarang berbasis `jumlahHariTercatat` — jumlah HARI
+    // UNIK yang benar-benar punya minimal satu catatan Hadir dari pegawai
+    // MANA PUN bulan ini (dikumpulkan di hariTercatatSet, dengan pengecualian
+    // "hari ini" yang identik dengan disiplinPerPegawai di atas) — bukan lagi
+    // rekor pribadi siapa pun. Ini basis yang lebih tepat secara konsep karena
+    // murni deskriptif tentang data presensi yang sungguh-sungguh sudah masuk
+    // bulan ini (union dari semua pegawai), bukan pencapaian satu orang.
+    // CATATAN JUJUR: kalau ada pegawai yang hadir SENDIRIAN (tanpa pegawai
+    // lain sama sekali) di hari-hari sukarela ekstra, angka ini secara
+    // matematis akan tetap sama dengan rekor pribadinya (karena dialah
+    // satu-satunya sumber "hari itu tercatat ada kehadiran") — jadi basis ini
+    // TIDAK sepenuhnya kebal dari kasus ekstrem tersebut, hanya lebih akurat
+    // secara konsep untuk kasus umum (kehadiran tersebar di banyak pegawai).
+    const jumlahHariTercatat = hariTercatatSet.size;
+    const minHariUntukPeringkat = jumlahHariTercatat >= 10
+      ? Math.max(5, Math.ceil(jumlahHariTercatat * 0.5))
+      : Math.max(1, Math.ceil(jumlahHariTercatat * 0.5));
     const layakPeringkat = rekapDisiplin.filter(p => p.hariHadir >= minHariUntukPeringkat);
 
     const top15 = [...layakPeringkat]
