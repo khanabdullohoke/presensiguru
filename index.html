@@ -23,6 +23,7 @@
     --warn:#f79009; --warn-bg:#fef3e2;
     --info:#2e90fa; --info-bg:#e8f2ff;
     --err:#f04438;  --err-bg:#feecec;
+    --cuti:#0e9384; --cuti-bg:#e3f7f3;
     --font-display:'Sora',system-ui,sans-serif;
     --font-body:'Inter',system-ui,-apple-system,sans-serif;
   }
@@ -262,6 +263,7 @@
   .status-tag.Sakit{background:var(--warn-bg);color:var(--warn-deep,var(--warn));}
   .status-tag.Izin{background:var(--info-bg);color:var(--info);}
   .status-tag.Alfa{background:var(--err-bg);color:var(--err);}
+  .status-tag.Cuti{background:var(--cuti-bg);color:var(--cuti);}
   .status-tag.DinasLuar{background:#f0ecff;color:#6941c6;}
   .status-tag.BelumPresensi{background:var(--err-bg);color:var(--err);}
   .status-tag.TidakWajib{background:#eef1f8;color:var(--muted);}
@@ -312,6 +314,7 @@
   .gauge-panel .gauge-sub{font-size:11px;color:var(--faint);margin-top:3px;position:relative;z-index:1;}
 
   .kartu-ringkas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .kartu-ringkas .kartu:last-child:nth-child(5){grid-column:1 / -1;}
   @media(max-width:420px){.kartu-ringkas{grid-template-columns:1fr 1fr;gap:9px;}}
   .kartu{
     position:relative;background:var(--card);border-radius:16px;padding:15px 16px 16px;
@@ -332,6 +335,7 @@
   .kartu.sakit::before{background:var(--warn);} .kartu.sakit .angka{color:var(--warn);} .kartu.sakit .ico{background:radial-gradient(circle at 30% 25%, #ffd48a, var(--warn-bg) 75%);}
   .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:radial-gradient(circle at 30% 25%, #a9d4ff, var(--info-bg) 75%);}
   .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:radial-gradient(circle at 30% 25%, #ffb3ac, var(--err-bg) 75%);}
+  .kartu.cuti::before{background:var(--cuti);} .kartu.cuti .angka{color:var(--cuti);} .kartu.cuti .ico{background:radial-gradient(circle at 30% 25%, #7fd9cb, var(--cuti-bg) 75%);}
 
   .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch;}
   .panel-grid .panel{display:flex;flex-direction:column;}
@@ -477,6 +481,7 @@
   #isiDashboard.tampil .kartu-ringkas .kartu:nth-child(2){animation-delay:.1s;}
   #isiDashboard.tampil .kartu-ringkas .kartu:nth-child(3){animation-delay:.15s;}
   #isiDashboard.tampil .kartu-ringkas .kartu:nth-child(4){animation-delay:.2s;}
+  #isiDashboard.tampil .kartu-ringkas .kartu:nth-child(5){animation-delay:.25s;}
   #isiDashboard.tampil .panel-grid .panel{animation:masukHalus .45s ease both;}
   #isiDashboard.tampil .panel-grid .panel:nth-child(1){animation-delay:.12s;}
   #isiDashboard.tampil .panel-grid .panel:nth-child(2){animation-delay:.2s;}
@@ -617,7 +622,7 @@
         </div>
         <button type="button" class="lokasi-retry" id="btnUlangiLokasi" style="display:none;">Coba Lagi</button>
       </div>
-      <div class="lokasi-sub" id="lokasiCatatanOpsional" style="display:none;margin:-2px 0 4px 2px;font-style:italic;">Radius 200 m tidak wajib untuk status Izin / Sakit / Alfa / Dinas Luar — hanya berlaku untuk status Hadir.</div>
+      <div class="lokasi-sub" id="lokasiCatatanOpsional" style="display:none;margin:-2px 0 4px 2px;font-style:italic;">Radius 200 m tidak wajib untuk status Izin / Sakit / Cuti / Alfa / Dinas Luar — hanya berlaku untuk status Hadir.</div>
 
       <label for="pilihNama">Nama</label>
       <select id="pilihNama"><option value="">Memuat daftar pegawai...</option></select>
@@ -637,6 +642,7 @@
         <option value="Hadir">Hadir (absen masuk / pulang)</option>
         <option value="Sakit">Sakit</option>
         <option value="Izin">Izin</option>
+        <option value="Cuti">Cuti</option>
         <option value="Alfa">Alfa</option>
         <option value="Dinas Luar">Dinas Luar</option>
       </select>
@@ -668,7 +674,7 @@
         </div>
         <label for="pnTugas">Tugas <span style="color:#e53e3e;">*</span></label>
         <textarea id="pnTugas" rows="2" placeholder="Tugas yang diberikan kepada siswa selama guru berhalangan hadir"></textarea>
-        <div class="field-hint">Wajib diisi karena Anda tercatat sebagai guru dan mengajukan Izin/Sakit/Dinas Luar, agar kelas tetap mendapat penugasan.</div>
+        <div class="field-hint">Wajib diisi karena Anda tercatat sebagai guru dan mengajukan Izin/Sakit/Cuti/Dinas Luar, agar kelas tetap mendapat penugasan.</div>
       </div>
 
       <label for="keterangan" id="labelKeterangan">Catatan tambahan (opsional)</label>
@@ -850,6 +856,7 @@
           <div class="kartu sakit"><div class="kartu-top"><span class="ico">🩺</span></div><div class="angka" id="totalSakit">0</div><div class="label">Total Sakit</div></div>
           <div class="kartu izin"><div class="kartu-top"><span class="ico">📋</span></div><div class="angka" id="totalIzin">0</div><div class="label">Total Izin</div></div>
           <div class="kartu alpa"><div class="kartu-top"><span class="ico">⛔</span></div><div class="angka" id="totalAlpa">0</div><div class="label">Total Alfa</div></div>
+          <div class="kartu cuti"><div class="kartu-top"><span class="ico">🏖️</span></div><div class="angka" id="totalCuti">0</div><div class="label">Total Cuti</div></div>
         </div>
       </div>
 
@@ -995,6 +1002,7 @@
               <th class="num sortable" data-sort="Hadir" data-tipe="angka">Hadir<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Sakit" data-tipe="angka">Sakit<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Izin" data-tipe="angka">Izin<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Cuti" data-tipe="angka">Cuti<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Alfa" data-tipe="angka">Alfa<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Dinas Luar" data-tipe="angka">Dinas Luar<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="persen" data-tipe="angka">Tingkat<span class="panah">▼</span></th>
@@ -1014,7 +1022,7 @@
     <div class="dash-top">
       <div class="dash-title">
         <h2>Penugasan Siswa</h2>
-        <p>Daftar tugas pengganti dari guru yang Izin, Sakit, atau Dinas Luar — mengikuti periode yang sama dengan Rekap Bulanan</p>
+        <p>Daftar tugas pengganti dari guru yang Izin, Sakit, Cuti, atau Dinas Luar — mengikuti periode yang sama dengan Rekap Bulanan</p>
       </div>
     </div>
     <div class="panel">
@@ -1225,8 +1233,9 @@
           <li><span class="no">3</span><span>Presensi hanya dapat dilakukan dalam radius <strong>200 meter</strong> dari lingkungan SMK Ciledug Al-Musaddadiyah. Sistem memverifikasi lokasi GPS perangkat secara otomatis dan menolak pengisian dari luar radius tersebut.</span></li>
           <li><span class="no">4</span><span>Presensi hanya dapat dilakukan atas nama sendiri, diverifikasi dengan <strong>kode keamanan (PIN)</strong> pribadi dan <strong>foto kehadiran</strong> yang diambil langsung dari kamera. Menitipkan absen, PIN, atau nomor identitas pegawai pada pihak lain melanggar ketentuan ini.</span></li>
           <li><span class="no">5</span><span>Izin atau sakit wajib disertai keterangan pada kolom yang tersedia, dan bila perlu menyertakan surat pendukung ke bagian tata usaha.</span></li>
-          <li><span class="no">6</span><span>Data kehadiran direkap setiap bulan dan menjadi salah satu dasar penilaian kinerja serta tunjangan kehadiran.</span></li>
-          <li><span class="no">7</span><span>Kendala teknis saat absen (jaringan, GPS, atau sistem error) segera dilaporkan ke operator sekolah agar dapat dikoreksi.</span></li>
+          <li><span class="no">6</span><span>Cuti (di luar izin mendadak dan sakit) diajukan melalui status <strong>"Cuti"</strong> pada tab Absen, sebaiknya diketahui pihak sekolah lebih awal agar kelas atau tugas yang ditinggalkan dapat disiapkan penggantinya.</span></li>
+          <li><span class="no">7</span><span>Data kehadiran direkap setiap bulan dan menjadi salah satu dasar penilaian kinerja serta tunjangan kehadiran.</span></li>
+          <li><span class="no">8</span><span>Kendala teknis saat absen (jaringan, GPS, atau sistem error) segera dilaporkan ke operator sekolah agar dapat dikoreksi.</span></li>
         </ul>
       </div>
 
@@ -1572,6 +1581,9 @@
   const gpNama = document.getElementById('gpNama');
   let pegawaiMap = {};
   let statusHariIniTerakhir = { sudahMasuk:false, sudahPulang:false, status:null };
+  // BARU (FIX jeda tombol Absen Pulang): lihat catatan lengkap di
+  // perbaruiEnableTombol() & cekStatus() di bawah.
+  let statusSedangDimuat = false;
   let fotoDataUrl = '';
 
   function updateJam(){
@@ -1716,15 +1728,18 @@
     }
   }
 
-  // Guru (bukan staf non-guru) yang mengajukan Izin/Dinas Luar wajib mengisi
-  // tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) agar kelas
-  // yang ditinggalkan tetap mendapat arahan. Staf cukup catatan opsional.
+  // Guru (bukan staf non-guru) yang mengajukan Izin/Sakit/Cuti/Dinas Luar wajib
+  // mengisi tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) agar
+  // kelas yang ditinggalkan tetap mendapat arahan. Staf cukup catatan opsional.
+  // Cuti disertakan di sini (sama seperti Izin/Sakit/Dinas Luar) karena guru
+  // yang cuti tetap meninggalkan kelas tanpa pengajar — kelas tetap butuh
+  // penugasan pengganti terlepas dari alasan ketidakhadirannya.
   function isGuru(){
     const p = pegawaiMap[pilihNama.value];
     return !!p && /guru/i.test(p.jabatan || '');
   }
   function perluPenugasan(){
-    return (pilihStatus.value === 'Izin' || pilihStatus.value === 'Sakit' || pilihStatus.value === 'Dinas Luar') && isGuru();
+    return (pilihStatus.value === 'Izin' || pilihStatus.value === 'Sakit' || pilihStatus.value === 'Cuti' || pilihStatus.value === 'Dinas Luar') && isGuru();
   }
   function penugasanValid(){
     if(!perluPenugasan()) return true;
@@ -1757,11 +1772,29 @@
   function fotoValid(){ return !!fotoDataUrl; }
 
   // Radius 200m dari sekolah hanya wajib untuk status "Hadir" (absen masuk/pulang di lokasi).
-  // Izin, Sakit, Alfa, dan Dinas Luar tidak mensyaratkan berada dalam radius sekolah.
+  // Izin, Sakit, Cuti, Alfa, dan Dinas Luar tidak mensyaratkan berada dalam radius sekolah.
   function wajibLokasi(){ return pilihStatus.value === 'Hadir'; }
 
   function perbaruiEnableTombol(){
     const nama = pilihNama.value;
+
+    // FIX (jeda/kedipan tombol saat pilih nama): statusHariIniTerakhir
+    // SEBELUM data server datang selalu berisi nilai bawaan
+    // { sudahMasuk:false, ... } — bukan berarti pegawai itu benar-benar
+    // belum absen masuk, hanya karena datanya belum sempat ditarik dari
+    // server. Sebelumnya fungsi ini langsung dipanggil dengan nilai
+    // bawaan itu (dari perbaruiTampilanTombol() yang berjalan SESAAT
+    // setelah cekStatus() dipanggil, tapi SEBELUM fetch-nya selesai) —
+    // akibatnya tombol "Absen Masuk" sempat menyala keliru selama
+    // beberapa detik (durasi fetch ke Apps Script), baru kemudian
+    // berganti ke "Absen Pulang" begitu status asli tiba. Diperbaiki:
+    // selama statusSedangDimuat masih true, KEDUA tombol dikunci dulu
+    // (statusBox tetap menampilkan "Mengecek status..."), supaya tidak
+    // ada tombol yang salah sempat menyala sebelum status dipastikan.
+    if(nama && statusSedangDimuat){
+      btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true; return;
+    }
+
     const d = statusHariIniTerakhir;
     const sudahAdaCatatanHariIni = d.sudahMasuk;
     const lokasiOk = !wajibLokasi() || lokasiTerkini.valid;
@@ -1786,16 +1819,79 @@
     }
   }
 
+  // OPTIMASI (mengurangi jeda tombol Absen Pulang terasa lama): status
+  // presensi hari ini (aksi=statusHariIni) selalu ditarik ulang dari
+  // server SETIAP kali dropdown nama dipilih — wajar terasa lama kalau
+  // Apps Script sedang "cold start" (bisa 1-3+ detik). Sekarang dipakai
+  // pola sama seperti muatDaftarPegawai(): kalau ada status tersimpan
+  // dari pengecekan SEBELUMNYA untuk nama & TANGGAL yang sama (di
+  // sessionStorage perangkat ini), langsung dipakai sebagai perkiraan
+  // awal — tombol Masuk/Pulang langsung menyala sesuai kondisi terakhir
+  // yang diketahui TANPA menunggu jaringan — sambil tetap menarik ulang
+  // data asli dari server di latar belakang untuk mengoreksi kalau
+  // ternyata sudah berubah (mis. diabsenkan dari perangkat lain).
+  //
+  // AMAN: server (doPost) tetap jadi sumber kebenaran akhir dan SELALU
+  // memvalidasi ulang saat tombol ditekan (lihat pengecekan rowIndex di
+  // Code.gs) — kalau perkiraan ini kebetulan sudah basi, klik yang salah
+  // paling buruk hanya memicu pesan error yang sudah ditangani rapi oleh
+  // kirimAbsen(), BUKAN data ganda tersimpan. TTL sengaja pendek (5
+  // menit) supaya perkiraan yang ditampilkan tidak pernah terlalu basi.
+  const CACHE_STATUS_TTL_MS = 5 * 60 * 1000;
+  function _kunciCacheStatus(nama){
+    const tglHariIni = _formatTanggalLokalUntukCache(new Date());
+    return `spa_statusHariIni_v1_${tglHariIni}_${nama}`;
+  }
+  // Format tanggal lokal yyyy-MM-dd murni untuk kunci cache (BUKAN untuk
+  // dikirim ke server) — dibuat manual (bukan toISOString) supaya tidak
+  // ikut bergeser ke UTC saat lewat tengah malam waktu setempat.
+  function _formatTanggalLokalUntukCache(d){
+    const p2 = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+  }
+  function _bacaCacheStatus(nama){
+    try{
+      const mentah = sessionStorage.getItem(_kunciCacheStatus(nama));
+      if(!mentah) return null;
+      const cache = JSON.parse(mentah);
+      if(!cache || (Date.now() - (cache.waktu||0)) > CACHE_STATUS_TTL_MS) return null;
+      return cache.data;
+    }catch(err){ return null; }
+  }
+  function _simpanCacheStatus(nama, data){
+    try{ sessionStorage.setItem(_kunciCacheStatus(nama), JSON.stringify({ data, waktu: Date.now() })); }catch(err){ /* sessionStorage penuh/tidak tersedia -> tidak fatal */ }
+  }
+
   async function cekStatus(){
     const nama = pilihNama.value;
     if(!nama){
       statusBox.classList.remove('show');
       statusHariIniTerakhir = { sudahMasuk:false, sudahPulang:false, status:null };
+      statusSedangDimuat = false;
       perbaruiEnableTombol();
       return;
     }
+
+    // Kalau ada perkiraan awal dari cache sesi ini, tampilkan dulu SEGERA
+    // (statusSedangDimuat TIDAK dikunci) supaya tombol langsung menyala
+    // sesuai kondisi terakhir yang diketahui, tanpa jeda menunggu jaringan.
+    // Kalau tidak ada cache sama sekali (pertama kali di sesi ini), tetap
+    // pakai jalur lama: kunci tombol selagi menunggu (lihat catatan FIX
+    // di perbaruiEnableTombol()) supaya tidak ada tombol yang salah
+    // sempat menyala.
+    const perkiraanAwal = _bacaCacheStatus(nama);
     statusBox.classList.remove('warn');
-    statusBox.classList.add('show'); statusBox.textContent = 'Mengecek status...';
+    statusBox.classList.add('show');
+    if(perkiraanAwal){
+      statusHariIniTerakhir = perkiraanAwal;
+      statusSedangDimuat = false;
+      statusBox.textContent = 'Menyegarkan status...';
+    } else {
+      statusSedangDimuat = true;
+      statusBox.textContent = 'Mengecek status...';
+    }
+    perbaruiEnableTombol();
+
     try{
       const res = await fetch(`${API_URL}?aksi=statusHariIni&nama=${encodeURIComponent(nama)}&token=${TOKEN}`);
       const json = await res.json(); const d = json.data;
@@ -1803,9 +1899,13 @@
       // request ini masih berjalan. Kalau balasan ini bukan lagi untuk nama
       // yang sedang aktif di dropdown, abaikan saja — supaya balasan yang
       // datang belakangan (tapi untuk nama yang lama) tidak menimpa status
-      // nama yang sedang dipilih sekarang dengan data yang salah.
+      // nama yang sedang dipilih sekarang dengan data yang salah. TIDAK
+      // menyentuh statusSedangDimuat di sini: request BARU untuk nama yang
+      // sekarang aktif sudah menguncinya lagi secara terpisah.
       if(pilihNama.value !== nama) return;
       statusHariIniTerakhir = d;
+      statusSedangDimuat = false;
+      _simpanCacheStatus(nama, d);
 
       if(!d.sudahMasuk){
         statusBox.textContent = 'Belum ada catatan presensi hari ini.';
@@ -1818,7 +1918,22 @@
         statusBox.textContent = `Presensi hari ini lengkap (masuk ${d.jamMasuk}, pulang ${d.jamPulang}).`;
       }
       perbaruiEnableTombol();
-    }catch(err){ if(pilihNama.value === nama) statusBox.textContent = 'Gagal mengecek status.'; }
+    }catch(err){
+      // FIX: sebelumnya cabang gagal ini TIDAK memanggil perbaruiEnableTombol()
+      // sama sekali — dikombinasikan dengan penguncian statusSedangDimuat, itu
+      // bisa membuat KEDUA tombol terkunci permanen kalau fetch gagal (mis.
+      // jaringan terputus). Sekarang statusSedangDimuat tetap dilepas & tombol
+      // disegarkan (memakai perkiraan cache kalau ada, supaya pegawai tetap
+      // bisa lanjut absen berdasarkan info terakhir yang diketahui, bukan
+      // macet total).
+      if(pilihNama.value === nama){
+        statusSedangDimuat = false;
+        if(!perkiraanAwal){
+          statusBox.textContent = 'Gagal mengecek status. Coba pilih ulang nama Anda.';
+        }
+        perbaruiEnableTombol();
+      }
+    }
   }
   // BARU — cek kewajiban presensi & jadwal Blok A/B aktif untuk nama yang
   // dipilih, lalu tampilkan sebagai banner informasi. TIDAK PERNAH menonaktifkan
@@ -1941,12 +2056,12 @@
         keteranganEl.value = ''; pnKelas.value = ''; pnJurusan.value = ''; pnCapaian.value = ''; pnTugas.value = '';
         pnJamBoxes.forEach(cb => cb.checked = false);
         // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi.
-        // Izin/Sakit/Dinas Luar (diisi manual oleh pegawai) juga diberi ucapan
+        // Izin/Sakit/Cuti/Dinas Luar (diisi manual oleh pegawai) juga diberi ucapan
         // bernada positif, tapi Alfa TIDAK — karena Alfa tercatat otomatis oleh
         // sistem, bukan pengajuan sadar dari pegawai, jadi tidak pantas diberi ucapan.
         if(pilihStatus.value === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
           tampilkanUcapan(tipe, nama, json.jam || '');
-        } else if(['Izin','Sakit','Dinas Luar'].includes(pilihStatus.value)){
+        } else if(['Izin','Sakit','Cuti','Dinas Luar'].includes(pilihStatus.value)){
           tampilkanUcapan(pilihStatus.value, nama, '');
         }
       }
@@ -1990,6 +2105,11 @@
     'Selamat menjalankan tugas, Bapak/Ibu. Apa yang dikerjakan di luar sekolah hari ini tetap menjadi bagian dari pengabdian yang berharga.',
     'Semoga perjalanan dan tugas dinas hari ini dimudahkan. Terima kasih sudah mewakili sekolah dengan baik, hati-hati di jalan.'
   ];
+  const PESAN_CUTI = [
+    'Cuti Bapak/Ibu sudah tercatat. Semoga waktu istirahat ini benar-benar bisa dinikmati bersama keluarga, dan sampai jumpa lagi di sekolah.',
+    'Terima kasih sudah mengabari lebih awal. Manfaatkan cuti ini sebaik-baiknya untuk mengisi ulang semangat, kami tunggu kembali dengan energi yang segar.',
+    'Selamat menikmati waktu cuti, Bapak/Ibu. Sesekali beristirahat dari rutinitas adalah bagian penting dari menjaga semangat mengabdi dalam jangka panjang.'
+  ];
 
   const modalUcapan = document.getElementById('modalUcapan');
   const ucapanIco = document.getElementById('ucapanIco');
@@ -2030,10 +2150,11 @@
   }
 
   function tampilkanUcapan(tipe, nama, jam){
-    // tipe: 'masuk' | 'pulang' (status Hadir) ATAU 'Izin' | 'Sakit' | 'Dinas Luar'
+    // tipe: 'masuk' | 'pulang' (status Hadir) ATAU 'Izin' | 'Sakit' | 'Cuti' | 'Dinas Luar'
     const PETA_NONHADIR = {
       'Izin':       { ico: '📋', judul: 'Izin Tercatat',      pesan: PESAN_IZIN },
       'Sakit':      { ico: '🩺', judul: 'Semoga Lekas Sembuh', pesan: PESAN_SAKIT },
+      'Cuti':       { ico: '🏖️', judul: 'Cuti Tercatat',      pesan: PESAN_CUTI },
       'Dinas Luar': { ico: '🧳', judul: 'Dinas Luar Tercatat', pesan: PESAN_DINAS }
     };
 
@@ -2517,8 +2638,9 @@
     const totalSakit = document.getElementById('totalSakit').textContent;
     const totalIzin = document.getElementById('totalIzin').textContent;
     const totalAlpa = document.getElementById('totalAlpa').textContent;
+    const totalCuti = document.getElementById('totalCuti').textContent;
     doc.setFontSize(9.5);
-    doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Alfa: ${totalAlpa}`, 14, 40);
+    doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Cuti: ${totalCuti}    Total Alfa: ${totalAlpa}`, 14, 40);
 
     // Tabel detail per pegawai (ambil langsung dari tabel yang sedang tampil di layar)
     const bodyRows = [];
@@ -2529,7 +2651,7 @@
 
     doc.autoTable({
       startY: 45,
-      head: [['No', 'Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Alfa', 'Dinas Luar', 'Tingkat']],
+      head: [['No', 'Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Cuti', 'Alfa', 'Dinas Luar', 'Tingkat']],
       body: bodyRows,
       styles: { fontSize: 8.5, cellPadding: 2.2 },
       headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
@@ -2665,6 +2787,7 @@
       { label:'Hadir', angka: r.Hadir || 0 },
       { label:'Sakit', angka: r.Sakit || 0 },
       { label:'Izin', angka: r.Izin || 0 },
+      { label:'Cuti', angka: r.Cuti || 0 },
       { label:'Dinas Luar', angka: r['Dinas Luar'] || 0 },
       { label:'Alfa', angka: r.Alfa || 0 },
       { label:'Belum Presensi', angka: r.belumPresensi || 0 }
@@ -2748,7 +2871,7 @@
     const r = data.ringkasan;
     doc.setFontSize(9);
     doc.text(
-      `Wajib: ${r.totalWajib||0}   Tidak Wajib: ${r.totalTidakWajib||0}   Hadir: ${r.Hadir||0}   Sakit: ${r.Sakit||0}   Izin: ${r.Izin||0}   Dinas Luar: ${r['Dinas Luar']||0}   Alfa: ${r.Alfa||0}   Belum Presensi: ${r.belumPresensi||0}`,
+      `Wajib: ${r.totalWajib||0}   Tidak Wajib: ${r.totalTidakWajib||0}   Hadir: ${r.Hadir||0}   Sakit: ${r.Sakit||0}   Izin: ${r.Izin||0}   Cuti: ${r.Cuti||0}   Dinas Luar: ${r['Dinas Luar']||0}   Alfa: ${r.Alfa||0}   Belum Presensi: ${r.belumPresensi||0}`,
       12, 35
     );
 
@@ -2841,7 +2964,7 @@
     terurut.forEach(({nama, r, persen}, i) => {
       const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="no-urut">${i+1}</td><td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tr.innerHTML = `<td class="no-urut">${i+1}</td><td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Cuti||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
       tabelBody.appendChild(tr);
     });
     // perbarui indikator panah & kolom aktif di header
@@ -2871,18 +2994,18 @@
   function renderDashboard(data){
     const { rekapPerPegawai, trenHarian, daftarHarian } = data;
     const namaList = Object.keys(rekapPerPegawai);
-    let totalHadir=0, totalSakit=0, totalIzin=0, totalAlfa=0, totalDinas=0;
+    let totalHadir=0, totalSakit=0, totalIzin=0, totalCuti=0, totalAlfa=0, totalDinas=0;
 
     // hitung persentase per pegawai, lalu urutkan nama A-Z (alfabetis)
     const rekapPersen = namaList.map(nama => {
       const r = rekapPerPegawai[nama];
-      const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Alfa||0)+(r['Dinas Luar']||0);
+      const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Cuti||0)+(r.Alfa||0)+(r['Dinas Luar']||0);
       const persen = totalTercatat > 0 ? Math.round((r.Hadir||0) / totalTercatat * 100) : 0;
       return { nama, r, persen, totalTercatat };
     }).sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
 
     rekapPersen.forEach(({r}) => {
-      totalHadir += r.Hadir||0; totalSakit += r.Sakit||0; totalIzin += r.Izin||0; totalAlfa += r.Alfa||0; totalDinas += r['Dinas Luar']||0;
+      totalHadir += r.Hadir||0; totalSakit += r.Sakit||0; totalIzin += r.Izin||0; totalCuti += r.Cuti||0; totalAlfa += r.Alfa||0; totalDinas += r['Dinas Luar']||0;
     });
 
     // simpan untuk sort interaktif & render dengan urutan sort yang sedang aktif
@@ -2893,8 +3016,9 @@
     animasiAngka(document.getElementById('totalSakit'), totalSakit);
     animasiAngka(document.getElementById('totalIzin'), totalIzin);
     animasiAngka(document.getElementById('totalAlpa'), totalAlfa);
+    animasiAngka(document.getElementById('totalCuti'), totalCuti);
 
-    const totalKeseluruhan = totalHadir+totalSakit+totalIzin+totalAlfa+totalDinas;
+    const totalKeseluruhan = totalHadir+totalSakit+totalIzin+totalCuti+totalAlfa+totalDinas;
     const persenKeseluruhan = totalKeseluruhan > 0 ? Math.round(totalHadir/totalKeseluruhan*100) : 0;
     document.getElementById('gaugeSub').textContent = `${totalHadir} dari ${totalKeseluruhan} hari kerja tercatat`;
     gambarGauge('gaugeUtama', persenKeseluruhan);
@@ -3145,7 +3269,7 @@
       const kolomFoto = tautanFoto.length ? tautanFoto.join(' · ') : '—';
 
       // Penanda "lewat jam 08.00" hanya relevan untuk status Hadir (jam masuk sekolah sungguhan).
-      // Untuk Izin/Sakit/Alfa/Dinas Luar, kolom jam (jika terisi) adalah waktu pengajuan/penyimpanan
+      // Untuk Izin/Sakit/Cuti/Alfa/Dinas Luar, kolom jam (jika terisi) adalah waktu pengajuan/penyimpanan
       // status — bukan jam masuk, jadi tidak pantas ditandai "terlambat".
       const menitMasuk = row.status === 'Hadir' ? jamKeMenit(row.jamMasuk) : null;
       const telatKuning = menitMasuk !== null && menitMasuk >= BATAS_MENIT_KUNING;
@@ -3164,11 +3288,11 @@
     renderRiwayat(riwayatTerakhir.filter(r => r.nama.toLowerCase().includes(q)));
   });
 
-  // Tabel "Penugasan Siswa": hanya baris guru berstatus Izin/Sakit/Dinas Luar
-  // yang sudah mengisi tabel penugasan (kolom kelas terisi).
+  // Tabel "Penugasan Siswa": hanya baris guru berstatus Izin/Sakit/Cuti/Dinas
+  // Luar yang sudah mengisi tabel penugasan (kolom kelas terisi).
   let penugasanTerakhir = [];
   function renderPenugasan(daftar){
-    penugasanTerakhir = (daftar || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Dinas Luar'));
+    penugasanTerakhir = (daftar || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Cuti' || r.status === 'Dinas Luar'));
     const body = document.getElementById('penugasanBody');
     renderTabel(body, penugasanTerakhir, 9, 'Belum ada penugasan untuk periode ini', row => {
       const tglLabel = row.tanggal.split('-').reverse().join('-');
@@ -3189,7 +3313,7 @@
   }
   document.getElementById('cariPenugasan').addEventListener('input', (e) => {
     const q = e.target.value.trim().toLowerCase();
-    const sumber = (riwayatTerakhir || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Dinas Luar'));
+    const sumber = (riwayatTerakhir || []).filter(r => r.kelas && (r.status === 'Izin' || r.status === 'Sakit' || r.status === 'Cuti' || r.status === 'Dinas Luar'));
     renderPenugasan(q ? sumber.filter(r => r.nama.toLowerCase().includes(q)) : sumber);
   });
 
