@@ -2607,6 +2607,15 @@
      bukan saat halaman pertama kali dibuka, supaya ± 500KB ini tidak
      memperlambat pemuatan awal di jaringan lambat. Promise di-cache
      supaya klik berikutnya tidak memuat ulang dari jaringan. */
+  // FIX (bug: tombol PDF macet permanen setelah 1x gagal muat): sebelumnya
+  // begitu muatLibraryPdf() gagal sekali saja (mis. jaringan sempat putus
+  // sesaat), Promise yang GAGAL itu tetap disimpan selamanya di
+  // pdfLibsPromise -> setiap klik "Unduh PDF" berikutnya (bulanan, harian
+  // per blok, maupun lembur), walau jaringan sudah pulih, langsung
+  // mendapat Promise basi yang sama dan gagal lagi tanpa pernah mencoba
+  // ulang -- pengguna harus me-refresh seluruh halaman untuk bisa unduh
+  // PDF lagi. Diperbaiki: kalau pemuatan gagal, pdfLibsPromise direset ke
+  // null supaya klik berikutnya memuat ulang dari awal (retry otomatis).
   let pdfLibsPromise = null;
   function muatLibraryPdf(){
     if(pdfLibsPromise) return pdfLibsPromise;
@@ -2622,7 +2631,7 @@
       };
       s1.onerror = () => reject(new Error('Gagal memuat pustaka PDF'));
       document.head.appendChild(s1);
-    });
+    }).catch(err => { pdfLibsPromise = null; throw err; });
     return pdfLibsPromise;
   }
 
@@ -3495,6 +3504,17 @@
   function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
 
   /* ---- Gauge lingkaran (signature element), dianimasikan mengisi dari 0 ---- */
+  // FIX (animasi gauge dobel/berebut jika muatRekap dipanggil cepat
+  // berturut-turut, mis. ganti bulan beberapa kali dengan cepat): setiap
+  // panggilan gambarGauge() sebelumnya memulai loop requestAnimationFrame
+  // baru TANPA menghentikan loop dari panggilan sebelumnya yang mungkin
+  // masih berjalan (durasi animasi 900ms) — dua (atau lebih) loop lalu
+  // menggambar ke canvas yang sama secara bersamaan, saling menimpa dan
+  // membuang siklus CPU/GPU sia-sia. _gaugeAnimToken menyimpan token unik
+  // per canvasId; setiap frame loop memeriksa apakah token dirinya masih
+  // yang terbaru sebelum melanjutkan — loop lama otomatis berhenti sendiri
+  // begitu ada panggilan gambarGauge() baru untuk canvas yang sama.
+  const _gaugeAnimToken = {};
   function gambarGauge(canvasId, persenTarget){
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
@@ -3508,8 +3528,10 @@
     const warna = warnaPersen(persenTarget);
     const durasi = kurangGerak ? 0 : 900;
     const mulaiWaktu = performance.now();
+    const tokenSaya = (_gaugeAnimToken[canvasId] = (_gaugeAnimToken[canvasId] || 0) + 1);
 
     function frame(sekarang){
+      if(_gaugeAnimToken[canvasId] !== tokenSaya) return; // ada panggilan gambarGauge() lebih baru -> hentikan loop ini
       const t = durasi === 0 ? 1 : Math.min(1, (sekarang - mulaiWaktu) / durasi);
       const p = easeOutCubic(t) * persenTarget;
 
