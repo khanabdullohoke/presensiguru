@@ -820,13 +820,14 @@
         <select id="pilihTahun"></select>
         <button id="btnMuat">Tampilkan</button>
         <button id="btnLoginAdmin" class="btn-pdf" type="button">🔒 Login Admin</button>
-        <!-- Kedua tombol unduh PDF (bulanan & harian per blok) sengaja
-             ditaruh berdampingan di sini, sejajar, dan sama-sama baru
-             muncul setelah admin login lewat modal "Login Admin" di atas
-             (lihat tampilkanTombolPdfAdmin()) — satu kali login membuka
-             keduanya sekaligus. -->
+        <!-- Ketiga tombol unduh PDF (bulanan, harian per blok, & lembur)
+             sengaja ditaruh berdampingan di sini, sejajar, dan sama-sama
+             baru muncul setelah admin login lewat modal "Login Admin" di
+             atas (lihat tampilkanTombolPdfAdmin()) — satu kali login
+             membuka ketiganya sekaligus. -->
         <button id="btnUnduhPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF Bulanan</button>
         <button id="btnUnduhLaporanBlokPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF Harian</button>
+        <button id="btnUnduhLemburPdf" class="btn-pdf" type="button" style="display:none;" disabled>📄 Unduh PDF Lembur</button>
       </div>
     </div>
 
@@ -2321,6 +2322,16 @@
       btnPdfBlok.disabled = !(typeof laporanBlokTerakhir !== 'undefined' && laporanBlokTerakhir
         && typeof daftarWajibSaja === 'function' && daftarWajibSaja(laporanBlokTerakhir.daftar).length);
     }
+    // Login admin yang sama juga menampilkan tombol PDF Rekap Jam Lembur
+    // — hanya aktif kalau panel Info Lembur Bulanan sudah selesai dimuat
+    // DAN ada minimal satu pegawai dengan catatan lembur pada periode itu
+    // (lihat lemburTerakhir, diisi oleh muatLembur()/renderLembur()).
+    const btnPdfLembur = document.getElementById('btnUnduhLemburPdf');
+    if(btnPdfLembur){
+      btnPdfLembur.style.display = 'inline-flex';
+      btnPdfLembur.disabled = !(typeof lemburTerakhir !== 'undefined' && lemburTerakhir
+        && lemburTerakhir.perPegawai && lemburTerakhir.perPegawai.length);
+    }
   }
 
   async function verifikasiAdmin(){
@@ -2492,22 +2503,38 @@
   // catatan di pemanggilnya, tampilkanDataRekap). Tidak memakai cache
   // browser seperti muatRekap karena datanya ringan & jarang diakses
   // berulang-ulang di sesi yang sama.
+  // BARU — menyimpan balasan terakhir aksi=lemburBulanan (dipakai baik oleh
+  // renderLembur() untuk tampilan bar-list, MAUPUN oleh unduhLemburPdf()
+  // supaya tidak perlu fetch ulang saat tombol "Unduh PDF Lembur" ditekan —
+  // sama seperti pola riwayatTerakhir/laporanBlokTerakhir yang sudah ada.
+  let lemburTerakhir = null;
+
   async function muatLembur(bulan, tahun){
     const kosong = document.getElementById('lemburKosong');
     const isi = document.getElementById('lemburIsi');
+    const btnPdfLembur = document.getElementById('btnUnduhLemburPdf');
     if(!kosong || !isi) return; // fail-safe kalau markup panel belum ada
     kosong.style.display = 'block';
     kosong.textContent = 'Memuat data lembur...';
     isi.style.display = 'none';
+    lemburTerakhir = null;
+    if(btnPdfLembur) btnPdfLembur.disabled = true;
     try{
       const res = await fetch(`${API_URL}?aksi=lemburBulanan&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
+      lemburTerakhir = json.data;
       renderLembur(json.data);
     }catch(err){
       kosong.textContent = 'Gagal memuat data lembur.';
       kosong.style.display = 'block';
       isi.style.display = 'none';
+    }
+    // Tombol PDF Lembur mengikuti status data sekaligus status login admin
+    // yang sama dengan kedua tombol PDF lainnya — hanya aktif kalau admin
+    // sudah login DAN periode ini punya minimal satu pegawai berlembur.
+    if(btnPdfLembur){
+      btnPdfLembur.disabled = !(adminTerverifikasi && lemburTerakhir && lemburTerakhir.perPegawai && lemburTerakhir.perPegawai.length);
     }
   }
 
@@ -2703,6 +2730,135 @@
     btnUnduhPdf.disabled = false;
   }
   document.getElementById('btnUnduhPdf').addEventListener('click', unduhRekapPdf);
+
+  /* ---------- Unduh rekap Jam Lembur bulanan sebagai PDF ----------
+     Memakai data yang sama persis dengan yang sedang tampil di panel
+     "Info Lembur Bulanan" (lemburTerakhir, lihat muatLembur()) — tidak
+     fetch ulang, supaya PDF yang diunduh selalu identik dengan apa yang
+     terlihat di layar saat itu. Berisi DUA tabel: (1) ringkasan total
+     per pegawai (untuk rekap cepat/lampiran tunjangan), dan (2) rincian
+     per tanggal beserta alasannya (untuk verifikasi, mengambil field
+     `keterangan` yang sudah dihasilkan _hitungLembur() di Code.gs, mis.
+     "Staf, pulang 16:30 (lewat jam kerja resmi 15:00) — lembur 1 jam 30
+     menit."). Gerbang admin (adminTerverifikasi) SAMA dengan kedua
+     tombol PDF lainnya — satu kali login admin membuka ketiganya. */
+  async function unduhLemburPdf(){
+    if(!adminTerverifikasi){
+      bukaModalAdmin();
+      return;
+    }
+    const perPegawai = (lemburTerakhir && lemburTerakhir.perPegawai) || [];
+    if(!perPegawai.length){
+      return;
+    }
+    const btnUnduhLemburPdf = document.getElementById('btnUnduhLemburPdf');
+    const labelAsli = btnUnduhLemburPdf.textContent;
+    btnUnduhLemburPdf.disabled = true;
+    btnUnduhLemburPdf.textContent = 'Menyiapkan PDF...';
+    try{
+      await muatLibraryPdf();
+    }catch(err){
+      btnUnduhLemburPdf.textContent = labelAsli;
+      btnUnduhLemburPdf.disabled = false;
+      alert('Gagal memuat komponen PDF. Periksa koneksi internet Anda lalu coba lagi.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const lebar = doc.internal.pageSize.getWidth();
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text('SMK Ciledug Al-Musaddadiyah', lebar/2, 16, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text('Rekapitulasi Jam Lembur Guru & Staf', lebar/2, 23, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(`Periode: ${periodeLabel}`, lebar/2, 29, { align: 'center' });
+    doc.setDrawColor(11, 61, 145); doc.setLineWidth(0.6);
+    doc.line(14, 33, lebar-14, 33);
+
+    doc.setFontSize(9.5);
+    doc.text(`Total lembur periode ini: ${lemburTerakhir.totalDurasi || '0 menit'}    Jumlah pegawai: ${perPegawai.length}`, 14, 40);
+
+    // Tabel 1: ringkasan total per pegawai, urutan sama seperti tampilan
+    // di layar (dari backend: jam terbanyak lebih dulu).
+    const bodyRingkasan = perPegawai.map((p, i) => [
+      String(i+1), p.nama, String((p.rincian || []).length), p.totalDurasi || ''
+    ]);
+    doc.autoTable({
+      startY: 45,
+      head: [['No', 'Nama', 'Jumlah Hari Lembur', 'Total Durasi']],
+      body: bodyRingkasan,
+      styles: { fontSize: 8.5, cellPadding: 2.2 },
+      headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [244, 246, 252] },
+      margin: { left: 14, right: 14 }
+    });
+
+    // Tabel 2: rincian per tanggal + alasan, diratakan (flatten) dari
+    // seluruh pegawai, urut nama lalu tanggal — supaya operator/kepala
+    // sekolah bisa memverifikasi SETIAP baris lembur, bukan cuma totalnya.
+    const bodyRincian = [];
+    perPegawai.forEach(p => {
+      (p.rincian || []).forEach(r => {
+        bodyRincian.push([p.nama, r.tanggal, r.jamTeks || '', r.keterangan || '']);
+      });
+    });
+
+    const akhirTabel1 = doc.lastAutoTable.finalY || 45;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(30);
+    doc.text('Rincian per Tanggal', 14, akhirTabel1 + 9);
+
+    doc.autoTable({
+      startY: akhirTabel1 + 13,
+      head: [['Nama', 'Tanggal', 'Durasi', 'Keterangan']],
+      body: bodyRincian,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [201, 134, 0], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [254, 243, 226] },
+      columnStyles: { 3: { cellWidth: 'auto' } },
+      margin: { left: 14, right: 14 }
+    });
+
+    const akhirTabel2 = doc.lastAutoTable.finalY || akhirTabel1;
+    doc.setFontSize(8.5); doc.setTextColor(120);
+    doc.text(`Dicetak otomatis dari sistem presensi pada ${new Date().toLocaleString('id-ID')}`, 14, akhirTabel2 + 8);
+
+    // Kolom tanda tangan — pola & ukuran ruang sama persis dengan
+    // unduhRekapPdf(), lihat catatan lengkap di sana.
+    const tinggiBlokTtd = 48;
+    const tinggiHalaman = doc.internal.pageSize.getHeight();
+    let yTtd = akhirTabel2 + 20;
+    if(yTtd + tinggiBlokTtd > tinggiHalaman - 10){
+      doc.addPage();
+      yTtd = 22;
+    }
+
+    const tanggalCetak = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+    const kolomKiriX = lebar * 0.27;
+    const kolomKananX = lebar * 0.73;
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(30);
+    doc.text('Mengetahui,', kolomKiriX, yTtd, { align: 'center' });
+    doc.text('Kepala Sekolah', kolomKiriX, yTtd + 5, { align: 'center' });
+    doc.text(`Garut, ${tanggalCetak}`, kolomKananX, yTtd, { align: 'center' });
+    doc.text('Operator Presensi', kolomKananX, yTtd + 5, { align: 'center' });
+
+    const lebarGaris = 45;
+    doc.setDrawColor(120); doc.setLineWidth(0.3);
+    doc.line(kolomKiriX - lebarGaris/2, yTtd + 26, kolomKiriX + lebarGaris/2, yTtd + 26);
+    doc.line(kolomKananX - lebarGaris/2, yTtd + 26, kolomKananX + lebarGaris/2, yTtd + 26);
+
+    doc.setFontSize(8.5); doc.setTextColor(90);
+    doc.text('(.............................)', kolomKiriX, yTtd + 31, { align: 'center' });
+    doc.text('(.............................)', kolomKananX, yTtd + 31, { align: 'center' });
+
+    const namaFile = `Rekap-Lembur-${NAMA_BULAN[pilihBulan.value-1]}-${pilihTahun.value}.pdf`;
+    doc.save(namaFile);
+
+    btnUnduhLemburPdf.textContent = labelAsli;
+    btnUnduhLemburPdf.disabled = false;
+  }
+  document.getElementById('btnUnduhLemburPdf').addEventListener('click', unduhLemburPdf);
 
   /* ================= PANEL: LAPORAN ABSENSI HARIAN PER BLOK =================
      Independen dari filter bulan/tahun rekap bulanan di atas — panel ini
