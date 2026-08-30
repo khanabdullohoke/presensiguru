@@ -39,6 +39,7 @@
     --info:#2e90fa; --info-bg:#e8f2ff;
     --err:#f04438;  --err-bg:#feecec;
     --cuti:#0e9384; --cuti-bg:#e3f7f3;
+    --setengah:#b54708; --setengah-bg:#fef1e3;
     --font-display:'Sora',system-ui,sans-serif;
     --font-body:'Inter',system-ui,-apple-system,sans-serif;
   }
@@ -281,6 +282,7 @@
   .status-tag.Alfa{background:var(--err-bg);color:var(--err);}
   .status-tag.Cuti{background:var(--cuti-bg);color:var(--cuti);}
   .status-tag.DinasLuar{background:#f0ecff;color:#6941c6;}
+  .status-tag.HadirSetengahHari{background:var(--setengah-bg);color:var(--setengah);}
   .status-tag.BelumPresensi{background:var(--err-bg);color:var(--err);}
   .status-tag.TidakWajib{background:#eef1f8;color:var(--muted);}
   .tag-otomatis{
@@ -352,6 +354,7 @@
   .kartu.izin::before{background:var(--info);} .kartu.izin .angka{color:var(--info);} .kartu.izin .ico{background:radial-gradient(circle at 30% 25%, #a9d4ff, var(--info-bg) 75%);}
   .kartu.alpa::before{background:var(--err);} .kartu.alpa .angka{color:var(--err);} .kartu.alpa .ico{background:radial-gradient(circle at 30% 25%, #ffb3ac, var(--err-bg) 75%);}
   .kartu.cuti::before{background:var(--cuti);} .kartu.cuti .angka{color:var(--cuti);} .kartu.cuti .ico{background:radial-gradient(circle at 30% 25%, #7fd9cb, var(--cuti-bg) 75%);}
+  .kartu.setengahhari::before{background:var(--setengah);} .kartu.setengahhari .angka{color:var(--setengah);} .kartu.setengahhari .ico{background:radial-gradient(circle at 30% 25%, #ffc98a, var(--setengah-bg) 75%);}
 
   .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:stretch;}
   .panel-grid .panel{display:flex;flex-direction:column;}
@@ -874,6 +877,7 @@
           <div class="kartu izin"><div class="kartu-top"><span class="ico">📋</span></div><div class="angka" id="totalIzin">0</div><div class="label">Total Izin</div></div>
           <div class="kartu alpa"><div class="kartu-top"><span class="ico">⛔</span></div><div class="angka" id="totalAlpa">0</div><div class="label">Total Alfa</div></div>
           <div class="kartu cuti"><div class="kartu-top"><span class="ico">🏖️</span></div><div class="angka" id="totalCuti">0</div><div class="label">Total Cuti</div></div>
+          <div class="kartu setengahhari" title="Absen masuk tapi tidak absen pulang sampai akhir hari — dicatat otomatis oleh sistem"><div class="kartu-top"><span class="ico">🌗</span></div><div class="angka" id="totalSetengahHari">0</div><div class="label">Setengah Hari (Otomatis)</div></div>
         </div>
       </div>
 
@@ -1022,6 +1026,7 @@
               <th class="num sortable" data-sort="Cuti" data-tipe="angka">Cuti<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Alfa" data-tipe="angka">Alfa<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Dinas Luar" data-tipe="angka">Dinas Luar<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Hadir Setengah Hari" data-tipe="angka" title="Absen masuk tapi tidak absen pulang sampai akhir hari — otomatis oleh sistem">½ Hari<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="persen" data-tipe="angka">Tingkat<span class="panah">▼</span></th>
             </tr>
           </thead>
@@ -2682,8 +2687,9 @@
     const totalIzin = document.getElementById('totalIzin').textContent;
     const totalAlpa = document.getElementById('totalAlpa').textContent;
     const totalCuti = document.getElementById('totalCuti').textContent;
+    const totalSetengahHari = document.getElementById('totalSetengahHari').textContent;
     doc.setFontSize(9.5);
-    doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Cuti: ${totalCuti}    Total Alfa: ${totalAlpa}`, 14, 40);
+    doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Cuti: ${totalCuti}    Total Alfa: ${totalAlpa}    Total Setengah Hari (Otomatis): ${totalSetengahHari}`, 14, 40);
 
     // Tabel detail per pegawai (ambil langsung dari tabel yang sedang tampil di layar)
     const bodyRows = [];
@@ -2694,7 +2700,7 @@
 
     doc.autoTable({
       startY: 45,
-      head: [['No', 'Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Cuti', 'Alfa', 'Dinas Luar', 'Tingkat']],
+      head: [['No', 'Nama', 'Periode', 'Hadir', 'Sakit', 'Izin', 'Cuti', 'Alfa', 'Dinas Luar', '½ Hari', 'Tingkat']],
       body: bodyRows,
       styles: { fontSize: 8.5, cellPadding: 2.2 },
       headStyles: { fillColor: [11, 61, 145], textColor: 255, fontStyle: 'bold' },
@@ -2962,6 +2968,7 @@
       { label:'Cuti', angka: r.Cuti || 0 },
       { label:'Dinas Luar', angka: r['Dinas Luar'] || 0 },
       { label:'Alfa', angka: r.Alfa || 0 },
+      { label:'Setengah Hari (Otomatis)', angka: r['Hadir Setengah Hari'] || 0 },
       { label:'Belum Presensi', angka: r.belumPresensi || 0 }
     ];
     ringkasGrid.innerHTML = items.map(it =>
@@ -3156,7 +3163,7 @@
     terurut.forEach(({nama, r, persen}, i) => {
       const kelas = persen >= 95 ? 'tinggi' : (persen >= 85 ? 'sedang' : 'rendah');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="no-urut">${i+1}</td><td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Cuti||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
+      tr.innerHTML = `<td class="no-urut">${i+1}</td><td>${escapeHtml(nama)}</td><td>${escapeHtml(periodeLabel)}</td><td class="num">${r.Hadir||0}</td><td class="num">${r.Sakit||0}</td><td class="num">${r.Izin||0}</td><td class="num">${r.Cuti||0}</td><td class="num">${r.Alfa||0}</td><td class="num">${r['Dinas Luar']||0}</td><td class="num">${r['Hadir Setengah Hari']||0}</td><td class="num"><span class="status-pill ${kelas}">${persen}%</span></td>`;
       tabelBody.appendChild(tr);
     });
     // perbarui indikator panah & kolom aktif di header
@@ -3186,18 +3193,25 @@
   function renderDashboard(data){
     const { rekapPerPegawai, trenHarian, daftarHarian } = data;
     const namaList = Object.keys(rekapPerPegawai);
-    let totalHadir=0, totalSakit=0, totalIzin=0, totalCuti=0, totalAlfa=0, totalDinas=0;
+    let totalHadir=0, totalSakit=0, totalIzin=0, totalCuti=0, totalAlfa=0, totalDinas=0, totalSetengahHari=0;
 
     // hitung persentase per pegawai, lalu urutkan nama A-Z (alfabetis)
+    // Catatan (fitur "Hadir Setengah Hari" otomatis): baris berstatus ini
+    // dihitung sebagai SETENGAH kehadiran di pembilang (bukan penuh,
+    // karena presensi pulang tidak dituntaskan), tapi tetap masuk
+    // penyebut totalTercatat (karena tetap satu hari kerja yang tercatat)
+    // — konsisten dengan maksud fitur ini sebagai konsekuensi kedisiplinan.
     const rekapPersen = namaList.map(nama => {
       const r = rekapPerPegawai[nama];
-      const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Cuti||0)+(r.Alfa||0)+(r['Dinas Luar']||0);
-      const persen = totalTercatat > 0 ? Math.round((r.Hadir||0) / totalTercatat * 100) : 0;
+      const setengahHari = r['Hadir Setengah Hari']||0;
+      const totalTercatat = (r.Hadir||0)+(r.Sakit||0)+(r.Izin||0)+(r.Cuti||0)+(r.Alfa||0)+(r['Dinas Luar']||0)+setengahHari;
+      const persen = totalTercatat > 0 ? Math.round(((r.Hadir||0) + setengahHari*0.5) / totalTercatat * 100) : 0;
       return { nama, r, persen, totalTercatat };
     }).sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
 
     rekapPersen.forEach(({r}) => {
       totalHadir += r.Hadir||0; totalSakit += r.Sakit||0; totalIzin += r.Izin||0; totalCuti += r.Cuti||0; totalAlfa += r.Alfa||0; totalDinas += r['Dinas Luar']||0;
+      totalSetengahHari += r['Hadir Setengah Hari']||0;
     });
 
     // simpan untuk sort interaktif & render dengan urutan sort yang sedang aktif
@@ -3209,10 +3223,11 @@
     animasiAngka(document.getElementById('totalIzin'), totalIzin);
     animasiAngka(document.getElementById('totalAlpa'), totalAlfa);
     animasiAngka(document.getElementById('totalCuti'), totalCuti);
+    animasiAngka(document.getElementById('totalSetengahHari'), totalSetengahHari);
 
-    const totalKeseluruhan = totalHadir+totalSakit+totalIzin+totalCuti+totalAlfa+totalDinas;
-    const persenKeseluruhan = totalKeseluruhan > 0 ? Math.round(totalHadir/totalKeseluruhan*100) : 0;
-    document.getElementById('gaugeSub').textContent = `${totalHadir} dari ${totalKeseluruhan} hari kerja tercatat`;
+    const totalKeseluruhan = totalHadir+totalSakit+totalIzin+totalCuti+totalAlfa+totalDinas+totalSetengahHari;
+    const persenKeseluruhan = totalKeseluruhan > 0 ? Math.round((totalHadir + totalSetengahHari*0.5)/totalKeseluruhan*100) : 0;
+    document.getElementById('gaugeSub').textContent = `${totalHadir} dari ${totalKeseluruhan} hari kerja tercatat${totalSetengahHari ? ` (${totalSetengahHari} setengah hari)` : ''}`;
     gambarGauge('gaugeUtama', persenKeseluruhan);
 
     const tanggalList = Object.keys(trenHarian).sort();
