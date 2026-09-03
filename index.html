@@ -2088,7 +2088,31 @@
         })
       });
       clearTimeout(batasWaktuId);
-      const json = await res.json();
+
+      // PERBAIKAN BUG (pop-up "hilang" walau presensi mungkin sudah tersimpan):
+      // res.json() sebelumnya dipanggil di try yang SAMA dengan fetch() dan
+      // ditangkap oleh catch generik di bawah. Padahal Apps Script (backend
+      // di sini) kadang membalas HALAMAN HTML, BUKAN JSON — mis. "Exceeded
+      // maximum execution time" atau "Service invoked too many times" — saat
+      // banyak pegawai presensi bersamaan (jam masuk sekolah, kasus paling
+      // umum). Saat itu terjadi, res.json() melempar SyntaxError, jatuh ke
+      // catch yang sama dengan gagal jaringan, dan pegawai melihat pesan
+      // "Gagal mengirim, periksa koneksi internet" — padahal permintaan
+      // SUDAH sampai ke server (bahkan mungkin sudah tersimpan sebelum Apps
+      // Script gagal membalas JSON-nya). Pop-up ucapan pun tidak pernah
+      // tercapai, bukan karena rusak, tapi karena baris ini melempar error
+      // lebih dulu. Sekarang parsing JSON dipisah ke try sendiri dengan
+      // pesan yang jujur ("status tidak pasti, cek dulu di atas") alih-alih
+      // pesan jaringan yang menyesatkan — perilaku sukses (termasuk pop-up)
+      // di bawah TIDAK berubah sama sekali untuk balasan JSON yang valid.
+      let json;
+      try{
+        json = await res.json();
+      }catch(errParsing){
+        tampilPesan('Server menjawab tapi isinya tidak terbaca (kemungkinan sedang sibuk/banyak yang presensi bersamaan). Presensi Anda BELUM TENTU tersimpan — cek kotak status di atas dahulu sebelum mencoba lagi.', 'err');
+        await cekStatus();
+        return;
+      }
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
       if(json.ok){
         pinEl.value = ''; resetFoto();
