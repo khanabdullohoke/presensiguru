@@ -2051,9 +2051,25 @@
 
     btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true;
     tampilPesan('Mengirim...', 'ok');
+
+    // PERBAIKAN BUG (pop-up tidak pernah muncul saat server lambat/hang):
+    // sebelumnya fetch() di sini TIDAK punya batas waktu sama sekali —
+    // kalau Apps Script sedang antre panjang (LockService, banyak orang
+    // presensi bersamaan) atau jaringan pegawai bermasalah, browser bisa
+    // menunggu fetch() ini TANPA BATAS. Selama menunggu, kode di bawahnya
+    // (termasuk tampilkanUcapan()) tidak pernah tercapai — makanya terasa
+    // "lama sekali" dan pop-up ucapan "tidak muncul", padahal sebenarnya
+    // permintaan belum selesai/gagal, bukan pop-up-nya yang rusak.
+    // Sekarang dipasang batas waktu 25 detik lewat AbortController: kalau
+    // terlampaui, permintaan dibatalkan dan pegawai diberi pesan jelas
+    // (bukan diam menunggu) supaya tahu harus coba lagi, bukan menunggu
+    // tanpa kepastian atau mengira aplikasinya rusak/nge-hang.
+    const kontrolWaktu = new AbortController();
+    const batasWaktuId = setTimeout(() => kontrolWaktu.abort(), 25000);
     try{
       const res = await fetch(API_URL, {
         method: 'POST',
+        signal: kontrolWaktu.signal,
         body: JSON.stringify({
           token: TOKEN,
           nama: nama,
@@ -2071,6 +2087,7 @@
           foto: fotoDataUrl
         })
       });
+      clearTimeout(batasWaktuId);
       const json = await res.json();
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
       if(json.ok){
@@ -2088,7 +2105,17 @@
         }
       }
       await cekStatus();
-    }catch(err){ tampilPesan('Gagal mengirim, coba lagi.', 'err'); await cekStatus(); }
+    }catch(err){
+      clearTimeout(batasWaktuId);
+      // Pesan dibedakan: timeout/abort (server tidak kunjung menjawab)
+      // vs kegagalan jaringan biasa, supaya pegawai tahu apa yang
+      // sebenarnya terjadi alih-alih pesan generik yang membingungkan.
+      const pesanGagal = (err && err.name === 'AbortError')
+        ? 'Server tidak merespons dalam 25 detik (kemungkinan sedang banyak yang presensi bersamaan). Silakan coba lagi.'
+        : 'Gagal mengirim, periksa koneksi internet lalu coba lagi.';
+      tampilPesan(pesanGagal, 'err');
+      await cekStatus();
+    }
     finally{ perbaruiEnableTombol(); }
   }
   btnMasuk.addEventListener('click', () => kirimAbsen('masuk'));
@@ -2469,15 +2496,28 @@
     muatSpin.style.display = 'block';
     muatTeks.textContent = 'Memuat data...';
     isiDashboard.style.display = 'none';
+
+    // PERBAIKAN (rekap terasa "loading lama" tanpa kepastian): sama
+    // seperti perbaikan di kirimAbsen — fetch rekap sebelumnya tidak
+    // punya batas waktu, jadi kalau server lambat (banyak orang buka
+    // Dashboard bersamaan / cache baru saja kedaluwarsa dan harus
+    // dihitung ulang dari awal), panel bisa terus berputar tanpa batas
+    // tanpa pernah memberi tahu pengguna apa yang terjadi.
+    const kontrolWaktuRekap = new AbortController();
+    const batasWaktuRekapId = setTimeout(() => kontrolWaktuRekap.abort(), 25000);
     try{
-      const res = await fetch(`${API_URL}?aksi=rekap&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`);
+      const res = await fetch(`${API_URL}?aksi=rekap&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`, { signal: kontrolWaktuRekap.signal });
+      clearTimeout(batasWaktuRekapId);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
       cacheRekapBrowser[kunciCache] = { data: json.data, waktuAmbil: Date.now() };
       tampilkanDataRekap(json.data, bulan, tahun);
     }catch(err){
+      clearTimeout(batasWaktuRekapId);
       muatSpin.style.display = 'none';
-      muatTeks.textContent = 'Gagal memuat data. Periksa konfigurasi API.';
+      muatTeks.textContent = (err && err.name === 'AbortError')
+        ? 'Server tidak merespons dalam 25 detik (kemungkinan traffic sedang tinggi). Coba tekan "Muat Data" lagi.'
+        : 'Gagal memuat data. Periksa konfigurasi API atau koneksi internet.';
     }
   }
   document.getElementById('btnMuat').addEventListener('click', muatRekap);
