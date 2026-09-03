@@ -1340,6 +1340,10 @@
 
   let lokasiTerkini = { valid:false, lat:null, lng:null, jarak:null };
   let watchIdLokasi = null;
+  // BARU — dipakai mulaiPantauLokasi() untuk tahu seberapa "segar" lokasi
+  // terakhir, lihat catatan lengkap di mulaiPantauLokasi().
+  let lokasiTerakhirWaktu = 0;
+  const LOKASI_SEGAR_MS = 2 * 60 * 1000; // 2 menit
   const lokasiCard = document.getElementById('lokasiCard');
   const lokasiIcon = document.getElementById('lokasiIcon');
   const lokasiJudul = document.getElementById('lokasiJudul');
@@ -1445,9 +1449,36 @@
     }
   }
 
-  async function mulaiPantauLokasi(){
-    lokasiTerkini = { valid:false, lat:null, lng:null, jarak:null };
-    if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
+  // PERBAIKAN BUG KRITIS (tombol Absen Masuk/Pulang terkunci ulang & terasa
+  // seperti "pop-up tidak muncul" setiap habis mengambil foto): mengambil
+  // Foto Bukti Kehadiran (WAJIB untuk semua absen) membuka kamera perangkat,
+  // yang SELALU memicu document.hidden -> visible sesaat saat kamera
+  // ditutup (lihat listener 'visibilitychange' di bawah). Sebelumnya,
+  // mulaiPantauLokasi() SELALU membuang lokasiTerkini yang sudah
+  // tervalidasi lalu mengunci tombol Absen Masuk/Pulang sampai GPS
+  // presisi-tinggi mendapat titik BARU — bisa 5-15+ detik, terutama di
+  // dalam gedung sekolah. Karena validasi lokasi hanya diwajibkan untuk
+  // status "Hadir" (lihat wajibLokasi()), efeknya paling terasa justru di
+  // absen masuk/pulang: pengguna ambil foto lalu langsung menekan tombol,
+  // tombolnya sempat terkunci ulang tanpa penjelasan -> tekan tidak
+  // bereaksi (kirimAbsen() bahkan belum sempat terpanggil karena tombolnya
+  // disabled) -> terasa seperti presensi gagal / pop-up tidak muncul,
+  // padahal prosesnya belum sempat mulai sama sekali.
+  // PERBAIKAN: parameter `pertahankanLokasiLama` — kalau lokasi sebelumnya
+  // masih SEGAR (< 2 menit, lihat LOKASI_SEGAR_MS) saat watch dinyalakan
+  // ulang (mis. karena kembali dari kamera), lokasi lama itu TETAP dipakai
+  // apa adanya (tombol TIDAK ikut dikunci ulang) sementara GPS tetap
+  // diminta memperbarui di latar belakang seperti biasa — begitu titik
+  // baru datang, otomatis menimpa yang lama lewat callback watchPosition
+  // di bawah, sama seperti sebelumnya. Direset total (perilaku lama)
+  // hanya untuk pemuatan halaman pertama kali atau saat lokasi lama sudah
+  // basi/tidak ada — akurasi presensi TIDAK diturunkan sedikit pun.
+  async function mulaiPantauLokasi(pertahankanLokasiLama){
+    const lokasiMasihSegar = pertahankanLokasiLama && lokasiTerkini.valid && (Date.now() - lokasiTerakhirWaktu) < LOKASI_SEGAR_MS;
+    if(!lokasiMasihSegar){
+      lokasiTerkini = { valid:false, lat:null, lng:null, jarak:null };
+      if(typeof perbaruiEnableTombol === 'function') perbaruiEnableTombol();
+    }
 
     if(!navigator.geolocation){
       tampilkanStatusLokasi('error', 'Perangkat tidak mendukung GPS', 'Gunakan perangkat dengan akses lokasi untuk mengisi presensi.');
@@ -1466,6 +1497,7 @@
         const { latitude, longitude } = pos.coords;
         const jarak = Math.round(hitungJarakMeter(latitude, longitude, SEKOLAH_LAT, SEKOLAH_LNG));
         lokasiTerkini = { valid: jarak <= RADIUS_METER, lat: latitude, lng: longitude, jarak };
+        lokasiTerakhirWaktu = Date.now();
         if(lokasiTerkini.valid){
           tampilkanStatusLokasi('ok', `Lokasi terverifikasi (± ${jarak} m dari sekolah)`, 'Anda berada dalam radius sekolah dan dapat mengisi presensi.');
         } else {
@@ -1481,7 +1513,12 @@
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
     );
   }
-  btnUlangiLokasi.addEventListener('click', mulaiPantauLokasi);
+  // Diubah jadi wrapper () => mulaiPantauLokasi() (bukan mulaiPantauLokasi
+  // langsung) supaya objek click-event dari addEventListener TIDAK ikut
+  // ternilai sebagai argumen `pertahankanLokasiLama` — tombol "Coba Lagi"
+  // ini harus selalu memaksa pengecekan ulang penuh, bukan mempertahankan
+  // lokasi lama.
+  btnUlangiLokasi.addEventListener('click', () => mulaiPantauLokasi());
 
   // BARU (FIX RINGAN — hemat baterai) — hentikan watch GPS saat tidak
   // dibutuhkan. AKAR MASALAH: mulaiPantauLokasi() dipanggil sekali saat
@@ -1511,7 +1548,7 @@
     if(document.hidden){
       hentikanPantauLokasi();
     } else {
-      mulaiPantauLokasi();
+      mulaiPantauLokasi(true); // true = pertahankan lokasi lama kalau masih segar (lihat catatan di mulaiPantauLokasi)
       // FIX (tombol Absen Pulang macet setelah HP dikunci/di-background lalu
       // dibuka lagi): sebelumnya hanya GPS yang di-refresh di sini, sedangkan
       // statusHariIniTerakhir (penentu tombol Masuk/Pulang menyala) TETAP
@@ -1564,7 +1601,7 @@
       // -> pantau ulang supaya lokasi yang tampil tetap segar (lihat
       // hentikanPantauLokasi() untuk detail akar masalah & alasannya).
       if(btn.dataset.tab === 'presensi'){
-        mulaiPantauLokasi();
+        mulaiPantauLokasi(true); // true = pertahankan lokasi lama kalau masih segar, sama seperti resume dari visibilitychange
       } else {
         hentikanPantauLokasi();
       }
