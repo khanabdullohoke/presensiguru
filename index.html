@@ -1595,6 +1595,7 @@
       viewBaru.classList.add('active');
       // Paksa reflow supaya animasi masuk (lihat CSS .view.active) berjalan
       // ulang tiap kali pindah tab, bukan cuma sekali di load pertama.
+      viewBaru.style.animation = ''; // lepas dulu sisa "animation:none" dari fix anti-blur, supaya animasi bisa main ulang
       viewBaru.classList.remove('masuk-halus'); void viewBaru.offsetWidth; viewBaru.classList.add('masuk-halus');
       // BARU (FIX RINGAN — hemat baterai) — GPS cuma perlu aktif di tab
       // Absen. Pindah ke tab lain -> hentikan watch. Kembali ke tab Absen
@@ -1613,6 +1614,23 @@
         renderPenugasan(riwayatTerakhir);
       }
     });
+  });
+
+  // FIX (teks & canvas "ngeblur" di tab Rekap Bulanan & Penugasan Siswa):
+  // animasi masukHalus/tabMasukHalus dipasang dengan fill-mode "both" supaya
+  // state akhirnya (translateY(0)) tetap menempel di elemen. Selama animasi
+  // CSS itu masih "aktif" menempel, browser (terutama Chrome/Edge) menahan
+  // elemen tsb di compositing layer terpisah, dan teks/gambar di dalam layer
+  // itu sering dirender tanpa hinting/antialiasing penuh sehingga terlihat
+  // buram — walau translateY(0) itu sendiri seharusnya tidak mengubah posisi.
+  // Begitu animasi selesai, kita lepas propertinya (animation:none) supaya
+  // elemen kembali ke layer normal dan renderingnya tajam lagi. Animasi
+  // fade-in tetap berjalan penuh dulu sebelum ini dijalankan, jadi efek
+  // visualnya tidak berubah.
+  document.addEventListener('animationend', (e) => {
+    if(e.animationName === 'masukHalus' || e.animationName === 'tabMasukHalus'){
+      e.target.style.animation = 'none';
+    }
   });
 
   /* ================= TAB PRESENSI ================= */
@@ -2602,6 +2620,8 @@
     periodeLabel = `1–${tanggalAkhir} ${NAMA_BULAN[bulan-1]} ${tahun}`;
     muatSpin.style.display = 'none';
     muatPesan.style.display = 'none'; isiDashboard.style.display = 'block';
+    isiDashboard.style.animation = ''; // lepas dulu sisa "animation:none" dari fix anti-blur, supaya animasi bisa main ulang
+    isiDashboard.querySelectorAll('.kartu-ringkas .kartu, .panel-grid .panel').forEach(el => { el.style.animation = ''; });
     isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
     renderDashboard(data);
     const jamSekarang = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
