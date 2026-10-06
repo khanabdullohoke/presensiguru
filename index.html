@@ -171,45 +171,49 @@
   .modal-pesan.ok{color:var(--ok);}
   .modal-pesan.err{color:var(--err);}
 
-  /* ===== Modal Ucapan Terima Kasih & Motivasi (setelah absen berhasil) ===== */
+  /* ===== Modal Ucapan & Motivasi (setelah presensi) — minimalis ===== */
+  .modal-ucapan{background:rgba(6,36,84,0.38);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+  .modal-ucapan.show{animation:ucapanOv .22s ease both;}
+  @keyframes ucapanOv{from{opacity:0;}to{opacity:1;}}
   .modal-ucapan .modal-box{
-    text-align:center;padding:30px 26px 26px;max-width:380px;
-    animation:ucapanMasuk .35s cubic-bezier(.2,.9,.3,1.2) both;
+    text-align:center;padding:34px 28px 24px;max-width:372px;border-radius:24px;
+    box-shadow:0 24px 60px rgba(6,36,84,0.22),0 2px 6px rgba(6,36,84,0.06);
+    animation:ucapanMasuk .28s cubic-bezier(.22,.8,.3,1) both;
   }
-  @keyframes ucapanMasuk{from{opacity:0;transform:translateY(14px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
-  @media(prefers-reduced-motion:reduce){.modal-ucapan .modal-box{animation:none;}}
+  @keyframes ucapanMasuk{from{opacity:0;transform:translateY(12px) scale(.98);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){.modal-ucapan.show,.modal-ucapan .modal-box{animation:none;}}
 
   .ucapan-ico{
-    width:64px;height:64px;border-radius:50%;margin:0 auto 16px;
-    display:flex;align-items:center;justify-content:center;font-size:30px;
-    background:radial-gradient(circle at 35% 30%, #34d399, var(--ok));
-    box-shadow:0 10px 24px rgba(18,183,106,0.35);color:#fff;
+    width:54px;height:54px;border-radius:50%;margin:0 auto 18px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--ok-bg);color:var(--ok);
   }
-  .ucapan-ico.pulang{background:radial-gradient(circle at 35% 30%, #ffd166, var(--gold-deep));box-shadow:0 10px 24px rgba(201,134,0,0.35);}
-  .ucapan-judul{font-size:18px;font-weight:800;color:var(--navy);margin:0 0 4px;font-family:var(--font-display);}
-  .ucapan-sub{font-size:12.5px;color:var(--muted);margin:0 0 18px;}
-  .ucapan-sub strong{color:var(--ink);}
-  .ucapan-quote{
-    background:var(--bg);border:1px solid var(--line);border-radius:14px;
-    padding:16px 18px;font-size:13.5px;line-height:1.65;color:var(--ink);
-    font-style:italic;position:relative;margin-bottom:20px;
-  }
-  .ucapan-quote::before{content:"“";position:absolute;top:2px;left:10px;font-size:28px;color:var(--gold);font-style:normal;line-height:1;opacity:.6;}
-  /* BARU — pengingat "belum isi presensi pulang kemarin" di dalam pop-up
-     ucapan. Sengaja dibuat SATU blok terpisah (bukan digabung ke dalam
-     ucapan-quote) supaya bisa disembunyikan/ditampilkan independen lewat
-     display:none tanpa mengubah pesan motivasi yang sudah ada di atasnya. */
+  .ucapan-ico.pulang{background:#fff4d6;color:var(--gold-deep);}
+  .ucapan-ico.netral{background:#e8eefb;color:var(--navy);}
+  .ucapan-ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .ucapan-judul{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 6px;font-family:var(--font-display);letter-spacing:-.1px;}
+  .ucapan-sub{font-size:13px;color:var(--muted);margin:0 0 22px;line-height:1.5;}
+  .ucapan-sub strong{color:var(--ink);font-weight:600;}
+
+  .ucapan-kutipan{margin:0 0 22px;padding-top:20px;position:relative;}
+  .ucapan-kutipan::before{content:"";position:absolute;top:0;left:50%;width:28px;height:2px;margin-left:-14px;background:var(--gold);border-radius:2px;}
+  .ucapan-jenis{display:none;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:8px;}
+  .ucapan-quote{font-size:14px;line-height:1.75;color:var(--ink);font-style:normal;}
+  .ucapan-sumber{display:none;margin-top:9px;font-size:11.5px;color:var(--faint);letter-spacing:.2px;}
+
+  /* Pengingat "belum presensi pulang kemarin" — blok terpisah (id & logika tidak berubah). */
   .ucapan-pengingat{
-    display:none;text-align:left;background:var(--err-bg);border:1px solid rgba(240,68,56,0.3);
-    border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.6;color:#8a2e24;
-    margin:-6px 0 20px;
+    display:none;text-align:left;background:var(--err-bg);border-left:3px solid var(--err);
+    border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.6;color:#8a2e24;margin:-6px 0 20px;
   }
   .ucapan-pengingat strong{color:#7a1f16;}
   .ucapan-tutup{
-    width:100%;padding:12px;border-radius:999px;background:linear-gradient(135deg,var(--navy) 0%,#1650b8 100%);color:#fff;
-    font-size:14px;font-weight:700;box-shadow:0 8px 18px rgba(11,61,145,0.25);
+    width:100%;padding:13px;border:none;border-radius:14px;background:var(--navy);color:#fff;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;transition:background .15s ease,transform .1s ease;
   }
-  .ucapan-tutup:active{transform:scale(0.98);}
+  .ucapan-tutup:hover{background:#0a3480;}
+  .ucapan-tutup:focus-visible{outline:3px solid rgba(11,61,145,0.28);outline-offset:2px;}
+  .ucapan-tutup:active{transform:scale(0.985);}
 
   /* ===== Kartu verifikasi lokasi (radius sekolah) ===== */
   .lokasi-card{
@@ -761,11 +765,15 @@
 
   <!-- ===== MODAL: UCAPAN TERIMA KASIH & MOTIVASI (setelah absen masuk/pulang berhasil) ===== -->
   <div class="modal-overlay modal-ucapan" id="modalUcapan">
-    <div class="modal-box">
-      <div class="ucapan-ico" id="ucapanIco">✅</div>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="ucapanJudul">
+      <div class="ucapan-ico" id="ucapanIco" aria-hidden="true"></div>
       <h3 class="ucapan-judul" id="ucapanJudul">Absen Masuk Berhasil</h3>
       <p class="ucapan-sub" id="ucapanSub">Terima kasih, <strong>Nama</strong> — tercatat pukul 07.00</p>
-      <div class="ucapan-quote" id="ucapanQuote">Semangat menjalani hari ini.</div>
+      <figure class="ucapan-kutipan" style="margin-left:0;margin-right:0;">
+        <div class="ucapan-jenis" id="ucapanJenis"></div>
+        <div class="ucapan-quote" id="ucapanQuote">Semangat menjalani hari ini.</div>
+        <figcaption class="ucapan-sumber" id="ucapanSumber"></figcaption>
+      </figure>
       <div class="ucapan-pengingat" id="ucapanPengingat"></div>
       <button type="button" class="ucapan-tutup" id="tutupUcapan">Terima Kasih</button>
     </div>
@@ -1438,7 +1446,9 @@
       }
       // Pantau perubahan izin secara live (mis. user baru saja mengizinkan lewat pengaturan browser)
       status.onchange = function(){
-        if(status.state === 'granted' || status.state === 'prompt'){
+        const tabA = document.querySelector('.tab-btn.active');
+        const diTabPresensi = tabA && tabA.dataset.tab === 'presensi' && !document.hidden;
+        if(diTabPresensi && (status.state === 'granted' || status.state === 'prompt')){
           mulaiPantauLokasi();
         }
       };
@@ -1489,6 +1499,10 @@
 
     const statusIzin = await cekIzinLokasiProaktif();
     if(statusIzin === 'denied') return; // pesan sudah ditampilkan oleh cekIzinLokasiProaktif
+    // Selama menunggu cek izin (await), pengguna mungkin sudah pindah tab / mengunci layar;
+    // jangan menyalakan GPS untuk konteks yang sudah tidak aktif (boros baterai).
+    const tabAktifSkrg = document.querySelector('.tab-btn.active');
+    if(document.hidden || !tabAktifSkrg || tabAktifSkrg.dataset.tab !== 'presensi') return;
 
     if(watchIdLokasi !== null) navigator.geolocation.clearWatch(watchIdLokasi);
 
@@ -1939,7 +1953,7 @@
     try{ sessionStorage.setItem(_kunciCacheStatus(nama), JSON.stringify({ data, waktu: Date.now() })); }catch(err){ /* sessionStorage penuh/tidak tersedia -> tidak fatal */ }
   }
 
-  async function cekStatus(){
+  async function cekStatus(paksaSegar){
     const nama = pilihNama.value;
     if(!nama){
       statusBox.classList.remove('show');
@@ -1956,7 +1970,7 @@
     // pakai jalur lama: kunci tombol selagi menunggu (lihat catatan FIX
     // di perbaruiEnableTombol()) supaya tidak ada tombol yang salah
     // sempat menyala.
-    const perkiraanAwal = _bacaCacheStatus(nama);
+    const perkiraanAwal = paksaSegar ? null : _bacaCacheStatus(nama);
     statusBox.classList.remove('warn');
     statusBox.classList.add('show');
     if(perkiraanAwal){
@@ -2165,7 +2179,7 @@
         json = await res.json();
       }catch(errParsing){
         tampilPesan('Server menjawab tapi isinya tidak terbaca (kemungkinan sedang sibuk/banyak yang presensi bersamaan). Presensi Anda BELUM TENTU tersimpan — cek kotak status di atas dahulu sebelum mencoba lagi.', 'err');
-        await cekStatus();
+        await cekStatus(true);
         return;
       }
       tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
@@ -2183,7 +2197,7 @@
           tampilkanUcapan(pilihStatus.value, nama, '');
         }
       }
-      await cekStatus();
+      await cekStatus(true);
     }catch(err){
       clearTimeout(batasWaktuId);
       // Pesan dibedakan: timeout/abort (server tidak kunjung menjawab)
@@ -2193,7 +2207,7 @@
         ? 'Server tidak merespons dalam 25 detik (kemungkinan sedang banyak yang presensi bersamaan). Silakan coba lagi.'
         : 'Gagal mengirim, periksa koneksi internet lalu coba lagi.';
       tampilPesan(pesanGagal, 'err');
-      await cekStatus();
+      await cekStatus(true);
     }
     finally{ perbaruiEnableTombol(); }
   }
@@ -2202,21 +2216,41 @@
   btnSimpan.addEventListener('click', () => kirimAbsen('masuk'));
 
   // ===== Ucapan terima kasih & motivasi setelah absen masuk/pulang =====
+  // 30 kutipan: j = jenis ('Hadis' | 'Makna Ayat' | 'Motivasi'), s = sumber.
+  // Hadis & ayat ditulis dalam MAKNA bahasa Indonesia (bukan terjemahan resmi kata per kata).
   const PESAN_MASUK = [
-    'Terima kasih sudah hadir tepat waktu. Setiap pagi yang Bapak/Ibu mulai dengan niat baik adalah bekal berharga bagi murid-murid yang menanti di kelas.',
-    'Kehadiran Bapak/Ibu hari ini adalah awal yang berarti bagi banyak orang. Semoga ilmu yang dibagikan hari ini membawa manfaat yang panjang.',
-    'Selamat memulai hari. Di balik absen sederhana ini, ada dedikasi yang tidak semua orang lihat — tapi selalu dihargai.',
-    'Terima kasih atas komitmennya untuk selalu hadir. Semoga langkah kecil pagi ini membawa keberkahan untuk hari yang penuh makna.',
-    'Setiap kali Bapak/Ibu melangkah masuk gerbang sekolah, ada murid yang diam-diam menunggu bimbingan itu. Selamat bertugas hari ini.',
-    'Semangat pagi! Yang Bapak/Ibu lakukan hari ini mungkin terasa biasa, tapi bagi seorang murid, itu bisa jadi momen yang mereka ingat seumur hidup.'
+    { j:'Hadis', t:'Barangsiapa menempuh jalan untuk mencari ilmu, Allah mudahkan baginya jalan menuju surga.', s:'HR. Muslim' },
+    { j:'Hadis', t:'Sebaik-baik kalian adalah yang belajar Al-Qur\'an dan mengajarkannya.', s:'HR. Al-Bukhari' },
+    { j:'Hadis', t:'Sesungguhnya setiap amal bergantung pada niatnya.', s:'HR. Al-Bukhari dan Muslim' },
+    { j:'Hadis', t:'Barangsiapa menunjukkan kepada kebaikan, ia mendapat pahala seperti pahala orang yang melakukannya.', s:'HR. Muslim' },
+    { j:'Hadis', t:'Permudahlah dan jangan mempersulit; berilah kabar gembira dan jangan membuat orang lari.', s:'HR. Al-Bukhari dan Muslim' },
+    { j:'Makna Ayat', t:'Allah mengangkat derajat orang-orang beriman dan orang-orang yang berilmu di antara kalian.', s:'QS. Al-Mujadilah: 11' },
+    { j:'Makna Ayat', t:'Bacalah dengan menyebut nama Tuhanmu yang menciptakan.', s:'QS. Al-\'Alaq: 1' },
+    { j:'Makna Ayat', t:'Tolong-menolonglah kamu dalam (mengerjakan) kebajikan dan takwa.', s:'QS. Al-Ma\'idah: 2' },
+    { j:'Motivasi', t:'Ilmu yang dibagikan dengan tulus tidak pernah habis; ia tumbuh di setiap murid yang mengingatnya.' },
+    { j:'Motivasi', t:'Pagi ini, satu kebaikan kecil di kelas bisa menjadi alasan seorang murid tidak menyerah.' },
+    { j:'Motivasi', t:'Guru tidak hanya mengisi kepala, tetapi menyalakan keyakinan bahwa setiap anak mampu bertumbuh.' },
+    { j:'Motivasi', t:'Pendidikan yang baik dimulai dari teladan: apa yang kita lakukan hari ini, itulah yang akan ditiru.' },
+    { j:'Motivasi', t:'Kesabaran di ruang kelas hari ini adalah investasi bagi karakter generasi esok.' },
+    { j:'Motivasi', t:'Disiplin yang dimulai dari hal sederhana seperti hadir tepat waktu adalah pelajaran paling nyata bagi murid.' },
+    { j:'Motivasi', t:'Setiap murid datang dengan cerita yang berbeda. Hari ini, jadilah alasan mereka merasa dihargai.' }
   ];
   const PESAN_PULANG = [
-    'Terima kasih untuk seluruh tenaga dan pikiran yang sudah dicurahkan hari ini. Selamat beristirahat, Bapak/Ibu sudah bekerja dengan baik.',
-    'Satu hari lagi telah dilalui dengan penuh dedikasi. Semoga lelahnya terbayar dengan keberkahan yang tak terlihat.',
-    'Terima kasih sudah menyelesaikan tugas hari ini dengan sepenuh hati. Perjalanan pulang ini pantas didapatkan setelah kerja keras tadi.',
-    'Hari ini mungkin melelahkan, tapi jejak kebaikan yang Bapak/Ibu tinggalkan di kelas tidak akan sia-sia. Selamat pulang, hati-hati di jalan.',
-    'Terima kasih telah hadir sepenuhnya untuk murid-murid hari ini. Semoga rumah menyambut dengan kehangatan yang sama seperti yang Bapak/Ibu berikan di sekolah.',
-    'Satu hari penuh pengabdian telah selesai. Selamat pulang, dan terima kasih sudah menjadi bagian penting dari perjalanan pendidikan mereka.'
+    { j:'Hadis', t:'Apabila manusia meninggal, terputuslah amalnya kecuali tiga: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya.', s:'HR. Muslim' },
+    { j:'Hadis', t:'Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.', s:'HR. Ath-Thabrani' },
+    { j:'Hadis', t:'Amalan yang paling dicintai Allah adalah yang dilakukan terus-menerus, meskipun sedikit.', s:'HR. Al-Bukhari dan Muslim' },
+    { j:'Hadis', t:'Barangsiapa meringankan kesulitan seorang mukmin, Allah akan meringankan kesulitannya pada hari kiamat.', s:'HR. Muslim' },
+    { j:'Hadis', t:'Senyummu kepada saudaramu adalah sedekah.', s:'HR. At-Tirmidzi' },
+    { j:'Hadis', t:'Sesungguhnya Allah mencintai seseorang yang apabila bekerja, ia menyelesaikannya dengan sebaik-baiknya.', s:'HR. Al-Baihaqi' },
+    { j:'Makna Ayat', t:'Berbuat baiklah, sesungguhnya Allah menyukai orang-orang yang berbuat baik.', s:'QS. Al-Baqarah: 195' },
+    { j:'Makna Ayat', t:'Barangsiapa mengerjakan kebaikan seberat zarah pun, niscaya ia akan melihat balasannya.', s:'QS. Az-Zalzalah: 7' },
+    { j:'Motivasi', t:'Lelah hari ini adalah bukti bahwa ada sesuatu yang berharga sedang diperjuangkan.' },
+    { j:'Motivasi', t:'Tidak semua kebaikan terlihat hari ini, tetapi setiap murid yang Anda bimbing akan membawanya ke masa depan.' },
+    { j:'Motivasi', t:'Pulanglah dengan hati lapang: hari ini ada yang belajar, ada yang terbantu, dan ada yang terinspirasi.' },
+    { j:'Motivasi', t:'Pendidik hebat bukan yang tak pernah lelah, melainkan yang tetap peduli di tengah lelahnya.' },
+    { j:'Motivasi', t:'Pelajaran yang disampaikan dengan tulus terus bekerja, bahkan setelah bel pulang berbunyi.' },
+    { j:'Motivasi', t:'Istirahat yang baik adalah bagian dari pengabdian; esok, semangat baru menunggu di kelas yang sama.' },
+    { j:'Motivasi', t:'Terima kasih telah menjadi bagian dari tumbuhnya anak-anak yang kelak mengingat jasa Anda.' }
   ];
   const PESAN_IZIN = [
     'Terima kasih sudah menyampaikan kabar dengan jujur dan tepat waktu. Semoga urusan yang sedang dijalani berjalan lancar, dan sampai jumpa lagi di sekolah.',
@@ -2245,6 +2279,39 @@
   const ucapanSub = document.getElementById('ucapanSub');
   const ucapanQuote = document.getElementById('ucapanQuote');
   const ucapanPengingat = document.getElementById('ucapanPengingat');
+  const ucapanJenis = document.getElementById('ucapanJenis');
+  const ucapanSumber = document.getElementById('ucapanSumber');
+
+  const IKON_UCAPAN = {
+    masuk:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    pulang:  '<svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 0 0-10 0M12 9V2M4.2 10.2l1.4 1.4M1 18h2M21 18h2M18.4 11.6l1.4-1.4M23 22H1M16 5l-4 4-4-4"/></svg>',
+    catatan: '<svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 14l2 2 4-4"/></svg>',
+    hati:    '<svg viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg>',
+    kalender:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    koper:   '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'
+  };
+
+  // Pilih acak tanpa mengulang kutipan yang sama berturut-turut.
+  const _kutipanTerakhir = {};
+  function pilihAcak(daftar, kunci){
+    let i = Math.floor(Math.random() * daftar.length);
+    if (daftar.length > 1 && i === _kutipanTerakhir[kunci]) i = (i + 1) % daftar.length;
+    _kutipanTerakhir[kunci] = i;
+    return daftar[i];
+  }
+  // Menerima teks biasa (pesan situasional) ATAU objek {j,t,s} (kutipan).
+  function isiKutipan(item){
+    const obj = (item && typeof item === 'object') ? item : { t: String(item) };
+    ucapanQuote.textContent = obj.t;
+    ucapanJenis.textContent = obj.j || '';
+    ucapanJenis.style.display = (obj.j && obj.j !== 'Motivasi') ? 'block' : 'none';
+    ucapanSumber.textContent = obj.s || '';
+    ucapanSumber.style.display = obj.s ? 'block' : 'none';
+  }
+  function bukaUcapan(){
+    modalUcapan.classList.add('show');
+    setTimeout(() => { try{ document.getElementById('tutupUcapan').focus({ preventScroll: true }); }catch(e){} }, 50);
+  }
 
   // BARU — format tanggal 'yyyy-MM-dd' jadi teks Indonesia yang mudah
   // dibaca (mis. "Selasa, 25 Agustus") untuk pesan pengingat di pop-up.
@@ -2270,7 +2337,7 @@
     const p = statusHariIniTerakhir && statusHariIniTerakhir.pengingatPulangKemarin;
     if (p && p.perlu) {
       ucapanPengingat.style.display = 'block';
-      ucapanPengingat.innerHTML = `⚠️ <strong>Pengingat:</strong> pada ${escapeHtml(formatTanggalIndo(p.tanggal))} Anda belum mengisi presensi <strong>pulang</strong>. Jangan lupa isi presensi pulang hari ini sebelum meninggalkan sekolah.`;
+      ucapanPengingat.innerHTML = `<strong>Pengingat:</strong> pada ${escapeHtml(formatTanggalIndo(p.tanggal))} Anda belum mengisi presensi <strong>pulang</strong>. Jangan lupa isi presensi pulang hari ini sebelum meninggalkan sekolah.`;
     } else {
       ucapanPengingat.style.display = 'none';
       ucapanPengingat.innerHTML = '';
@@ -2280,31 +2347,31 @@
   function tampilkanUcapan(tipe, nama, jam){
     // tipe: 'masuk' | 'pulang' (status Hadir) ATAU 'Izin' | 'Sakit' | 'Cuti' | 'Dinas Luar'
     const PETA_NONHADIR = {
-      'Izin':       { ico: '📋', judul: 'Izin Tercatat',      pesan: PESAN_IZIN },
-      'Sakit':      { ico: '🩺', judul: 'Semoga Lekas Sembuh', pesan: PESAN_SAKIT },
-      'Cuti':       { ico: '🏖️', judul: 'Cuti Tercatat',      pesan: PESAN_CUTI },
-      'Dinas Luar': { ico: '🧳', judul: 'Dinas Luar Tercatat', pesan: PESAN_DINAS }
+      'Izin':       { ico: 'catatan', judul: 'Izin Tercatat',      pesan: PESAN_IZIN },
+      'Sakit':      { ico: 'hati', judul: 'Semoga Lekas Sembuh', pesan: PESAN_SAKIT },
+      'Cuti':       { ico: 'kalender', judul: 'Cuti Tercatat',      pesan: PESAN_CUTI },
+      'Dinas Luar': { ico: 'koper', judul: 'Dinas Luar Tercatat', pesan: PESAN_DINAS }
     };
 
     if (PETA_NONHADIR[tipe]) {
       const info = PETA_NONHADIR[tipe];
       const pesan = info.pesan[Math.floor(Math.random() * info.pesan.length)];
-      ucapanIco.textContent = info.ico;
-      ucapanIco.classList.remove('pulang');
+      ucapanIco.innerHTML = IKON_UCAPAN[info.ico] || '';
+      ucapanIco.className = 'ucapan-ico netral';
       ucapanJudul.textContent = info.judul;
       ucapanSub.innerHTML = `Terima kasih, <strong>${escapeHtml(nama)}</strong> — status sudah tercatat`;
-      ucapanQuote.textContent = pesan;
+      isiKutipan(pesan);
       terapkanPengingatKemarin();
-      modalUcapan.classList.add('show');
+      bukaUcapan();
       return;
     }
 
     const masuk = tipe === 'masuk';
     const daftarPesan = masuk ? PESAN_MASUK : PESAN_PULANG;
-    const pesan = daftarPesan[Math.floor(Math.random() * daftarPesan.length)];
+    const pesan = pilihAcak(daftarPesan, masuk ? 'masuk' : 'pulang');
 
-    ucapanIco.textContent = masuk ? '☀️' : '🌇';
-    ucapanIco.classList.toggle('pulang', !masuk);
+    ucapanIco.innerHTML = masuk ? IKON_UCAPAN.masuk : IKON_UCAPAN.pulang;
+    ucapanIco.className = 'ucapan-ico' + (masuk ? '' : ' pulang');
     ucapanJudul.textContent = masuk ? 'Absen Masuk Berhasil' : 'Absen Pulang Berhasil';
 
     const menit = masuk ? jamKeMenit(jam) : null;
@@ -2313,14 +2380,15 @@
     ucapanSub.innerHTML = labelJam
       ? `Terima kasih, <strong>${escapeHtml(nama)}</strong> — tercatat ${labelJam}`
       : `Terima kasih, <strong>${escapeHtml(nama)}</strong>`;
-    ucapanQuote.textContent = pesan;
+    isiKutipan(pesan);
     terapkanPengingatKemarin();
 
-    modalUcapan.classList.add('show');
+    bukaUcapan();
   }
   function tutupUcapanFn(){ modalUcapan.classList.remove('show'); }
   document.getElementById('tutupUcapan').addEventListener('click', tutupUcapanFn);
   modalUcapan.addEventListener('click', (e) => { if(e.target === modalUcapan) tutupUcapanFn(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && modalUcapan.classList.contains('show')) tutupUcapanFn(); });
 
   muatDaftarPegawai();
   document.getElementById('btnUlangiMuatPegawai').addEventListener('click', () => {
@@ -2590,9 +2658,12 @@
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
       cacheRekapBrowser[kunciCache] = { data: json.data, waktuAmbil: Date.now() };
+      // Balasan basi (bulan/tahun sudah diganti saat request jalan): cukup di-cache, jangan menimpa tampilan.
+      if(pilihBulan.value !== bulan || pilihTahun.value !== tahun) return;
       tampilkanDataRekap(json.data, bulan, tahun);
     }catch(err){
       clearTimeout(batasWaktuRekapId);
+      if(pilihBulan.value !== bulan || pilihTahun.value !== tahun) return;
       muatSpin.style.display = 'none';
       muatTeks.textContent = (err && err.name === 'AbortError')
         ? 'Server tidak merespons dalam 25 detik (kemungkinan traffic sedang tinggi). Coba tekan "Muat Data" lagi.'
@@ -2662,12 +2733,18 @@
     lemburTerakhir = null;
     if(btnPdfLembur) btnPdfLembur.disabled = true;
     try{
-      const res = await fetch(`${API_URL}?aksi=lemburBulanan&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`);
+      const kontrolLembur = new AbortController();
+      const batasLemburId = setTimeout(() => kontrolLembur.abort(), 25000);
+      let res;
+      try{ res = await fetch(`${API_URL}?aksi=lemburBulanan&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`, { signal: kontrolLembur.signal }); }
+      finally{ clearTimeout(batasLemburId); }
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
+      if(String(pilihBulan.value) !== String(bulan) || String(pilihTahun.value) !== String(tahun)) return; // balasan basi
       lemburTerakhir = json.data;
       renderLembur(json.data);
     }catch(err){
+      if(String(pilihBulan.value) !== String(bulan) || String(pilihTahun.value) !== String(tahun)) return;
       kosong.textContent = 'Gagal memuat data lembur.';
       kosong.style.display = 'block';
       isi.style.display = 'none';
@@ -2803,12 +2880,15 @@
     doc.line(14, 33, lebar-14, 33);
 
     // Ringkasan total
-    const totalHadir = document.getElementById('totalHadir').textContent;
-    const totalSakit = document.getElementById('totalSakit').textContent;
-    const totalIzin = document.getElementById('totalIzin').textContent;
-    const totalAlpa = document.getElementById('totalAlpa').textContent;
-    const totalCuti = document.getElementById('totalCuti').textContent;
-    const totalSetengahHari = document.getElementById('totalSetengahHari').textContent;
+    // Dari data sebenarnya (bukan textContent yang bisa masih beranimasi 0 -> target).
+    const T = totalRekapTerakhir;
+    const ambilTotal = (kunci, idEl) => T ? T[kunci] : document.getElementById(idEl).textContent;
+    const totalHadir = ambilTotal('hadir', 'totalHadir');
+    const totalSakit = ambilTotal('sakit', 'totalSakit');
+    const totalIzin = ambilTotal('izin', 'totalIzin');
+    const totalAlpa = ambilTotal('alfa', 'totalAlpa');
+    const totalCuti = ambilTotal('cuti', 'totalCuti');
+    const totalSetengahHari = ambilTotal('setengah', 'totalSetengahHari');
     doc.setFontSize(9.5);
     doc.text(`Total Hadir: ${totalHadir}    Total Sakit: ${totalSakit}    Total Izin: ${totalIzin}    Total Cuti: ${totalCuti}    Total Alfa: ${totalAlpa}    Total Setengah Hari (Otomatis): ${totalSetengahHari}`, 14, 40);
 
@@ -3251,6 +3331,7 @@
   btnUnduhLaporanBlokPdf.addEventListener('click', unduhLaporanBlokPdf);
 
   let riwayatTerakhir = [];
+  let totalRekapTerakhir = null;
   let grafikTerakhir = null; // menyimpan data grafik terakhir untuk digambar ulang saat resize
   let periodeLabel = ''; // label "Bulan Tahun" untuk kolom Periode di tabel Detail per Pegawai
 
@@ -3339,6 +3420,7 @@
     dataTabelTerakhir = rekapPersen;
     renderTabelDetail();
 
+    totalRekapTerakhir = { hadir: totalHadir, sakit: totalSakit, izin: totalIzin, alfa: totalAlfa, cuti: totalCuti, setengah: totalSetengahHari };
     animasiAngka(document.getElementById('totalHadir'), totalHadir);
     animasiAngka(document.getElementById('totalSakit'), totalSakit);
     animasiAngka(document.getElementById('totalIzin'), totalIzin);
