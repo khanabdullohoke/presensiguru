@@ -1890,12 +1890,29 @@
   // BARU (FIX jeda tombol Presensi Pulang): lihat catatan lengkap di
   // perbaruiEnableTombol() & cekStatus() di bawah.
   let statusSedangDimuat = false;
+  // BARU (FIX "gagal padahal masuk"): true selama satu pengiriman presensi masih
+  // berjalan. perbaruiEnableTombol() dipanggil dari banyak tempat (update GPS
+  // watchPosition, ketikan PIN, dll.) dan SEBELUMNYA ikut menyalakan ulang tombol
+  // di tengah pengiriman -> pegawai yang tidak sabar menekan lagi -> permintaan
+  // kedua ditolak server ("Sudah tercatat"/"Terlalu banyak permintaan") dan pesan
+  // merahnya menimpa hasil sukses permintaan pertama.
+  let sedangMengirim = false;
+  // id permintaan yang dipakai ulang bila kiriman sebelumnya tidak pasti
+  // (timeout/jaringan putus) — server memakainya untuk idempotensi.
+  let permintaanMenggantung = null;
   let fotoDataUrl = '';
 
+  // OPTIMASI: toLocaleDateString (Intl) mahal & hasilnya hanya berubah tiap ganti
+  // hari — dihitung ulang hanya saat tanggalnya berganti, bukan tiap detik.
+  let _tglKeyTerakhir = '';
   function updateJam(){
     const now = new Date();
     jamNowEl.textContent = now.toLocaleTimeString('id-ID');
-    tglNowEl.textContent = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const kunciTgl = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+    if(kunciTgl !== _tglKeyTerakhir){
+      _tglKeyTerakhir = kunciTgl;
+      tglNowEl.textContent = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }
   }
   setInterval(updateJam, 1000); updateJam();
 
@@ -1913,12 +1930,16 @@
   // (± 25–45 KB per foto pada kondisi normal) demi menghemat ruang
   // penyimpanan Drive. 420px & kualitas 0.45 masih cukup jelas untuk
   // keperluan bukti kehadiran (bukan foto resolusi tinggi).
+  // OPTIMASI: dulu foto kamera ukuran penuh dibaca FileReader jadi string base64
+  // (3-10 MB di memori, lambat & berat di HP kelas menengah ke bawah) baru
+  // didecode. Sekarang memakai URL.createObjectURL (tanpa salinan base64);
+  // hasil kompresi (420px, JPEG 0.45) identik.
   function kompresGambar(file, maxWidth = 420, quality = 0.45){
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
+      const urlObjek = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try{
           let w = img.width, h = img.height;
           if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
           const canvas = document.createElement('canvas');
@@ -1926,12 +1947,14 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
           resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = () => reject(new Error('Gagal memuat gambar'));
-        img.src = e.target.result;
+        }catch(err){
+          reject(err);
+        }finally{
+          URL.revokeObjectURL(urlObjek);
+        }
       };
-      reader.onerror = () => reject(new Error('Gagal membaca berkas foto'));
-      reader.readAsDataURL(file);
+      img.onerror = () => { URL.revokeObjectURL(urlObjek); reject(new Error('Gagal memuat gambar')); };
+      img.src = urlObjek;
     });
   }
 
@@ -2016,7 +2039,11 @@
     }catch(err){ /* localStorage tidak tersedia / data korup -> abaikan, lanjut fetch seperti biasa */ }
 
     try{
-      const res = await fetch(`${API_URL}?aksi=daftarPegawai&token=${TOKEN}`);
+      const kontrolDaftar = new AbortController();
+      const batasDaftarId = setTimeout(() => kontrolDaftar.abort(), 25000);
+      let res;
+      try{ res = await fetch(`${API_URL}?aksi=daftarPegawai&token=${TOKEN}`, { signal: kontrolDaftar.signal }); }
+      finally{ clearTimeout(batasDaftarId); }
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
       kartuGagal.classList.remove('show');
@@ -2082,6 +2109,9 @@
   function wajibLokasi(){ return pilihStatus.value === 'Hadir'; }
 
   function perbaruiEnableTombol(){
+    if(sedangMengirim){
+      btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true; return;
+    }
     const nama = pilihNama.value;
 
     // FIX (jeda/kedipan tombol saat pilih nama): statusHariIniTerakhir
@@ -2199,8 +2229,15 @@
     perbaruiEnableTombol();
 
     try{
-      const res = await fetch(`${API_URL}?aksi=statusHariIni&nama=${encodeURIComponent(nama)}&token=${TOKEN}`);
-      const json = await res.json(); const d = json.data;
+      const kontrolStatus = new AbortController();
+      const batasStatusId = setTimeout(() => kontrolStatus.abort(), 20000);
+      let res;
+      try{
+        res = await fetch(`${API_URL}?aksi=statusHariIni&nama=${encodeURIComponent(nama)}${paksaSegar ? '&segar=1' : ''}&token=${TOKEN}`, { signal: kontrolStatus.signal });
+      }finally{ clearTimeout(batasStatusId); }
+      const json = await res.json();
+      if(!json || !json.ok || !json.data) throw new Error((json && json.error) || 'Status tidak tersedia');
+      const d = json.data;
       // Nama bisa saja sudah berganti (dipilih ulang oleh pengguna) sementara
       // request ini masih berjalan. Kalau balasan ini bukan lagi untuk nama
       // yang sedang aktif di dropdown, abaikan saja — supaya balasan yang
@@ -2293,33 +2330,79 @@
     fotoHint.textContent = 'Foto diambil langsung dari kamera perangkat dan dikompres otomatis sebelum dikirim.';
   }
 
+  // ===== Pengiriman presensi (tahan banting) =====
+  // AKAR MASALAH \"gagal padahal masuk\" yang diperbaiki di sini:
+  //  (1) Tombol dinyalakan ulang di tengah pengiriman oleh update GPS/ketikan PIN
+  //      -> klik ganda -> balasan error permintaan ke-2 menimpa sukses permintaan ke-1
+  //      (kini dijaga flag sedangMengirim).
+  //  (2) Balasan hilang/terputus di jaringan seluler (Apps Script membalas lewat
+  //      redirect), timeout klien, atau balasan HTML dari Apps Script saat sibuk:
+  //      data SUDAH tersimpan di server, tapi klien menampilkan \"gagal\".
+  //      Kini kondisi \"tidak pasti\" itu TIDAK dilaporkan sebagai gagal: klien
+  //      memeriksa langsung ke server (statusHariIni segar) dan bila ternyata sudah
+  //      tersimpan, alur sukses + pop-up ucapan dijalankan seperti biasa.
+  //  (3) Kiriman ulang diberi idPermintaan yang sama -> server menjawab sukses yang
+  //      sama (tanpa baris ganda) alih-alih \"Sudah tercatat hari ini\".
+  //  (4) Error di pop-up ucapan tidak lagi bisa jatuh ke pesan \"Gagal mengirim\".
+  const BATAS_WAKTU_KIRIM_MS = 40000;
+  const _tunggu = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function _buatIdPermintaan(){
+    try{ if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID(); }catch(err){}
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+
+  // \"dd/MM/yyyy HH:mm:ss\" (format statusHariIni) -> \"HH:mm:ss\"
+  function _jamDariTeks(teks){
+    const t = String(teks || '').trim();
+    if(!t) return '';
+    const bagian = t.split(' ');
+    return bagian[bagian.length - 1];
+  }
+
+  // Apakah status server (statusHariIni) menunjukkan bahwa kiriman ini sudah tersimpan?
+  function _cocokDenganKiriman(d, tipe, statusKirim){
+    if(!d || !d.sudahMasuk) return false;
+    if(tipe === 'pulang') return !!d.sudahPulang && d.status === 'Hadir';
+    return d.status === statusKirim;
+  }
+
+  async function periksaTersimpan(nama, tipe, statusKirim){
+    const jeda = [1500, 3000, 4500, 6000, 8000]; // total ± 23 detik
+    for(let i = 0; i < jeda.length; i++){
+      await _tunggu(jeda[i]);
+      const kontrol = new AbortController();
+      const timer = setTimeout(() => kontrol.abort(), 12000);
+      try{
+        const res = await fetch(`${API_URL}?aksi=statusHariIni&nama=${encodeURIComponent(nama)}&segar=1&token=${TOKEN}`, { signal: kontrol.signal });
+        const j = await res.json();
+        if(j && j.ok && j.data && _cocokDenganKiriman(j.data, tipe, statusKirim)){
+          return { tersimpan: true, jam: _jamDariTeks(tipe === 'pulang' ? j.data.jamPulang : j.data.jamMasuk) };
+        }
+      }catch(err){ /* jaringan masih bermasalah -> coba lagi pada putaran berikutnya */ }
+      finally{ clearTimeout(timer); }
+    }
+    return { tersimpan: false };
+  }
+
+  const PESAN_TIDAK_PASTI = {
+    waktu: 'Server belum menjawab dalam 40 detik dan presensi Anda belum terkonfirmasi tersimpan. Tekan tombol sekali lagi — sistem menjamin tidak ada catatan ganda.',
+    jaringan: 'Koneksi terputus dan presensi Anda belum terkonfirmasi tersimpan. Periksa sinyal lalu tekan tombol sekali lagi — sistem menjamin tidak ada catatan ganda.',
+    isi: 'Server sedang sibuk (balasan tidak terbaca) dan presensi Anda belum terkonfirmasi tersimpan. Tunggu sebentar lalu tekan tombol sekali lagi — sistem menjamin tidak ada catatan ganda.'
+  };
+
   async function kirimAbsen(tipe){
+    if(sedangMengirim) return; // jaring pengaman klik ganda
     const nama = pilihNama.value; if(!nama) return;
     if(!pinValid()){ tampilPesan('Masukkan kode keamanan (PIN) terlebih dahulu.', 'err'); return; }
     if(!fotoValid()){ tampilPesan('Ambil foto bukti kehadiran terlebih dahulu.', 'err'); return; }
     if(wajibLokasi() && !lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
     if(!penugasanValid()){ tampilPesan('Lengkapi tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) terlebih dahulu.', 'err'); return; }
 
-    // Jaring pengaman tambahan di sisi klien: sekali presensi masuk & sekali presensi pulang per hari.
-    // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
-    // atau kondisi tombol yang belum sempat ter-update.
+    // Jaring pengaman klien: sekali masuk & sekali pulang per hari (server tetap sumber kebenaran).
+    // Cek status non-Hadir ditaruh paling atas supaya pesannya akurat (tombol Simpan
+    // untuk Izin/Sakit/Cuti/Dinas Luar juga memanggil kirimAbsen('masuk')).
     const d = statusHariIniTerakhir;
-    // FIX (urutan pengecekan — pesan error yang salah untuk status non-Hadir):
-    // tombol "Simpan" (Izin/Sakit/Alfa/Dinas Luar) SELALU memanggil
-    // kirimAbsen('masuk') — lihat btnSimpan.addEventListener di bawah — jadi
-    // `tipe === 'masuk'` selalu bernilai true untuk status non-Hadir juga.
-    // Sebelumnya cek "pilihStatus.value !== 'Hadir'" ditaruh PALING BAWAH,
-    // di BAWAH cek "tipe==='masuk' && d.sudahMasuk" — akibatnya begitu
-    // pegawai memilih status non-Hadir (mis. Izin) padahal hari ini sudah
-    // ada catatan, cek pertama itu SELALU lebih dulu cocok dan pegawai
-    // melihat pesan "Presensi masuk hari ini sudah tercatat, tidak bisa diisi
-    // ulang." — membingungkan karena dia tidak sedang presensi masuk. Pesan
-    // yang lebih tepat ("Hari ini sudah ada catatan presensi...") jadi
-    // TIDAK PERNAH tercapai (dead code) untuk kombinasi ini. Diperbaiki:
-    // cek status non-Hadir dipindah ke PALING ATAS supaya pesannya akurat
-    // untuk kasusnya sendiri, sebelum jatuh ke cek generik tipe='masuk'.
-    // Perilaku (tombol tetap terkunci) tidak berubah sama sekali — murni
-    // perbaikan teks pesan yang ditampilkan.
     if(pilihStatus.value !== 'Hadir' && d.sudahMasuk){
       tampilPesan('Hari ini sudah ada catatan presensi, tidak bisa disimpan ulang.', 'err');
       perbaruiEnableTombol(); return;
@@ -2333,98 +2416,94 @@
       perbaruiEnableTombol(); return;
     }
 
+    sedangMengirim = true;
     btnMasuk.disabled = true; btnPulang.disabled = true; btnSimpan.disabled = true;
     tampilPesan('Mengirim...', 'ok');
 
-    // PERBAIKAN BUG (pop-up tidak pernah muncul saat server lambat/hang):
-    // sebelumnya fetch() di sini TIDAK punya batas waktu sama sekali —
-    // kalau Apps Script sedang antre panjang (LockService, banyak orang
-    // presensi bersamaan) atau jaringan pegawai bermasalah, browser bisa
-    // menunggu fetch() ini TANPA BATAS. Selama menunggu, kode di bawahnya
-    // (termasuk tampilkanUcapan()) tidak pernah tercapai — makanya terasa
-    // "lama sekali" dan pop-up ucapan "tidak muncul", padahal sebenarnya
-    // permintaan belum selesai/gagal, bukan pop-up-nya yang rusak.
-    // Sekarang dipasang batas waktu 25 detik lewat AbortController: kalau
-    // terlampaui, permintaan dibatalkan dan pegawai diberi pesan jelas
-    // (bukan diam menunggu) supaya tahu harus coba lagi, bukan menunggu
-    // tanpa kepastian atau mengira aplikasinya rusak/nge-hang.
-    const kontrolWaktu = new AbortController();
-    const batasWaktuId = setTimeout(() => kontrolWaktu.abort(), 25000);
-    try{
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        signal: kontrolWaktu.signal,
-        body: JSON.stringify({
-          token: TOKEN,
-          nama: nama,
-          tipe: tipe,
-          status: pilihStatus.value,
-          keterangan: keteranganEl.value,
-          kelas: perluPenugasan() ? pnKelas.value.trim() : '',
-          jurusan: perluPenugasan() ? pnJurusan.value.trim() : '',
-          capaian: perluPenugasan() ? pnCapaian.value.trim() : '',
-          tugas: perluPenugasan() ? pnTugas.value.trim() : '',
-          jam: perluPenugasan() ? jamTerpilih().join(',') : '',
-          pin: pinEl.value,
-          lat: lokasiTerkini.lat,
-          lng: lokasiTerkini.lng,
-          foto: fotoDataUrl
-        })
-      });
-      clearTimeout(batasWaktuId);
+    // Snapshot SEMUA nilai form saat klik (pengguna masih bisa mengubah dropdown
+    // selagi menunggu; keputusan pop-up di bawah tidak boleh ikut berubah).
+    const statusKirim = pilihStatus.value;
+    const butuhPenugasan = perluPenugasan();
+    const kunciKiriman = `${nama}|${tipe}|${statusKirim}`;
+    if(!permintaanMenggantung || permintaanMenggantung.kunci !== kunciKiriman){
+      permintaanMenggantung = { kunci: kunciKiriman, id: _buatIdPermintaan() };
+    }
+    const isiKiriman = JSON.stringify({
+      token: TOKEN,
+      idPermintaan: permintaanMenggantung.id,
+      nama: nama,
+      tipe: tipe,
+      status: statusKirim,
+      keterangan: keteranganEl.value,
+      kelas: butuhPenugasan ? pnKelas.value.trim() : '',
+      jurusan: butuhPenugasan ? pnJurusan.value.trim() : '',
+      capaian: butuhPenugasan ? pnCapaian.value.trim() : '',
+      tugas: butuhPenugasan ? pnTugas.value.trim() : '',
+      jam: butuhPenugasan ? jamTerpilih().join(',') : '',
+      pin: pinEl.value,
+      lat: lokasiTerkini.lat,
+      lng: lokasiTerkini.lng,
+      foto: fotoDataUrl
+    });
 
-      // PERBAIKAN BUG (pop-up "hilang" walau presensi mungkin sudah tersimpan):
-      // res.json() sebelumnya dipanggil di try yang SAMA dengan fetch() dan
-      // ditangkap oleh catch generik di bawah. Padahal Apps Script (backend
-      // di sini) kadang membalas HALAMAN HTML, BUKAN JSON — mis. "Exceeded
-      // maximum execution time" atau "Service invoked too many times" — saat
-      // banyak pegawai presensi bersamaan (jam masuk sekolah, kasus paling
-      // umum). Saat itu terjadi, res.json() melempar SyntaxError, jatuh ke
-      // catch yang sama dengan gagal jaringan, dan pegawai melihat pesan
-      // "Gagal mengirim, periksa koneksi internet" — padahal permintaan
-      // SUDAH sampai ke server (bahkan mungkin sudah tersimpan sebelum Apps
-      // Script gagal membalas JSON-nya). Pop-up ucapan pun tidak pernah
-      // tercapai, bukan karena rusak, tapi karena baris ini melempar error
-      // lebih dulu. Sekarang parsing JSON dipisah ke try sendiri dengan
-      // pesan yang jujur ("status tidak pasti, cek dulu di atas") alih-alih
-      // pesan jaringan yang menyesatkan — perilaku sukses (termasuk pop-up)
-      // di bawah TIDAK berubah sama sekali untuk balasan JSON yang valid.
-      let json;
-      try{
-        json = await res.json();
-      }catch(errParsing){
-        tampilPesan('Server menjawab tapi isinya tidak terbaca (kemungkinan sedang sibuk/banyak yang presensi bersamaan). Presensi Anda BELUM TENTU tersimpan — cek kotak status di atas dahulu sebelum mencoba lagi.', 'err');
-        await cekStatus(true);
-        return;
+    let json = null;
+    let sebabTidakPasti = '';
+    const kontrolWaktu = new AbortController();
+    const batasWaktuId = setTimeout(() => kontrolWaktu.abort(), BATAS_WAKTU_KIRIM_MS);
+    const pesanLambatId = setTimeout(() => {
+      if(sedangMengirim) tampilPesan('Masih memproses, mohon tunggu sebentar — jangan tekan tombol berulang kali.', 'ok');
+    }, 8000);
+    try{
+      const res = await fetch(API_URL, { method: 'POST', signal: kontrolWaktu.signal, body: isiKiriman });
+      const teks = await res.text();
+      try{ json = JSON.parse(teks); }catch(errParsing){ json = null; }
+      if(!json || typeof json !== 'object' || typeof json.ok !== 'boolean'){
+        json = null; sebabTidakPasti = 'isi';
       }
-      tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : json.error, json.ok ? 'ok' : 'err');
+    }catch(err){
+      json = null;
+      sebabTidakPasti = (err && err.name === 'AbortError') ? 'waktu' : 'jaringan';
+    }finally{
+      clearTimeout(batasWaktuId); clearTimeout(pesanLambatId);
+    }
+
+    try{
+      if(!json){
+        // Kondisi TIDAK PASTI: jangan bilang "gagal" — periksa dulu ke server.
+        tampilPesan('Koneksi/respons server terputus. Memastikan apakah presensi Anda sudah tersimpan...', 'ok');
+        const cek = await periksaTersimpan(nama, tipe, statusKirim);
+        if(cek.tersimpan){
+          const pesanOk = tipe === 'pulang' ? 'Absen pulang tercatat'
+            : (statusKirim === 'Hadir' ? 'Absen masuk tercatat' : `Status "${statusKirim}" tercatat`);
+          json = { ok: true, message: pesanOk, jam: cek.jam };
+        }else{
+          tampilPesan(PESAN_TIDAK_PASTI[sebabTidakPasti] || PESAN_TIDAK_PASTI.jaringan, 'err');
+          await cekStatus(true);
+          return; // id permintaan dipertahankan untuk kiriman ulang yang aman
+        }
+      }
+
+      permintaanMenggantung = null; // hasil sudah pasti (sukses atau ditolak server)
+      tampilPesan(json.ok ? (json.jam ? `${json.message} (${json.jam})` : json.message) : (json.error || 'Presensi tidak dapat disimpan.'), json.ok ? 'ok' : 'err');
       if(json.ok){
         pinEl.value = ''; resetFoto();
         keteranganEl.value = ''; pnKelas.value = ''; pnJurusan.value = ''; pnCapaian.value = ''; pnTugas.value = '';
         pnJamBoxes.forEach(cb => cb.checked = false);
-        // Presensi masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi.
-        // Izin/Sakit/Cuti/Dinas Luar (diisi manual oleh pegawai) juga diberi ucapan
-        // bernada positif, tapi Alfa TIDAK — karena Alfa tercatat otomatis oleh
-        // sistem, bukan pengajuan sadar dari pegawai, jadi tidak pantas diberi ucapan.
-        if(pilihStatus.value === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
-          tampilkanUcapan(tipe, nama, json.jam || '');
-        } else if(['Izin','Sakit','Cuti','Dinas Luar'].includes(pilihStatus.value)){
-          tampilkanUcapan(pilihStatus.value, nama, '');
-        }
+        // Pop-up ucapan dibungkus try sendiri: kegagalan menampilkannya tidak boleh
+        // pernah berubah jadi pesan "gagal" padahal presensi sudah tersimpan.
+        try{
+          if(statusKirim === 'Hadir' && (tipe === 'masuk' || tipe === 'pulang')){
+            tampilkanUcapan(tipe, nama, json.jam || '');
+          } else if(['Izin','Sakit','Cuti','Dinas Luar'].includes(statusKirim)){
+            tampilkanUcapan(statusKirim, nama, '');
+          }
+        }catch(errUcapan){ /* pop-up opsional; presensi sudah aman */ }
       }
       await cekStatus(true);
-    }catch(err){
-      clearTimeout(batasWaktuId);
-      // Pesan dibedakan: timeout/abort (server tidak kunjung menjawab)
-      // vs kegagalan jaringan biasa, supaya pegawai tahu apa yang
-      // sebenarnya terjadi alih-alih pesan generik yang membingungkan.
-      const pesanGagal = (err && err.name === 'AbortError')
-        ? 'Server tidak merespons dalam 25 detik (kemungkinan sedang banyak yang presensi bersamaan). Silakan coba lagi.'
-        : 'Gagal mengirim, periksa koneksi internet lalu coba lagi.';
-      tampilPesan(pesanGagal, 'err');
-      await cekStatus(true);
+    }finally{
+      sedangMengirim = false;
+      perbaruiEnableTombol();
     }
-    finally{ perbaruiEnableTombol(); }
   }
   btnMasuk.addEventListener('click', () => kirimAbsen('masuk'));
   btnPulang.addEventListener('click', () => kirimAbsen('pulang'));
