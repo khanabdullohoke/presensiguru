@@ -12,7 +12,7 @@
 <!-- OPTIMASI (ringan diakses): <link rel="stylesheet"> Google Fonts BIASA
      memblokir render pertama — browser menunda menampilkan APA PUN sampai
      CSS font itu selesai diunduh. Dipasang lewat pola "preload + baru
-     dipasang setelah termuat" (media="print" lalu di-swap ke "all" viaA
+     dipasang setelah termuat" (media="print" lalu di-swap ke "all" via
      onload) supaya HTML/CSS utama halaman ini bisa langsung tampil TANPA
      menunggu font — begitu font selesai diunduh di latar belakang, teks
      otomatis berganti dari font fallback sistem ke Sora/Inter (parameter
@@ -106,7 +106,7 @@
   .view.active.masuk-halus{animation:tabMasukHalus .32s ease both;}
   @media(prefers-reduced-motion:reduce){.view.active.masuk-halus{animation:none;}}
 
-  /* ===== Tab Absen ===== */
+  /* ===== Tab Presensi ===== */
   .form-card{
     background:var(--card);border-radius:22px;padding:26px 22px;max-width:420px;margin:10px auto 0;
     box-shadow:0 12px 32px rgba(11,61,145,0.10);border:1px solid var(--line);
@@ -124,7 +124,7 @@
   .link-gantipin{color:var(--navy);font-weight:700;text-decoration:none;}
   .link-gantipin:hover{text-decoration:underline;}
 
-  /* ===== FAQ mini: atur PIN dulu (tab Absen) ===== */
+  /* ===== FAQ mini: atur PIN dulu (tab Presensi) ===== */
   .pin-faq{background:#f8faff;border:1.5px dashed var(--line);border-radius:14px;padding:14px 16px 6px;margin-top:14px;}
   .pin-faq-head{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
   .pin-faq-head .ico{font-size:16px;line-height:1;}
@@ -454,7 +454,7 @@
   }
   .akhir-bulan-badge.show{display:inline-flex;}
 
-  /* ===== Panel: Laporan Absensi Harian per Blok (Blok A/B aktif) ===== */
+  /* ===== Panel: Laporan Presensi Harian per Blok (Blok A/B aktif) ===== */
   .blok-info-bar{
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     background:var(--info-bg);color:#0b3d91;border:1px solid rgba(46,144,250,0.25);
@@ -836,7 +836,7 @@
   </div>
   <p class="header-intro"><span>Presensi terverifikasi lokasi &amp; kode keamanan pribadi — wujud disiplin dan transparansi dalam pelayanan pendidikan.</span></p>
   <div class="tabs">
-    <button class="tab-btn active" data-tab="presensi">Absen</button>
+    <button class="tab-btn active" data-tab="presensi">Presensi</button>
     <button class="tab-btn" data-tab="dashboard">Rekap Bulanan</button>
     <button class="tab-btn" data-tab="penugasan">Penugasan Siswa</button>
     <button class="tab-btn" data-tab="info">Info & Ketentuan</button>
@@ -846,7 +846,7 @@
 
 <main>
 
-  <!-- ===== TAB: ABSEN ===== -->
+  <!-- ===== TAB: PRESENSI ===== -->
   <section id="view-presensi" class="view active">
     <div class="form-card">
       <div class="jam" id="jamNow">--:--:--</div>
@@ -877,7 +877,7 @@
 
       <label for="pilihStatus">Status Kehadiran</label>
       <select id="pilihStatus">
-        <option value="Hadir">Hadir (absen masuk / pulang)</option>
+        <option value="Hadir">Hadir (presensi masuk / pulang)</option>
         <option value="Sakit">Sakit</option>
         <option value="Izin">Izin</option>
         <option value="Cuti">Cuti</option>
@@ -926,12 +926,12 @@
       <div class="field-hint">PIN bersifat rahasia dan hanya diketahui oleh Anda. Presensi ditolak sistem jika PIN salah. <a href="#" id="bukaGantiPin" class="link-gantipin">Lupa atau ingin ganti PIN?</a></div>
 
       <div class="pin-faq">
-        <div class="pin-faq-head"><span class="ico">🔑</span><h4>Absen Pertama Kali? Atur PIN Dulu</h4></div>
+        <div class="pin-faq-head"><span class="ico">🔑</span><h4>Presensi Pertama Kali? Atur PIN Dulu</h4></div>
         <p class="panel-sub">PIN wajib diatur lebih dulu sebelum bisa mengisi presensi</p>
 
         <details class="faq-item" open>
           <summary>Bagaimana cara mengatur PIN untuk pertama kali?</summary>
-          <p>Tekan tombol "Atur PIN Sekarang" di bawah, pilih nama Anda, lalu masukkan nomor identitas pegawai (NUPTK/NIK/nomor pegawai internal) yang sudah didaftarkan operator sekolah untuk verifikasi. Jika cocok, buat PIN baru minimal 4 karakter dan langsung dapat digunakan untuk absen.</p>
+          <p>Tekan tombol "Atur PIN Sekarang" di bawah, pilih nama Anda, lalu masukkan nomor identitas pegawai (NUPTK/NIK/nomor pegawai internal) yang sudah didaftarkan operator sekolah untuk verifikasi. Jika cocok, buat PIN baru minimal 4 karakter dan langsung dapat digunakan untuk presensi.</p>
         </details>
 
         <details class="faq-item">
@@ -940,7 +940,7 @@
         </details>
 
         <details class="faq-item">
-          <summary>Apakah PIN harus diatur ulang setiap kali absen?</summary>
+          <summary>Apakah PIN harus diatur ulang setiap kali presensi?</summary>
           <p>Tidak. PIN cukup diatur satu kali dan akan terus dipakai untuk setiap presensi berikutnya, sampai Anda menggantinya sendiri kapan pun diperlukan.</p>
         </details>
 
@@ -968,8 +968,8 @@
       <div class="status-box" id="statusBox"></div>
 
       <div class="btn-row" id="btnRowHadir">
-        <button class="btn-masuk" id="btnMasuk" disabled>Absen Masuk</button>
-        <button class="btn-pulang" id="btnPulang" disabled>Absen Pulang</button>
+        <button class="btn-masuk" id="btnMasuk" disabled>Presensi Masuk</button>
+        <button class="btn-pulang" id="btnPulang" disabled>Presensi Pulang</button>
       </div>
       <div class="btn-row tunggal" id="btnRowLain" style="display:none;">
         <button class="btn-simpan" id="btnSimpan" disabled>Simpan Status</button>
@@ -978,11 +978,11 @@
     </div>
   </section>
 
-  <!-- ===== MODAL: UCAPAN TERIMA KASIH & MOTIVASI (setelah absen masuk/pulang berhasil) ===== -->
+  <!-- ===== MODAL: UCAPAN TERIMA KASIH & MOTIVASI (setelah presensi masuk/pulang berhasil) ===== -->
   <div class="modal-overlay modal-ucapan" id="modalUcapan">
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="ucapanJudul">
       <div class="ucapan-ico" id="ucapanIco" aria-hidden="true"></div>
-      <h3 class="ucapan-judul" id="ucapanJudul">Absen Masuk Berhasil</h3>
+      <h3 class="ucapan-judul" id="ucapanJudul">Presensi Masuk Berhasil</h3>
       <p class="ucapan-sub" id="ucapanSub">Terima kasih, <strong>Nama</strong> — tercatat pukul 07.00</p>
       <figure class="ucapan-kutipan" style="margin-left:0;margin-right:0;">
         <div class="ucapan-jenis" id="ucapanJenis"></div>
@@ -1055,7 +1055,7 @@
     <div class="dash-top">
       <div class="dash-title">
         <h2 id="judulRekap">Rekap Kehadiran</h2>
-        <p>Data resmi, ditarik langsung dari sistem absensi sekolah <span id="terakhirDiperbarui" class="terakhir-diperbarui"></span></p>
+        <p>Data resmi, ditarik langsung dari sistem presensi sekolah <span id="terakhirDiperbarui" class="terakhir-diperbarui"></span></p>
       </div>
       <div class="controls">
         <select id="pilihBulan"></select>
@@ -1100,7 +1100,7 @@
           <div class="kartu izin"><div class="kartu-top"><span class="ico">📋</span></div><div class="angka" id="totalIzin">0</div><div class="label">Total Izin</div></div>
           <div class="kartu alpa"><div class="kartu-top"><span class="ico">⛔</span></div><div class="angka" id="totalAlpa">0</div><div class="label">Total Alfa</div></div>
           <div class="kartu cuti"><div class="kartu-top"><span class="ico">🏖️</span></div><div class="angka" id="totalCuti">0</div><div class="label">Total Cuti</div></div>
-          <div class="kartu setengahhari" title="Absen masuk tapi tidak absen pulang sampai akhir hari — dicatat otomatis oleh sistem"><div class="kartu-top"><span class="ico">🌗</span></div><div class="angka" id="totalSetengahHari">0</div><div class="label">Setengah Hari (Otomatis)</div></div>
+          <div class="kartu setengahhari" title="Presensi masuk tapi tidak presensi pulang sampai akhir hari — dicatat otomatis oleh sistem"><div class="kartu-top"><span class="ico">🌗</span></div><div class="angka" id="totalSetengahHari">0</div><div class="label">Setengah Hari (Otomatis)</div></div>
         </div>
       </div>
 
@@ -1115,7 +1115,7 @@
         </div>
         <div class="panel">
           <div class="panel-head">
-            <div><h3>15 Peringkat Kedisiplinan Presensi</h3><p class="panel-sub">Diurutkan dari ketepatan absen masuk &amp; kelengkapan absen pulang &middot; arahkan kursor untuk detail</p></div>
+            <div><h3>15 Peringkat Kedisiplinan Presensi</h3><p class="panel-sub">Diurutkan dari ketepatan presensi masuk &amp; kelengkapan presensi pulang &middot; arahkan kursor untuk detail</p></div>
           </div>
           <div class="peringkat-scroll">
             <canvas id="chartPeringkat"></canvas>
@@ -1127,7 +1127,7 @@
         <div class="riwayat-head">
           <div>
             <h3 style="margin-bottom:2px;">Riwayat Kehadiran Harian</h3>
-            <p class="panel-sub" style="margin:0;">Setiap catatan absen berikut jam masuk dan jam pulangnya</p>
+            <p class="panel-sub" style="margin:0;">Setiap catatan presensi berikut jam masuk dan jam pulangnya</p>
           </div>
           <input type="text" id="cariRiwayat" placeholder="Cari nama...">
         </div>
@@ -1143,14 +1143,14 @@
         </div>
       </div>
 
-      <!-- ===== PANEL: LAPORAN ABSENSI HARIAN SESUAI JADWAL BLOK AKTIF =====
+      <!-- ===== PANEL: LAPORAN PRESENSI HARIAN SESUAI JADWAL BLOK AKTIF =====
            Ditaruh di bawah "Riwayat Kehadiran Harian" di atas. Independen
            dari filter bulan/tahun rekap bulanan — panel ini menjawab
            pertanyaan "hari ini/tanggal X, siapa saja yang WAJIB presensi
            menurut jadwal Blok A/B yang aktif minggu itu, dan bagaimana
            status kehadirannya?" Diambil lewat aksi=laporanHarianBlok (satu
            request, backend menggabungkan sheet Pegawai + JadwalBlok +
-           Absensi untuk tanggal terpilih). Hanya menampilkan pegawai yang
+           Presensi untuk tanggal terpilih). Hanya menampilkan pegawai yang
            WAJIB hadir hari itu: guru yang aktif di jadwal blok hari
            tersebut, ditambah staf (termasuk guru rangkap staf) yang wajib
            hadir 5 hari kerja/minggu — lihat renderLaporanBlokTabel(). Guru
@@ -1160,7 +1160,7 @@
       <div class="panel" id="panelLaporanBlok">
         <div class="panel-head">
           <div>
-            <h3>Laporan Absensi Harian — Jadwal Blok Aktif</h3>
+            <h3>Laporan Presensi Harian — Jadwal Blok Aktif</h3>
             <p class="panel-sub">Guru yang aktif jadwal Blok A/B hari itu, beserta staf yang wajib hadir 5 hari kerja/minggu &mdash; lengkap dengan status kehadirannya</p>
           </div>
           <div class="controls">
@@ -1203,7 +1203,7 @@
            backend (lihat _hitungLembur() pada Code.gs) dalam dua kondisi:
            (1) pegawai kategori "guru rangkap staf" ATAU "staf" (kategori
            dengan jam kerja resmi tetap 07.00–15.00, lihat _infoWajibPresensi)
-           yang absen pulang lewat jam 15:00 (jam pulang resmi) pada hari
+           yang presensi pulang lewat jam 15:00 (jam pulang resmi) pada hari
            kerja biasa — lembur = selisih dengan jam 15:00; (2) siapa pun
            yang tetap masuk pada tanggal merah/akhir pekan — seluruh
            durasi kerja hari itu dihitung lembur. FIX: sebelumnya kondisi
@@ -1249,7 +1249,7 @@
               <th class="num sortable" data-sort="Cuti" data-tipe="angka">Cuti<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Alfa" data-tipe="angka">Alfa<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="Dinas Luar" data-tipe="angka">Dinas Luar<span class="panah">▼</span></th>
-              <th class="num sortable" data-sort="Hadir Setengah Hari" data-tipe="angka" title="Absen masuk tapi tidak absen pulang sampai akhir hari — otomatis oleh sistem">½ Hari<span class="panah">▼</span></th>
+              <th class="num sortable" data-sort="Hadir Setengah Hari" data-tipe="angka" title="Presensi masuk tapi tidak presensi pulang sampai akhir hari — otomatis oleh sistem">½ Hari<span class="panah">▼</span></th>
               <th class="num sortable" data-sort="persen" data-tipe="angka">Tingkat<span class="panah">▼</span></th>
             </tr>
           </thead>
@@ -1293,7 +1293,7 @@
       <div class="eyebrow">Mengapa Presensi Ini Ada</div>
       <h3>Kehadiran yang tercatat rapi adalah bentuk tanggung jawab, bukan sekadar formalitas.</h3>
       <p>
-        Setiap absen yang dicatat oleh guru dan staf adalah wujud komitmen terhadap
+        Setiap presensi yang dicatat oleh guru dan staf adalah wujud komitmen terhadap
         proses belajar-mengajar dan pelayanan sekolah. Sistem ini dibuat bukan untuk
         mengawasi secara berlebihan, tetapi untuk membangun budaya disiplin, transparansi,
         dan profesionalisme bersama — supaya siswa, orang tua, dan masyarakat percaya
@@ -1473,14 +1473,14 @@
         <h3>Ketentuan Presensi</h3>
         <p class="panel-sub">Berlaku untuk seluruh guru dan staf</p>
         <ul class="ketentuan-list">
-          <li><span class="no">1</span><span>Absen masuk dilakukan paling lambat <strong>07.30 WIB</strong>; setelah jam tersebut tercatat sebagai terlambat.</span></li>
-          <li><span class="no">2</span><span>Absen pulang dilakukan setelah jam kerja selesai, minimal pukul <strong>15.30 WIB</strong>, sebelum meninggalkan lingkungan sekolah.</span></li>
+          <li><span class="no">1</span><span>Presensi masuk dilakukan paling lambat <strong>07.30 WIB</strong>; setelah jam tersebut tercatat sebagai terlambat.</span></li>
+          <li><span class="no">2</span><span>Presensi pulang dilakukan setelah jam kerja selesai, minimal pukul <strong>15.30 WIB</strong>, sebelum meninggalkan lingkungan sekolah.</span></li>
           <li><span class="no">3</span><span>Presensi hanya dapat dilakukan dalam radius <strong>200 meter</strong> dari lingkungan SMK Ciledug Al-Musaddadiyah. Sistem memverifikasi lokasi GPS perangkat secara otomatis dan menolak pengisian dari luar radius tersebut.</span></li>
-          <li><span class="no">4</span><span>Presensi hanya dapat dilakukan atas nama sendiri, diverifikasi dengan <strong>kode keamanan (PIN)</strong> pribadi dan <strong>foto kehadiran</strong> yang diambil langsung dari kamera. Menitipkan absen, PIN, atau nomor identitas pegawai pada pihak lain melanggar ketentuan ini.</span></li>
+          <li><span class="no">4</span><span>Presensi hanya dapat dilakukan atas nama sendiri, diverifikasi dengan <strong>kode keamanan (PIN)</strong> pribadi dan <strong>foto kehadiran</strong> yang diambil langsung dari kamera. Menitipkan presensi, PIN, atau nomor identitas pegawai pada pihak lain melanggar ketentuan ini.</span></li>
           <li><span class="no">5</span><span>Izin atau sakit wajib disertai keterangan pada kolom yang tersedia, dan bila perlu menyertakan surat pendukung ke bagian tata usaha.</span></li>
-          <li><span class="no">6</span><span>Cuti (di luar izin mendadak dan sakit) diajukan melalui status <strong>"Cuti"</strong> pada tab Absen, sebaiknya diketahui pihak sekolah lebih awal agar kelas atau tugas yang ditinggalkan dapat disiapkan penggantinya.</span></li>
+          <li><span class="no">6</span><span>Cuti (di luar izin mendadak dan sakit) diajukan melalui status <strong>"Cuti"</strong> pada tab Presensi, sebaiknya diketahui pihak sekolah lebih awal agar kelas atau tugas yang ditinggalkan dapat disiapkan penggantinya.</span></li>
           <li><span class="no">7</span><span>Data kehadiran direkap setiap bulan dan menjadi salah satu dasar penilaian kinerja serta tunjangan kehadiran.</span></li>
-          <li><span class="no">8</span><span>Kendala teknis saat absen (jaringan, GPS, atau sistem error) segera dilaporkan ke operator sekolah agar dapat dikoreksi.</span></li>
+          <li><span class="no">8</span><span>Kendala teknis saat presensi (jaringan, GPS, atau sistem error) segera dilaporkan ke operator sekolah agar dapat dikoreksi.</span></li>
         </ul>
       </div>
 
@@ -1500,7 +1500,7 @@
 
         <details class="faq-item">
           <summary>Apa itu kode keamanan (PIN) dan bagaimana mendapatkannya?</summary>
-          <p>PIN adalah kode rahasia pribadi yang memastikan hanya guru/staf bersangkutan yang bisa mengisi absennya sendiri, meski nama dapat dipilih siapa saja di daftar. PIN awal diberikan oleh operator sekolah. Setelahnya, Anda dapat mengatur atau mengganti PIN sendiri kapan saja lewat tautan "Lupa atau ingin ganti PIN?" pada tab Absen, dengan memasukkan nomor identitas pegawai sebagai verifikasi.</p>
+          <p>PIN adalah kode rahasia pribadi yang memastikan hanya guru/staf bersangkutan yang bisa mengisi presensinya sendiri, meski nama dapat dipilih siapa saja di daftar. PIN awal diberikan oleh operator sekolah. Setelahnya, Anda dapat mengatur atau mengganti PIN sendiri kapan saja lewat tautan "Lupa atau ingin ganti PIN?" pada tab Presensi, dengan memasukkan nomor identitas pegawai sebagai verifikasi.</p>
         </details>
 
         <details class="faq-item">
@@ -1514,8 +1514,8 @@
         </details>
 
         <details class="faq-item">
-          <summary>Bagaimana jika lupa absen pulang?</summary>
-          <p>Segera hubungi operator/tata usaha pada hari yang sama agar data dapat dikoreksi secara manual di Basis Data Sekolah, karena sistem tidak mengizinkan absen pulang diisi otomatis di hari lain.</p>
+          <summary>Bagaimana jika lupa presensi pulang?</summary>
+          <p>Segera hubungi operator/tata usaha pada hari yang sama agar data dapat dikoreksi secara manual di Basis Data Sekolah, karena sistem tidak mengizinkan presensi pulang diisi otomatis di hari lain.</p>
         </details>
 
         <details class="faq-item">
@@ -1674,17 +1674,17 @@
     }
   }
 
-  // PERBAIKAN BUG KRITIS (tombol Absen Masuk/Pulang terkunci ulang & terasa
+  // PERBAIKAN BUG KRITIS (tombol Presensi Masuk/Pulang terkunci ulang & terasa
   // seperti "pop-up tidak muncul" setiap habis mengambil foto): mengambil
-  // Foto Bukti Kehadiran (WAJIB untuk semua absen) membuka kamera perangkat,
+  // Foto Bukti Kehadiran (WAJIB untuk semua presensi) membuka kamera perangkat,
   // yang SELALU memicu document.hidden -> visible sesaat saat kamera
   // ditutup (lihat listener 'visibilitychange' di bawah). Sebelumnya,
   // mulaiPantauLokasi() SELALU membuang lokasiTerkini yang sudah
-  // tervalidasi lalu mengunci tombol Absen Masuk/Pulang sampai GPS
+  // tervalidasi lalu mengunci tombol Presensi Masuk/Pulang sampai GPS
   // presisi-tinggi mendapat titik BARU — bisa 5-15+ detik, terutama di
   // dalam gedung sekolah. Karena validasi lokasi hanya diwajibkan untuk
   // status "Hadir" (lihat wajibLokasi()), efeknya paling terasa justru di
-  // absen masuk/pulang: pengguna ambil foto lalu langsung menekan tombol,
+  // presensi masuk/pulang: pengguna ambil foto lalu langsung menekan tombol,
   // tombolnya sempat terkunci ulang tanpa penjelasan -> tekan tidak
   // bereaksi (kirimAbsen() bahkan belum sempat terpanggil karena tombolnya
   // disabled) -> terasa seperti presensi gagal / pop-up tidak muncul,
@@ -1757,8 +1757,8 @@
   // sekali tidak memakai lokasi, atau saat layar HP dikunci/aplikasi
   // dipindah ke background. Dengan enableHighAccuracy: true, ini berarti
   // chip GPS tetap menyala terus-menerus sia-sia selama halaman terbuka.
-  // PERBAIKAN: watch dihentikan begitu tab Absen ditinggalkan atau halaman
-  // disembunyikan, dan dipantau ulang begitu pengguna kembali ke tab Absen
+  // PERBAIKAN: watch dihentikan begitu tab Presensi ditinggalkan atau halaman
+  // disembunyikan, dan dipantau ulang begitu pengguna kembali ke tab Presensi
   // / membuka lagi halamannya — supaya lokasi yang ditampilkan tetap segar,
   // bukan sisa lokasi lama. Akurasi presensi TIDAK diturunkan sedikit pun:
   // enableHighAccuracy tetap true persis seperti sebelumnya, hanya DURASI
@@ -1778,13 +1778,13 @@
       hentikanPantauLokasi();
     } else {
       mulaiPantauLokasi(true); // true = pertahankan lokasi lama kalau masih segar (lihat catatan di mulaiPantauLokasi)
-      // FIX (tombol Absen Pulang macet setelah HP dikunci/di-background lalu
+      // FIX (tombol Presensi Pulang macet setelah HP dikunci/di-background lalu
       // dibuka lagi): sebelumnya hanya GPS yang di-refresh di sini, sedangkan
       // statusHariIniTerakhir (penentu tombol Masuk/Pulang menyala) TETAP
       // memakai nilai lama yang tersimpan di memori sejak halaman terakhir
       // aktif — karena cekStatus() hanya terpanggil saat dropdown nama
       // diubah atau setelah submit berhasil, bukan saat tab kembali aktif.
-      // Akibatnya: kalau layar terkunci setelah Absen Masuk berhasil (atau
+      // Akibatnya: kalau layar terkunci setelah Presensi Masuk berhasil (atau
       // tanggal berganti saat HP idle semalaman), tombol Pulang bisa tetap
       // terkunci walau di database sudah ada catatan terbaru, sampai
       // pengguna memilih ulang namanya secara manual.
@@ -1827,7 +1827,7 @@
       viewBaru.style.animation = ''; // lepas dulu sisa "animation:none" dari fix anti-blur, supaya animasi bisa main ulang
       viewBaru.classList.remove('masuk-halus'); void viewBaru.offsetWidth; viewBaru.classList.add('masuk-halus');
       // BARU (FIX RINGAN — hemat baterai) — GPS cuma perlu aktif di tab
-      // Absen. Pindah ke tab lain -> hentikan watch. Kembali ke tab Absen
+      // Presensi. Pindah ke tab lain -> hentikan watch. Kembali ke tab Presensi
       // -> pantau ulang supaya lokasi yang tampil tetap segar (lihat
       // hentikanPantauLokasi() untuk detail akar masalah & alasannya).
       if(btn.dataset.tab === 'presensi'){
@@ -1887,7 +1887,7 @@
   const gpNama = document.getElementById('gpNama');
   let pegawaiMap = {};
   let statusHariIniTerakhir = { sudahMasuk:false, sudahPulang:false, status:null };
-  // BARU (FIX jeda tombol Absen Pulang): lihat catatan lengkap di
+  // BARU (FIX jeda tombol Presensi Pulang): lihat catatan lengkap di
   // perbaruiEnableTombol() & cekStatus() di bawah.
   let statusSedangDimuat = false;
   let fotoDataUrl = '';
@@ -2077,7 +2077,7 @@
   // Foto wajib diambil (bukti kehadiran) sebelum tombol bisa ditekan
   function fotoValid(){ return !!fotoDataUrl; }
 
-  // Radius 200m dari sekolah hanya wajib untuk status "Hadir" (absen masuk/pulang di lokasi).
+  // Radius 200m dari sekolah hanya wajib untuk status "Hadir" (presensi masuk/pulang di lokasi).
   // Izin, Sakit, Cuti, Alfa, dan Dinas Luar tidak mensyaratkan berada dalam radius sekolah.
   function wajibLokasi(){ return pilihStatus.value === 'Hadir'; }
 
@@ -2087,13 +2087,13 @@
     // FIX (jeda/kedipan tombol saat pilih nama): statusHariIniTerakhir
     // SEBELUM data server datang selalu berisi nilai bawaan
     // { sudahMasuk:false, ... } — bukan berarti pegawai itu benar-benar
-    // belum absen masuk, hanya karena datanya belum sempat ditarik dari
+    // belum presensi masuk, hanya karena datanya belum sempat ditarik dari
     // server. Sebelumnya fungsi ini langsung dipanggil dengan nilai
     // bawaan itu (dari perbaruiTampilanTombol() yang berjalan SESAAT
     // setelah cekStatus() dipanggil, tapi SEBELUM fetch-nya selesai) —
-    // akibatnya tombol "Absen Masuk" sempat menyala keliru selama
+    // akibatnya tombol "Presensi Masuk" sempat menyala keliru selama
     // beberapa detik (durasi fetch ke Apps Script), baru kemudian
-    // berganti ke "Absen Pulang" begitu status asli tiba. Diperbaiki:
+    // berganti ke "Presensi Pulang" begitu status asli tiba. Diperbaiki:
     // selama statusSedangDimuat masih true, KEDUA tombol dikunci dulu
     // (statusBox tetap menampilkan "Mengecek status..."), supaya tidak
     // ada tombol yang salah sempat menyala sebelum status dipastikan.
@@ -2111,7 +2111,7 @@
 
     if(pilihStatus.value === 'Hadir'){
       if(sudahAdaCatatanHariIni && d.status !== 'Hadir'){
-        // sudah tercatat dengan status lain hari ini, tidak bisa absen Hadir juga
+        // sudah tercatat dengan status lain hari ini, tidak bisa presensi Hadir juga
         btnMasuk.disabled = true; btnPulang.disabled = true;
       } else if(!d.sudahMasuk){
         btnMasuk.disabled = false; btnPulang.disabled = true;
@@ -2125,7 +2125,7 @@
     }
   }
 
-  // OPTIMASI (mengurangi jeda tombol Absen Pulang terasa lama): status
+  // OPTIMASI (mengurangi jeda tombol Presensi Pulang terasa lama): status
   // presensi hari ini (aksi=statusHariIni) selalu ditarik ulang dari
   // server SETIAP kali dropdown nama dipilih — wajar terasa lama kalau
   // Apps Script sedang "cold start" (bisa 1-3+ detik). Sekarang dipakai
@@ -2135,7 +2135,7 @@
   // awal — tombol Masuk/Pulang langsung menyala sesuai kondisi terakhir
   // yang diketahui TANPA menunggu jaringan — sambil tetap menarik ulang
   // data asli dari server di latar belakang untuk mengoreksi kalau
-  // ternyata sudah berubah (mis. diabsenkan dari perangkat lain).
+  // ternyata sudah berubah (mis. dipresensikan dari perangkat lain).
   //
   // AMAN: server (doPost) tetap jadi sumber kebenaran akhir dan SELALU
   // memvalidasi ulang saat tombol ditekan (lihat pengecekan rowIndex di
@@ -2219,7 +2219,7 @@
         statusBox.textContent = `Hari ini sudah tercatat dengan status "${d.status}".`;
         statusBox.classList.add('warn');
       } else if(!d.sudahPulang){
-        statusBox.textContent = `Sudah absen masuk jam ${d.jamMasuk}. Belum absen pulang.`;
+        statusBox.textContent = `Sudah presensi masuk jam ${d.jamMasuk}. Belum presensi pulang.`;
       } else {
         statusBox.textContent = `Presensi hari ini lengkap (masuk ${d.jamMasuk}, pulang ${d.jamPulang}).`;
       }
@@ -2230,7 +2230,7 @@
       // bisa membuat KEDUA tombol terkunci permanen kalau fetch gagal (mis.
       // jaringan terputus). Sekarang statusSedangDimuat tetap dilepas & tombol
       // disegarkan (memakai perkiraan cache kalau ada, supaya pegawai tetap
-      // bisa lanjut absen berdasarkan info terakhir yang diketahui, bukan
+      // bisa lanjut presensi berdasarkan info terakhir yang diketahui, bukan
       // macet total).
       if(pilihNama.value === nama){
         statusSedangDimuat = false;
@@ -2300,7 +2300,7 @@
     if(wajibLokasi() && !lokasiTerkini.valid){ tampilPesan('Anda berada di luar radius sekolah, presensi tidak dapat dikirim.', 'err'); return; }
     if(!penugasanValid()){ tampilPesan('Lengkapi tabel penugasan (Kelas, Jurusan, Capaian Pembelajaran, Tugas) terlebih dahulu.', 'err'); return; }
 
-    // Jaring pengaman tambahan di sisi klien: sekali absen masuk & sekali absen pulang per hari.
+    // Jaring pengaman tambahan di sisi klien: sekali presensi masuk & sekali presensi pulang per hari.
     // Pengecekan utama tetap di server (aksi=statusHariIni), ini hanya mencegah klik ganda
     // atau kondisi tombol yang belum sempat ter-update.
     const d = statusHariIniTerakhir;
@@ -2312,8 +2312,8 @@
     // di BAWAH cek "tipe==='masuk' && d.sudahMasuk" — akibatnya begitu
     // pegawai memilih status non-Hadir (mis. Izin) padahal hari ini sudah
     // ada catatan, cek pertama itu SELALU lebih dulu cocok dan pegawai
-    // melihat pesan "Absen masuk hari ini sudah tercatat, tidak bisa diisi
-    // ulang." — membingungkan karena dia tidak sedang absen masuk. Pesan
+    // melihat pesan "Presensi masuk hari ini sudah tercatat, tidak bisa diisi
+    // ulang." — membingungkan karena dia tidak sedang presensi masuk. Pesan
     // yang lebih tepat ("Hari ini sudah ada catatan presensi...") jadi
     // TIDAK PERNAH tercapai (dead code) untuk kombinasi ini. Diperbaiki:
     // cek status non-Hadir dipindah ke PALING ATAS supaya pesannya akurat
@@ -2325,11 +2325,11 @@
       perbaruiEnableTombol(); return;
     }
     if(tipe === 'masuk' && d.sudahMasuk){
-      tampilPesan('Absen masuk hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
+      tampilPesan('Presensi masuk hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
       perbaruiEnableTombol(); return;
     }
     if(tipe === 'pulang' && d.sudahPulang){
-      tampilPesan('Absen pulang hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
+      tampilPesan('Presensi pulang hari ini sudah tercatat, tidak bisa diisi ulang.', 'err');
       perbaruiEnableTombol(); return;
     }
 
@@ -2402,7 +2402,7 @@
         pinEl.value = ''; resetFoto();
         keteranganEl.value = ''; pnKelas.value = ''; pnJurusan.value = ''; pnCapaian.value = ''; pnTugas.value = '';
         pnJamBoxes.forEach(cb => cb.checked = false);
-        // Absen masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi.
+        // Presensi masuk/pulang sungguhan (status Hadir) layak dapat ucapan & motivasi.
         // Izin/Sakit/Cuti/Dinas Luar (diisi manual oleh pegawai) juga diberi ucapan
         // bernada positif, tapi Alfa TIDAK — karena Alfa tercatat otomatis oleh
         // sistem, bukan pengajuan sadar dari pegawai, jadi tidak pantas diberi ucapan.
@@ -2430,8 +2430,8 @@
   btnPulang.addEventListener('click', () => kirimAbsen('pulang'));
   btnSimpan.addEventListener('click', () => kirimAbsen('masuk'));
 
-  // ===== Ucapan terima kasih & motivasi setelah absen masuk/pulang =====
-  // 30 pesan motivasi & inspirasi untuk guru (15 saat absen masuk + 15 saat absen pulang),
+  // ===== Ucapan terima kasih & motivasi setelah presensi masuk/pulang =====
+  // 40 pesan motivasi & inspirasi untuk guru (20 saat presensi masuk + 20 saat presensi pulang),
   // masing-masing menyisipkan ucapan terima kasih. Ditampilkan acak, tanpa mengulang pesan
   // yang sama berturut-turut (lihat pilihAcak). Untuk mengubah/menambah pesan, cukup edit daftar ini.
   const PESAN_MASUK = [
@@ -2449,7 +2449,12 @@
     { j:'Motivasi', t:'Hari baru, kesempatan baru untuk mengubah hidup seseorang lewat ilmu dan keteladanan. Selamat mengajar dengan sepenuh hati.' },
     { j:'Motivasi', t:'Di tangan guru yang ikhlas, ilmu menjadi lentera dan murid menjadi harapan. Terima kasih atas keikhlasan Anda hari ini dan selamanya.' },
     { j:'Motivasi', t:'Mungkin Anda sedang lelah, tetapi ingatlah: ada mata-mata kecil di kelas yang menunggu dan mengagumi Anda. Anda sangat berarti bagi mereka.' },
-    { j:'Motivasi', t:'Terima kasih telah bangun pagi demi masa depan anak-anak bangsa. Semoga setiap langkah Anda hari ini dimudahkan dan dipenuhi keberkahan.' }
+    { j:'Motivasi', t:'Terima kasih telah bangun pagi demi masa depan anak-anak bangsa. Semoga setiap langkah Anda hari ini dimudahkan dan dipenuhi keberkahan.' },
+    { j:'Motivasi', t:'Setiap pagi Anda melangkah ke sekolah, ada harapan para orang tua yang Anda jaga. Terima kasih sudah menjadi tempat mereka menitipkan buah hatinya.' },
+    { j:'Motivasi', t:'Guru yang baik membuat murid pintar, guru yang tulus membuat murid percaya diri. Terima kasih sudah memberikan keduanya hari ini.' },
+    { j:'Motivasi', t:'Jangan pernah meremehkan peran Anda: dari ruang kelas sederhana, lahir dokter, pemimpin, dan pribadi-pribadi hebat. Semangat mengabdi hari ini.' },
+    { j:'Motivasi', t:'Sabar Anda hari ini adalah teladan yang akan ditiru murid seumur hidup. Terima kasih sudah mengajar dengan hati yang lapang.' },
+    { j:'Motivasi', t:'Selamat datang kembali di tempat Anda paling dibutuhkan. Semoga setiap langkah mengajar hari ini membawa kebahagiaan dan keberkahan.' }
   ];
   const PESAN_PULANG = [
     { j:'Motivasi', t:'Terima kasih untuk hari ini, Bapak/Ibu Guru. Setiap ilmu, kesabaran, dan senyum yang Anda berikan adalah hadiah tak ternilai bagi murid-murid.' },
@@ -2466,7 +2471,12 @@
     { j:'Motivasi', t:'Anda bukan sekadar guru; Anda adalah alasan banyak anak percaya bahwa mereka bisa. Terima kasih sudah menjadi alasan itu.' },
     { j:'Motivasi', t:'Sekolah ini beruntung memiliki Anda. Terima kasih atas dedikasi dan kasih sayang yang tak pernah habis untuk murid-murid. Hati-hati di jalan pulang.' },
     { j:'Motivasi', t:'Beristirahatlah dengan bangga; setiap huruf yang Anda ajarkan hari ini adalah jembatan menuju mimpi seorang anak.' },
-    { j:'Motivasi', t:'Terima kasih telah berjuang dengan sepenuh hati hari ini. Semoga lelah menjadi pahala, dan esok Anda kembali dengan semangat yang baru.' }
+    { j:'Motivasi', t:'Terima kasih telah berjuang dengan sepenuh hati hari ini. Semoga lelah menjadi pahala, dan esok Anda kembali dengan semangat yang baru.' },
+    { j:'Motivasi', t:'Terima kasih sudah menjadi tempat bertanya, tempat mengadu, sekaligus tempat belajar bagi murid-murid. Anda berarti lebih dari yang Anda sangka.' },
+    { j:'Motivasi', t:'Tidak semua pahlawan memakai tanda jasa; sebagian membawa spidol dan buku presensi. Terima kasih, pahlawan kami, atas hari yang luar biasa ini.' },
+    { j:'Motivasi', t:'Hari ini Anda mungkin merasa belum sempurna, tetapi murid-murid melihat kesungguhan yang tulus. Itu sudah cukup membuat mereka tumbuh.' },
+    { j:'Motivasi', t:'Semoga langkah pulang Anda ringan, disambut senyum keluarga, dan dipenuhi rasa syukur. Terima kasih atas pengabdian yang tak pernah mengeluh.' },
+    { j:'Motivasi', t:'Setiap ilmu yang Anda bagikan hari ini akan terus mengalir menjadi kebaikan, bahkan ketika Anda sudah beristirahat. Terima kasih, Bapak/Ibu Guru.' }
   ];
   const PESAN_IZIN = [
     'Terima kasih sudah menyampaikan kabar dengan jujur dan tepat waktu. Semoga urusan yang sedang dijalani berjalan lancar, dan sampai jumpa lagi di sekolah.',
@@ -2588,7 +2598,7 @@
 
     ucapanIco.innerHTML = masuk ? IKON_UCAPAN.masuk : IKON_UCAPAN.pulang;
     ucapanIco.className = 'ucapan-ico' + (masuk ? '' : ' pulang');
-    ucapanJudul.textContent = masuk ? 'Absen Masuk Berhasil' : 'Absen Pulang Berhasil';
+    ucapanJudul.textContent = masuk ? 'Presensi Masuk Berhasil' : 'Presensi Pulang Berhasil';
 
     const menit = masuk ? jamKeMenit(jam) : null;
     const telatKuning = menit !== null && menit >= BATAS_MENIT_KUNING;
@@ -2724,7 +2734,7 @@
     btnPdf.style.display = 'inline-flex';
     // Tombol tetap mengikuti status data: aktif hanya jika rekap sudah dimuat.
     btnPdf.disabled = !(riwayatTerakhir && riwayatTerakhir.length !== undefined && document.getElementById('tabelBody').children.length);
-    // Login admin yang sama juga menampilkan tombol PDF Laporan Absensi
+    // Login admin yang sama juga menampilkan tombol PDF Laporan Presensi
     // Harian per Blok (sekarang berdampingan dengan tombol PDF bulanan di
     // atas) — hanya aktif kalau laporan tanggal tersebut sudah dimuat.
     const btnPdfBlok = document.getElementById('btnUnduhLaporanBlokPdf');
@@ -2816,7 +2826,7 @@
   // ditutup/refresh — bukan localStorage). Kalau pengguna balik lagi ke
   // bulan yang sudah pernah dibuka pada sesi ini, data langsung tampil
   // dari sini, tanpa menunggu jaringan sama sekali. Bulan berjalan tetap
-  // dianggap "boleh basi maksimal 2 menit" supaya absen baru yang masuk
+  // dianggap "boleh basi maksimal 2 menit" supaya presensi baru yang masuk
   // tetap kelihatan tanpa harus refresh halaman.
   const cacheRekapBrowser = {}; // { "bulan-tahun": { data, waktuAmbil } }
   const CACHE_BROWSER_BULAN_INI_MS = 2 * 60 * 1000;
@@ -3299,7 +3309,7 @@
   }
   document.getElementById('btnUnduhLemburPdf').addEventListener('click', unduhLemburPdf);
 
-  /* ================= PANEL: LAPORAN ABSENSI HARIAN PER BLOK =================
+  /* ================= PANEL: LAPORAN PRESENSI HARIAN PER BLOK =================
      Independen dari filter bulan/tahun rekap bulanan di atas — panel ini
      memuat satu tanggal spesifik lewat aksi=laporanHarianBlok (backend
      menggabungkan sheet Pegawai + JadwalBlok + Absensi untuk tanggal itu
@@ -3448,7 +3458,7 @@
     renderLaporanBlokTabel(q ? sumber.filter(r => r.nama.toLowerCase().includes(q)) : sumber);
   }, 150));
 
-  /* ---------- Unduh laporan absensi harian per blok sebagai PDF ---------- */
+  /* ---------- Unduh laporan presensi harian per blok sebagai PDF ---------- */
   async function unduhLaporanBlokPdf(){
     if(!adminTerverifikasi){
       bukaModalAdmin();
@@ -3477,7 +3487,7 @@
     doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
     doc.text('SMK Ciledug Al-Musaddadiyah', lebar/2, 14, { align: 'center' });
     doc.setFontSize(11);
-    doc.text('Laporan Absensi Kehadiran Harian — Jadwal Blok Aktif', lebar/2, 20.5, { align: 'center' });
+    doc.text('Laporan Presensi Kehadiran Harian — Jadwal Blok Aktif', lebar/2, 20.5, { align: 'center' });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
     const keteranganHari = data.hariLibur ? (data.liburLabel || 'Akhir pekan') : `Blok ${data.blokAktif} aktif`;
     doc.text(`Tanggal: ${tglLabel} (${data.hari})   ·   ${keteranganHari}`, lebar/2, 26, { align: 'center' });
@@ -3538,7 +3548,7 @@
     doc.text('(.............................)', kolomKiriX, yTtd + 29, { align: 'center' });
     doc.text('(.............................)', kolomKananX, yTtd + 29, { align: 'center' });
 
-    const namaFile = `Laporan-Absensi-Harian-Blok${data.blokAktif}-${data.tanggal}.pdf`;
+    const namaFile = `Laporan-Presensi-Harian-Blok${data.blokAktif}-${data.tanggal}.pdf`;
     doc.save(namaFile);
 
     btn.textContent = labelAsli;
@@ -3656,18 +3666,18 @@
     // ===== Peringkat "Kedisiplinan Presensi" =====
     // Sebelumnya peringkat ini memakai persentase Hadir keseluruhan (sama
     // dengan kolom "Tingkat" di tabel Detail per Pegawai). Sekarang diganti
-    // dengan skor kedisiplinan yang khusus menilai KEBIASAAN absen: apakah
-    // pegawai konsisten absen masuk TEPAT WAKTU (sebelum jam 08.00) dan
-    // konsisten absen pulang (tidak lupa checkout) — bukan sekadar berapa
+    // dengan skor kedisiplinan yang khusus menilai KEBIASAAN presensi: apakah
+    // pegawai konsisten presensi masuk TEPAT WAKTU (sebelum jam 08.00) dan
+    // konsisten presensi pulang (tidak lupa checkout) — bukan sekadar berapa
     // hari dia tercatat Hadir. Dua pegawai bisa sama-sama 100% Hadir, tapi
-    // yang satu selalu telat & lupa absen pulang jelas kurang disiplin
+    // yang satu selalu telat & lupa presensi pulang jelas kurang disiplin
     // dibanding yang selalu tepat waktu — perbedaan itu yang mau ditonjolkan
     // di sini, terpisah dari metrik "Tingkat Hadir" pada tabel di bawahnya.
     //
     // Hanya hari berstatus Hadir yang dihitung (hari Izin/Sakit/Alfa/Dinas
     // Luar tidak punya konsep jam masuk/pulang). Hari INI (bila rekap yang
     // sedang dilihat adalah bulan berjalan) sengaja dikecualikan dari
-    // perhitungan — karena hari belum selesai, wajar kalau absen pulang
+    // perhitungan — karena hari belum selesai, wajar kalau presensi pulang
     // belum terisi, jadi tidak adil dihitung sebagai "tidak disiplin".
     const hariIniStr = (() => {
       const n = new Date();
@@ -3692,10 +3702,10 @@
       // penanda visual warna kuning di tabel Riwayat, LEBIH LONGGAR daripada
       // aturan resmi presensi (lihat panel "Ketentuan Presensi": masuk
       // paling lambat 07.30 WIB, lewat itu terlambat). Akibatnya pegawai
-      // yang absen masuk mis. 07.45 tercatat "terlambat" secara resmi TAPI
+      // yang presensi masuk mis. 07.45 tercatat "terlambat" secara resmi TAPI
       // tetap dihitung "masukTepat" di skor Kedisiplinan — skor jadi lebih
       // tinggi dari kedisiplinan sesungguhnya. Sekarang pakai
-      // BATAS_MENIT_DISIPLIN (07.30) supaya skor "ketepatan absen masuk"
+      // BATAS_MENIT_DISIPLIN (07.30) supaya skor "ketepatan presensi masuk"
       // sungguh-sungguh mencerminkan aturan resmi, terpisah dari
       // BATAS_MENIT_KUNING yang tetap dipakai apa adanya untuk pewarnaan
       // tabel Riwayat (tidak diubah, supaya tampilan itu tidak berubah).
@@ -3900,7 +3910,7 @@
       const menitMasuk = row.status === 'Hadir' ? jamKeMenit(row.jamMasuk) : null;
       const telatKuning = menitMasuk !== null && menitMasuk >= BATAS_MENIT_KUNING;
       const kolomJamMasuk = row.jamMasuk
-        ? (telatKuning ? `<span class="jam-terlambat" title="Absen masuk lewat dari jam 08.00">⚠ ${escapeHtml(row.jamMasuk)}</span>` : escapeHtml(row.jamMasuk))
+        ? (telatKuning ? `<span class="jam-terlambat" title="Presensi masuk lewat dari jam 08.00">⚠ ${escapeHtml(row.jamMasuk)}</span>` : escapeHtml(row.jamMasuk))
         : '—';
 
       const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
@@ -4282,7 +4292,7 @@
       gambarPeringkat(peringkatChartState.canvasId, peringkatChartState.daftar, idx);
     }
     const { item } = peringkatChartState.rowsMeta[idx];
-    chartTooltipEl.innerHTML = `<b>${escapeHtml(item.nama)}</b><div class="tt-sub">${item.persen}% disiplin &middot; ${item.masukTepat} masuk tepat waktu, ${item.pulangLengkap} absen pulang lengkap &middot; dari ${item.hariHadir} hari hadir</div>`;
+    chartTooltipEl.innerHTML = `<b>${escapeHtml(item.nama)}</b><div class="tt-sub">${item.persen}% disiplin &middot; ${item.masukTepat} masuk tepat waktu, ${item.pulangLengkap} presensi pulang lengkap &middot; dari ${item.hariHadir} hari hadir</div>`;
     chartTooltipEl.style.left = rect.left + rect.width/2 + 'px';
     chartTooltipEl.style.top = rect.top + (peringkatChartState.rowsMeta[idx].top + peringkatChartState.rowsMeta[idx].bottom)/2 + 'px';
     chartTooltipEl.classList.add('show');
