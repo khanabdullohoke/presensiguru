@@ -12,7 +12,7 @@
 <!-- OPTIMASI (ringan diakses): <link rel="stylesheet"> Google Fonts BIASA
      memblokir render pertama — browser menunda menampilkan APA PUN sampai
      CSS font itu selesai diunduh. Dipasang lewat pola "preload + baru
-     dipasang setelah termuat" (media="print" lalu di-swap ke "all" via
+     dipasang setelah termuat" (media="print" lalu di-swap ke "all" viaA
      onload) supaya HTML/CSS utama halaman ini bisa langsung tampil TANPA
      menunggu font — begitu font selesai diunduh di latar belakang, teks
      otomatis berganti dari font fallback sistem ke Sora/Inter (parameter
@@ -2431,41 +2431,42 @@
   btnSimpan.addEventListener('click', () => kirimAbsen('masuk'));
 
   // ===== Ucapan terima kasih & motivasi setelah absen masuk/pulang =====
-  // 30 kutipan: j = jenis ('Hadis' | 'Makna Ayat' | 'Motivasi'), s = sumber.
-  // Hadis & ayat ditulis dalam MAKNA bahasa Indonesia (bukan terjemahan resmi kata per kata).
+  // 30 pesan motivasi & inspirasi untuk guru (15 saat absen masuk + 15 saat absen pulang),
+  // masing-masing menyisipkan ucapan terima kasih. Ditampilkan acak, tanpa mengulang pesan
+  // yang sama berturut-turut (lihat pilihAcak). Untuk mengubah/menambah pesan, cukup edit daftar ini.
   const PESAN_MASUK = [
-    { j:'Hadis', t:'Barangsiapa menempuh jalan untuk mencari ilmu, Allah mudahkan baginya jalan menuju surga.', s:'HR. Muslim' },
-    { j:'Hadis', t:'Sebaik-baik kalian adalah yang belajar Al-Qur\'an dan mengajarkannya.', s:'HR. Al-Bukhari' },
-    { j:'Hadis', t:'Sesungguhnya setiap amal bergantung pada niatnya.', s:'HR. Al-Bukhari dan Muslim' },
-    { j:'Hadis', t:'Barangsiapa menunjukkan kepada kebaikan, ia mendapat pahala seperti pahala orang yang melakukannya.', s:'HR. Muslim' },
-    { j:'Hadis', t:'Permudahlah dan jangan mempersulit; berilah kabar gembira dan jangan membuat orang lari.', s:'HR. Al-Bukhari dan Muslim' },
-    { j:'Makna Ayat', t:'Allah mengangkat derajat orang-orang beriman dan orang-orang yang berilmu di antara kalian.', s:'QS. Al-Mujadilah: 11' },
-    { j:'Makna Ayat', t:'Bacalah dengan menyebut nama Tuhanmu yang menciptakan.', s:'QS. Al-\'Alaq: 1' },
-    { j:'Makna Ayat', t:'Tolong-menolonglah kamu dalam (mengerjakan) kebajikan dan takwa.', s:'QS. Al-Ma\'idah: 2' },
-    { j:'Motivasi', t:'Ilmu yang dibagikan dengan tulus tidak pernah habis; ia tumbuh di setiap murid yang mengingatnya.' },
-    { j:'Motivasi', t:'Pagi ini, satu kebaikan kecil di kelas bisa menjadi alasan seorang murid tidak menyerah.' },
-    { j:'Motivasi', t:'Guru tidak hanya mengisi kepala, tetapi menyalakan keyakinan bahwa setiap anak mampu bertumbuh.' },
-    { j:'Motivasi', t:'Pendidikan yang baik dimulai dari teladan: apa yang kita lakukan hari ini, itulah yang akan ditiru.' },
-    { j:'Motivasi', t:'Kesabaran di ruang kelas hari ini adalah investasi bagi karakter generasi esok.' },
-    { j:'Motivasi', t:'Disiplin yang dimulai dari hal sederhana seperti hadir tepat waktu adalah pelajaran paling nyata bagi murid.' },
-    { j:'Motivasi', t:'Setiap murid datang dengan cerita yang berbeda. Hari ini, jadilah alasan mereka merasa dihargai.' }
+    { j:'Motivasi', t:'Selamat pagi, Bapak/Ibu Guru. Terima kasih sudah hadir dengan hati yang tulus; kehadiran Anda adalah cahaya pertama yang menyambut murid-murid hari ini.' },
+    { j:'Motivasi', t:'Di balik setiap murid yang berhasil, ada seorang guru yang tak pernah lelah mempercayainya. Terima kasih sudah menjadi guru seperti itu.' },
+    { j:'Motivasi', t:'Hari ini mungkin ada murid yang datang membawa beban di pundaknya. Sapaan dan senyum Anda bisa menjadi alasan ia kembali bersemangat.' },
+    { j:'Motivasi', t:'Terima kasih telah memilih mengabdi, bukan sekadar bekerja. Ketulusan Anda menanam benih yang akan tumbuh bertahun-tahun kelak.' },
+    { j:'Motivasi', t:'Anda tidak hanya mengajarkan pelajaran, Anda sedang membentuk masa depan. Semangat menjalani hari yang begitu bermakna ini.' },
+    { j:'Motivasi', t:'Satu kata baik dari seorang guru bisa dikenang seumur hidup. Selamat menebar kebaikan hari ini, dan terima kasih atas pengabdiannya.' },
+    { j:'Motivasi', t:'Guru adalah pelita yang rela terbakar demi menerangi jalan orang lain. Terima kasih sudah menyalakan cahaya itu setiap pagi.' },
+    { j:'Motivasi', t:'Tak semua jasa tercatat di buku, tetapi setiap kebaikan Anda tercatat di hati murid-murid. Semoga hari ini penuh keberkahan.' },
+    { j:'Motivasi', t:'Kehadiran tepat waktu Anda mengajarkan disiplin tanpa perlu berkata-kata. Terima kasih sudah menjadi teladan nyata bagi mereka.' },
+    { j:'Motivasi', t:'Hasilnya mungkin belum terlihat hari ini, tetapi percayalah, setiap usaha Anda tumbuh diam-diam di dalam diri murid. Teruslah bersemangat.' },
+    { j:'Motivasi', t:'Bangga rasanya memiliki guru seperti Anda: sabar, peduli, dan tak pernah berhenti belajar. Terima kasih sudah hadir untuk sekolah ini.' },
+    { j:'Motivasi', t:'Hari baru, kesempatan baru untuk mengubah hidup seseorang lewat ilmu dan keteladanan. Selamat mengajar dengan sepenuh hati.' },
+    { j:'Motivasi', t:'Di tangan guru yang ikhlas, ilmu menjadi lentera dan murid menjadi harapan. Terima kasih atas keikhlasan Anda hari ini dan selamanya.' },
+    { j:'Motivasi', t:'Mungkin Anda sedang lelah, tetapi ingatlah: ada mata-mata kecil di kelas yang menunggu dan mengagumi Anda. Anda sangat berarti bagi mereka.' },
+    { j:'Motivasi', t:'Terima kasih telah bangun pagi demi masa depan anak-anak bangsa. Semoga setiap langkah Anda hari ini dimudahkan dan dipenuhi keberkahan.' }
   ];
   const PESAN_PULANG = [
-    { j:'Hadis', t:'Apabila manusia meninggal, terputuslah amalnya kecuali tiga: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya.', s:'HR. Muslim' },
-    { j:'Hadis', t:'Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.', s:'HR. Ath-Thabrani' },
-    { j:'Hadis', t:'Amalan yang paling dicintai Allah adalah yang dilakukan terus-menerus, meskipun sedikit.', s:'HR. Al-Bukhari dan Muslim' },
-    { j:'Hadis', t:'Barangsiapa meringankan kesulitan seorang mukmin, Allah akan meringankan kesulitannya pada hari kiamat.', s:'HR. Muslim' },
-    { j:'Hadis', t:'Senyummu kepada saudaramu adalah sedekah.', s:'HR. At-Tirmidzi' },
-    { j:'Hadis', t:'Sesungguhnya Allah mencintai seseorang yang apabila bekerja, ia menyelesaikannya dengan sebaik-baiknya.', s:'HR. Al-Baihaqi' },
-    { j:'Makna Ayat', t:'Berbuat baiklah, sesungguhnya Allah menyukai orang-orang yang berbuat baik.', s:'QS. Al-Baqarah: 195' },
-    { j:'Makna Ayat', t:'Barangsiapa mengerjakan kebaikan seberat zarah pun, niscaya ia akan melihat balasannya.', s:'QS. Az-Zalzalah: 7' },
-    { j:'Motivasi', t:'Lelah hari ini adalah bukti bahwa ada sesuatu yang berharga sedang diperjuangkan.' },
-    { j:'Motivasi', t:'Tidak semua kebaikan terlihat hari ini, tetapi setiap murid yang Anda bimbing akan membawanya ke masa depan.' },
-    { j:'Motivasi', t:'Pulanglah dengan hati lapang: hari ini ada yang belajar, ada yang terbantu, dan ada yang terinspirasi.' },
-    { j:'Motivasi', t:'Pendidik hebat bukan yang tak pernah lelah, melainkan yang tetap peduli di tengah lelahnya.' },
-    { j:'Motivasi', t:'Pelajaran yang disampaikan dengan tulus terus bekerja, bahkan setelah bel pulang berbunyi.' },
-    { j:'Motivasi', t:'Istirahat yang baik adalah bagian dari pengabdian; esok, semangat baru menunggu di kelas yang sama.' },
-    { j:'Motivasi', t:'Terima kasih telah menjadi bagian dari tumbuhnya anak-anak yang kelak mengingat jasa Anda.' }
+    { j:'Motivasi', t:'Terima kasih untuk hari ini, Bapak/Ibu Guru. Setiap ilmu, kesabaran, dan senyum yang Anda berikan adalah hadiah tak ternilai bagi murid-murid.' },
+    { j:'Motivasi', t:'Lelah Anda hari ini tidak sia-sia; ia menjelma menjadi bekal masa depan anak-anak didik Anda. Pulanglah dengan bangga.' },
+    { j:'Motivasi', t:'Mungkin tak ada yang mengatakannya hari ini, maka izinkan kami: terima kasih, Anda sudah bekerja dengan luar biasa.' },
+    { j:'Motivasi', t:'Murid mungkin lupa isi pelajarannya, tetapi tak akan pernah lupa pada guru yang membuat mereka merasa dihargai. Anda adalah guru itu.' },
+    { j:'Motivasi', t:'Tinggalkan lelah di depan pintu rumah, bawa pulang rasa syukur. Hari ini Anda telah mengubah hidup seseorang, meski tak selalu disadari.' },
+    { j:'Motivasi', t:'Pengabdian Anda mungkin sunyi, tetapi gaungnya akan terdengar di setiap keberhasilan murid kelak. Terima kasih, selamat beristirahat.' },
+    { j:'Motivasi', t:'Guru sejati tak pernah benar-benar pulang dari kelas; doa dan harapannya terus menyertai murid-muridnya. Terima kasih atas ketulusan itu.' },
+    { j:'Motivasi', t:'Anda sudah memberikan yang terbaik hari ini, dan itu lebih dari cukup. Peluk keluarga, beristirahatlah, esok kita mulai lagi dengan semangat baru.' },
+    { j:'Motivasi', t:'Terima kasih sudah bersabar saat sulit, tetap tersenyum saat lelah, dan tetap peduli ketika tak ada yang melihat.' },
+    { j:'Motivasi', t:'Jasa guru tak akan pernah bisa dibalas dengan apa pun, tetapi doa baik murid-murid selalu mengalir untuk Anda. Semoga sehat dan bahagia selalu.' },
+    { j:'Motivasi', t:'Hari ini Anda telah menanam kebaikan di hati anak-anak. Biarkan waktu yang menumbuhkannya, dan Anda boleh beristirahat dengan tenang.' },
+    { j:'Motivasi', t:'Anda bukan sekadar guru; Anda adalah alasan banyak anak percaya bahwa mereka bisa. Terima kasih sudah menjadi alasan itu.' },
+    { j:'Motivasi', t:'Sekolah ini beruntung memiliki Anda. Terima kasih atas dedikasi dan kasih sayang yang tak pernah habis untuk murid-murid. Hati-hati di jalan pulang.' },
+    { j:'Motivasi', t:'Beristirahatlah dengan bangga; setiap huruf yang Anda ajarkan hari ini adalah jembatan menuju mimpi seorang anak.' },
+    { j:'Motivasi', t:'Terima kasih telah berjuang dengan sepenuh hati hari ini. Semoga lelah menjadi pahala, dan esok Anda kembali dengan semangat yang baru.' }
   ];
   const PESAN_IZIN = [
     'Terima kasih sudah menyampaikan kabar dengan jujur dan tepat waktu. Semoga urusan yang sedang dijalani berjalan lancar, dan sampai jumpa lagi di sekolah.',
