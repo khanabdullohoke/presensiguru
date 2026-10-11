@@ -2909,6 +2909,9 @@
   // tetap kelihatan tanpa harus refresh halaman.
   const cacheRekapBrowser = {}; // { "bulan-tahun": { data, waktuAmbil } }
   const CACHE_BROWSER_BULAN_INI_MS = 2 * 60 * 1000;
+  // "bulan-tahun" yang request lemburnya SUDAH dimulai paralel dengan request
+  // rekap (lihat muatRekap) — supaya tampilkanDataRekap tidak memintanya dua kali.
+  let lemburSudahDimulaiUntuk = '';
 
   function _kunciCacheBrowser(bulan, tahun){ return `${bulan}-${tahun}`; }
   function _iniBulanBerjalan(bulan, tahun){
@@ -2957,11 +2960,22 @@
     // tanpa pernah memberi tahu pengguna apa yang terjadi.
     const kontrolWaktuRekap = new AbortController();
     const batasWaktuRekapId = setTimeout(() => kontrolWaktuRekap.abort(), 25000);
+    // OPTIMASI: panel Lembur dulu baru DIMINTA setelah rekap selesai dan
+    // ditampilkan, sehingga waktu tunggunya = rekap + lembur (berurutan).
+    // Keduanya tidak saling bergantung, jadi request lembur dimulai sekarang
+    // dan berjalan paralel (waktu tunggu = yang terlama dari keduanya). Panel
+    // ini ada di dalam #isiDashboard yang masih tersembunyi selama memuat,
+    // dan muatLembur() sudah mengabaikan balasan basi bila bulan diganti.
+    lemburSudahDimulaiUntuk = _kunciCacheBrowser(bulan, tahun);
+    muatLembur(bulan, tahun);
+    const tMulaiRekap = performance.now();
     try{
       const res = await fetch(`${API_URL}?aksi=rekap&bulan=${bulan}&tahun=${tahun}&token=${TOKEN}`, { signal: kontrolWaktuRekap.signal });
       clearTimeout(batasWaktuRekapId);
       const json = await res.json();
       if(!json.ok) throw new Error(json.error);
+      console.info('[rekap] jaringan+parse', Math.round(performance.now() - tMulaiRekap), 'ms |',
+        ((json.data && json.data.daftarHarian) || []).length, 'baris riwayat');
       cacheRekapBrowser[kunciCache] = { data: json.data, waktuAmbil: Date.now() };
       // Balasan basi (bulan/tahun sudah diganti saat request jalan): cukup di-cache, jangan menimpa tampilan.
       if(pilihBulan.value !== bulan || pilihTahun.value !== tahun) return;
@@ -2999,7 +3013,9 @@
     isiDashboard.style.animation = ''; // lepas dulu sisa "animation:none" dari fix anti-blur, supaya animasi bisa main ulang
     isiDashboard.querySelectorAll('.kartu-ringkas .kartu, .panel-grid .panel').forEach(el => { el.style.animation = ''; });
     isiDashboard.classList.remove('tampil'); void isiDashboard.offsetWidth; isiDashboard.classList.add('tampil');
+    const tMulaiRender = performance.now();
     renderDashboard(data);
+    console.info('[rekap] render dashboard', Math.round(performance.now() - tMulaiRender), 'ms');
     const jamSekarang = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('terakhirDiperbarui').textContent = `Diperbarui ${jamSekarang} WIB`;
     document.getElementById('footerNote').textContent =
@@ -3010,7 +3026,12 @@
     // muatLembur()). Sengaja TIDAK di-await: kalau lambat atau gagal,
     // dashboard utama di atas tetap tampil normal, panel lembur saja
     // yang menunjukkan pesan gagal.
-    muatLembur(bulan, tahun);
+    // Bila request lembur sudah dimulai paralel oleh muatRekap(), jangan diminta lagi.
+    if(lemburSudahDimulaiUntuk === _kunciCacheBrowser(bulan, tahun)){
+      lemburSudahDimulaiUntuk = '';
+    } else {
+      muatLembur(bulan, tahun);
+    }
     // Tombol Unduh PDF hanya aktif untuk admin yang sudah login lewat modal
     // "Login Admin" (lihat verifikasiAdmin()). Pengunjung publik tetap
     // hanya melihat tombol "🔒 Login Admin" yang meminta password.
@@ -3953,14 +3974,42 @@
   // hanya perlu menghitung layout sekali untuk seluruh tabel, bukan
   // sekali per baris. Hasil visual & urutan kolom 100% identik dengan
   // versi sebelumnya, murni cara memasukkannya ke DOM yang lebih ringan.
-  function renderTabel(bodyEl, daftar, kolomKosong, pesanKosong, buatBarisHtml){
+  // OPTIMASI TAMBAHAN (parameter `bertahap`, hanya dipakai tabel Riwayat):
+  // untuk daftar panjang (> RENDER_BARIS_AWAL baris), BARIS PERTAMA langsung
+  // tampil dalam satu kali innerHTML seperti biasa, sisanya ditambahkan per
+  // kelompok lewat setTimeout supaya thread utama sempat bernapas (layar tidak
+  // "membeku" sesaat setelah data tiba). Hasil akhir isi tabel IDENTIK dengan
+  // versi satu-kali-render: urutan, nomor urut, dan HTML tiap barisnya sama.
+  // Setiap pemanggilan renderTabel pada <tbody> yang sama membatalkan
+  // penambahan yang masih berjalan (token), jadi mengetik di kolom cari atau
+  // login admin di tengah proses tidak pernah menghasilkan baris ganda.
+  // Untuk daftar <= RENDER_BARIS_AWAL (atau bertahap=false) jalurnya persis
+  // sama dengan sebelumnya.
+  const RENDER_BARIS_AWAL = 200;
+  const RENDER_BARIS_PER_KELOMPOK = 300;
+  function renderTabel(bodyEl, daftar, kolomKosong, pesanKosong, buatBarisHtml, bertahap){
+    const token = bodyEl._tokenRender = (bodyEl._tokenRender || 0) + 1;
     if(!daftar.length){
       bodyEl.innerHTML = `<tr><td colspan="${kolomKosong}" style="text-align:center;color:var(--faint);padding:20px;">${pesanKosong}</td></tr>`;
       return;
     }
-    bodyEl.innerHTML = daftar.map((row, i) =>
-      `<tr><td class="no-urut">${i+1}</td>${buatBarisHtml(row)}</tr>`
-    ).join('');
+    const buatBaris = (row, i) => `<tr><td class="no-urut">${i+1}</td>${buatBarisHtml(row)}</tr>`;
+    if(!bertahap || daftar.length <= RENDER_BARIS_AWAL){
+      bodyEl.innerHTML = daftar.map((row, i) => buatBaris(row, i)).join('');
+      return;
+    }
+    bodyEl.innerHTML = daftar.slice(0, RENDER_BARIS_AWAL).map((row, i) => buatBaris(row, i)).join('');
+    let mulai = RENDER_BARIS_AWAL;
+    const lanjut = () => {
+      if(bodyEl._tokenRender !== token) return; // sudah digantikan render yang lebih baru
+      const akhir = Math.min(mulai + RENDER_BARIS_PER_KELOMPOK, daftar.length);
+      let html = '';
+      for(let i = mulai; i < akhir; i++) html += buatBaris(daftar[i], i);
+      bodyEl.insertAdjacentHTML('beforeend', html);
+      mulai = akhir;
+      if(mulai < daftar.length) setTimeout(lanjut, 16);
+    };
+    setTimeout(lanjut, 16);
   }
 
   function renderRiwayat(daftar){
@@ -3994,7 +4043,7 @@
 
       const badgeOtomatis = row.otomatis ? '<span class="tag-otomatis" title="Ditandai otomatis oleh sistem karena tidak ada presensi hingga akhir hari">OTOMATIS</span>' : '';
       return `<td>${tglLabel}</td><td>${escapeHtml(row.nama)}</td><td><span class="status-tag ${kelasStatus}">${escapeHtml(row.status)}</span>${badgeOtomatis}</td><td class="num">${kolomJamMasuk}</td><td class="num">${escapeHtml(row.jamPulang) || '—'}</td><td class="num">${kolomFoto}</td>`;
-    });
+    }, true);
   }
 
   document.getElementById('cariRiwayat').addEventListener('input', debounce((e) => {
